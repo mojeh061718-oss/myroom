@@ -55,6 +55,41 @@ def detection_vocabulary() -> list[str]:
     return [p for p in prompts if not (p in seen or seen.add(p))]
 
 
+@lru_cache(maxsize=1)
+def _prompt_index() -> dict[str, str]:
+    """Every name a detector might use, mapped to its taxonomy category id.
+
+    Detectors return prompt strings ("couch"), the app places category ids
+    ("sofa"). One table, built from the same taxonomy both sides share, so a new
+    synonym never has to be added in two places.
+    """
+    if not TAXONOMY_JSON.exists():
+        raise ModelsUnavailable(
+            f"{TAXONOMY_JSON} is missing — run `pnpm --filter @myroom/catalog build:taxonomy`"
+        )
+    index: dict[str, str] = {}
+    for category in json.loads(TAXONOMY_JSON.read_text()):
+        identifier = category["id"]
+        names = [identifier, category.get("label", ""), *category.get("detectionPrompts", [])]
+        for name in names:
+            key = str(name).strip().lower()
+            # First writer wins: a category's own id and label outrank another
+            # category's synonym when two collide.
+            if key and key not in index:
+                index[key] = identifier
+    return index
+
+
+def category_for_prompt(label: str) -> str | None:
+    """Taxonomy category id for a detector's label, or None if it names nothing.
+
+    A model asked for a closed vocabulary will still occasionally answer outside
+    it. Returning None — rather than inventing a category — is what keeps an
+    unplaceable label from reaching the scene.
+    """
+    return _prompt_index().get(label.strip().lower())
+
+
 def runtime_available() -> tuple[bool, str]:
     """Whether this worker can run stage 1, and why not when it can't."""
     try:

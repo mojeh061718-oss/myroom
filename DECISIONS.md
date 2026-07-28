@@ -393,6 +393,51 @@ fallback, and it is honest.
 
 ---
 
+## Photo reconstruction without a GPU
+
+### Recovering the camera from the wall, not from a depth model
+
+**Decision.** Solve the camera pose from the four corners of the wall a photo
+was tagged to, then intersect rays with the room's own floor and wall planes,
+instead of running metric monocular depth.
+
+**Why.** The blueprint's stage 2/3 path needs a GPU for Depth Anything V2.
+Guided capture already tells us which wall each photo shows, and the drawn plan
+already knows that wall's width and the ceiling height — so every photo contains
+a rectangle of known metric size. That is enough for the textbook plane-to-image
+homography decomposition, which is arithmetic, not inference.
+
+**Trade.** Depth gives every pixel a distance, so it measures an object's
+front-to-back extent directly. One view of a known plane measures position,
+lateral width and height, but the depth away from the camera has to come from
+the matched class's catalog proportions. Each object records which of its
+extents were measured, and rooms built this way never leave the "photo" tier.
+
+**Would change it.** A second photo of the same object from a different wall
+would make its depth measurable by triangulation. The shot list already produces
+overlapping corner shots; nothing consumes them yet.
+
+### A hosted multimodal model as the detector
+
+**Decision.** Allow stage 1 to be served by a hosted multimodal model over
+Bedrock, configured entirely by environment variable, as an alternative to
+Grounding DINO + SAM 2 on a GPU.
+
+**Why.** It removes the accelerator from the deployment story for anyone who
+already has a model endpoint. The vocabulary sent to it is generated from the
+same taxonomy that prompts Grounding DINO, so neither backend can name a class
+the app cannot place.
+
+**Trade.** No masks — boxes only, so measurement works from box edges and is
+coarser. A hosted model can also decline or answer outside its instructions, so
+the parser drops what it cannot use, notes defects, and treats only a reply that
+is not JSON at all as fatal.
+
+**Would change it.** If the golden-room fixtures ever exist, they decide whether
+this backend meets docs/05 §9 or is a convenience tier below it.
+
+---
+
 ## Not built, and why
 
 These are **not** decisions — they are blueprint items this repository does not
@@ -401,7 +446,8 @@ described in full, with its acceptance criterion, in `CHANGELOG.md`.
 
 | Item | Why |
 |---|---|
-| GPU inference: Grounding DINO, SAM 2, Depth Anything V2 | No GPU in this environment |
+| GPU inference: Grounding DINO, SAM 2, Depth Anything V2 | No GPU in this environment. A no-GPU path for stages 1–3 exists — see "Photo reconstruction without a GPU" — but it is untested against real photos |
+| Wiring the no-GPU photo path into the API orchestrator | The stages and their CLI are implemented and tested; the API is not hosted anywhere, so nothing calls them yet |
 | Golden-room accuracy fixtures (docs/05 §9) | Tape-measure measurements of five real rooms; cannot be synthesized without inventing the numbers they exist to check |
 | Queue-driven worker dispatch (BullMQ over Valkey) | The orchestrator calls its stage driver in-process; `StageWorkers` is the seam a consumer would implement |
 | The 60-second demo video (docs/09 M6's definition of done) | Films a photo reconstruction, which needs the GPU tier |
