@@ -203,6 +203,16 @@ export function Home() {
           </div>
           <button
             className="settings-link"
+            data-testid="service-link"
+            onClick={() => {
+              setSettingsOpen(false);
+              navigate("/settings");
+            }}
+          >
+            Photo reconstruction service{settings.serviceUrl ? " · connected" : " · not set up"}
+          </button>
+          <button
+            className="settings-link"
             data-testid="privacy-link"
             onClick={() => {
               setSettingsOpen(false);

@@ -9,12 +9,14 @@ interface SettingsState extends Settings {
   setTutorialSeen: (seen: boolean) => void;
   setTheme: (theme: "dark" | "light") => void;
   setQuality: (quality: Settings["quality"]) => void;
+  /** Awaits the write: a Save the user can act on must be on disk before it returns. */
+  setService: (url: string, token: string) => Promise<void>;
 }
 
 export const useSettings = create<SettingsState>((set, get) => {
   const persist = () => {
-    const { tutorialSeen, displayUnit, theme, quality } = get();
-    void putSettings({ tutorialSeen, displayUnit, theme, quality });
+    const { tutorialSeen, displayUnit, theme, quality, serviceUrl, serviceToken } = get();
+    return putSettings({ tutorialSeen, displayUnit, theme, quality, serviceUrl, serviceToken });
   };
   return {
     ...DEFAULT_SETTINGS,
@@ -26,20 +28,26 @@ export const useSettings = create<SettingsState>((set, get) => {
     },
     setDisplayUnit: (displayUnit) => {
       set({ displayUnit });
-      persist();
+      void persist();
     },
     setTutorialSeen: (tutorialSeen) => {
       set({ tutorialSeen });
-      persist();
+      void persist();
     },
     setQuality: (quality) => {
       set({ quality });
-      persist();
+      void persist();
+    },
+    setService: (serviceUrl, serviceToken) => {
+      set({ serviceUrl: serviceUrl.trim().replace(/\/$/, ""), serviceToken: serviceToken.trim() });
+      // Returned, not fired and forgotten: closing the app right after tapping
+      // Save must not lose the address that was just typed in.
+      return persist();
     },
     setTheme: (theme) => {
       set({ theme });
       document.documentElement.dataset.theme = theme;
-      persist();
+      void persist();
     },
   };
 });

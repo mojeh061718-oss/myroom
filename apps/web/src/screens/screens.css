@@ -231,3 +231,31 @@
   min-height: 44px;
   text-decoration: underline;
 }
+
+/* Settings → photo reconstruction service (docs/03 §8). A phone cannot be
+   rebuilt with a new environment variable, so the endpoint is a field. */
+.settings-screen {
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.settings-header { display: flex; align-items: center; gap: 12px; }
+.settings-group { display: flex; flex-direction: column; gap: 14px; }
+.settings-help { color: var(--text-dim); }
+.settings-field { display: flex; flex-direction: column; gap: 6px; }
+.settings-field input {
+  font-size: 1rem; /* 16px keeps iOS from zooming the whole page on focus */
+  padding: 12px 14px;
+  color: var(--text);
+  background: var(--surface-solid);
+  border: 1.5px solid var(--surface-border);
+  border-radius: var(--radius-md);
+}
+.settings-field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.settings-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.settings-probe { font-size: 0.875rem; }
+.settings-probe.ok { color: var(--success); }
+.settings-probe.fail { color: var(--danger-strong); }

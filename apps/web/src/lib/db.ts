@@ -33,6 +33,15 @@ export interface Settings {
   theme: "dark" | "light";
   /** manual override for auto quality stepping (docs/06 §8) */
   quality: "auto" | "best" | "saver";
+  /**
+   * Where photo reconstruction runs. Empty means "nowhere" — the app builds
+   * rooms on the device and says so. Set in Settings rather than at build time,
+   * because this is a phone app: nobody is going to re-deploy a PWA to point it
+   * at their own server.
+   */
+  serviceUrl: string;
+  /** Optional bearer token for that service. Never leaves this device except to it. */
+  serviceToken: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,6 +49,8 @@ export const DEFAULT_SETTINGS: Settings = {
   displayUnit: "m",
   theme: "dark",
   quality: "auto",
+  serviceUrl: "",
+  serviceToken: "",
 };
 
 /**

@@ -13,6 +13,7 @@ import {
 } from "@myroom/recon";
 import { getCategory } from "@myroom/catalog";
 import { t } from "../i18n/index.js";
+import { useSettings } from "../stores/settingsStore.js";
 import { uuidv7 } from "./uuid.js";
 import type { LocalUpload } from "./db.js";
 
@@ -30,8 +31,29 @@ import type { LocalUpload } from "./db.js";
  *    one; see DECISIONS.md → "Demo reconstruction is labelled".
  */
 
-export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
-export const hasApi = API_BASE.length > 0;
+/**
+ * Where the reconstruction service lives, resolved at *call* time.
+ *
+ * A build-time constant was wrong for a phone app: the person who installs it
+ * is the person who knows their endpoint, and they cannot rebuild a PWA. The
+ * value entered in Settings wins; the build-time `VITE_API_URL` remains the
+ * default so hosted deployments need no per-device setup.
+ */
+export function apiBase(): string {
+  const configured = useSettings.getState().serviceUrl;
+  const fallback = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
+  return (configured || fallback).replace(/\/$/, "");
+}
+
+export function hasApi(): boolean {
+  return apiBase().length > 0;
+}
+
+/** Authorization for the configured service, when one was given. */
+function serviceHeaders(): Record<string, string> {
+  const token = useSettings.getState().serviceToken;
+  return token ? { authorization: `Bearer ${token}` } : {};
+}
 
 export const DEMO_NOTICE = t("recon.demoNotice");
 
@@ -55,7 +77,7 @@ export interface ReconstructInput {
 }
 
 export async function reconstruct(input: ReconstructInput): Promise<ReconstructResult> {
-  return hasApi ? viaApi(input) : locally(input);
+  return hasApi() ? viaApi(input) : locally(input);
 }
 
 export interface ScanRefinement {
@@ -86,7 +108,7 @@ export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Pr
     return {
       plan,
       notes: [
-        hasApi
+        hasApi()
           ? "We'll read your scan on the server while your room is built."
           : "This scan needs the reconstruction server to read — your room is built from the plan and photos for now.",
       ],
@@ -221,7 +243,11 @@ async function sha256(blob: Blob): Promise<string> {
 }
 
 async function api(path: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`${API_BASE}${path}`, { credentials: "include", ...init });
+  const res = await fetch(`${apiBase()}${path}`, {
+    credentials: "include",
+    ...init,
+    headers: { ...serviceHeaders(), ...(init?.headers ?? {}) },
+  });
   if (!res.ok && res.headers.get("content-type")?.includes("problem+json")) {
     const problem = (await res.json()) as { detail?: string; title?: string };
     throw new Error(problem.detail ?? problem.title ?? "That didn't work.");
@@ -244,7 +270,7 @@ export async function uploadOne(projectId: string, upload: LocalUpload): Promise
     }),
   }).then((r) => r.json());
 
-  const target = created.uploadUrl.startsWith("http") ? created.uploadUrl : `${API_BASE}${created.uploadUrl}`;
+  const target = created.uploadUrl.startsWith("http") ? created.uploadUrl : `${apiBase()}${created.uploadUrl}`;
   const put = await fetch(target, {
     method: "PUT",
     body: upload.blob,
@@ -291,7 +317,7 @@ export async function streamJob(
   onEvent: (event: JobEvent) => void,
   signal?: AbortSignal,
 ): Promise<Extract<JobEvent, { type: "done" }>> {
-  const res = await fetch(`${API_BASE}/v1/jobs/${jobId}/events`, {
+  const res = await fetch(`${apiBase()}/v1/jobs/${jobId}/events`, {
     credentials: "include",
     headers: { accept: "text/event-stream" },
     signal,
