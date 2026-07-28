@@ -1,0 +1,70 @@
+{
+  "$ref": "#/definitions/upload",
+  "definitions": {
+    "upload": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "photo",
+            "lidar"
+          ]
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 1
+        },
+        "byteSize": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "wallTag": {
+          "type": "string"
+        },
+        "exif": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "stored",
+            "rejected"
+          ]
+        },
+        "storageRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "kind",
+        "filename",
+        "byteSize",
+        "sha256",
+        "status",
+        "storageRef"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

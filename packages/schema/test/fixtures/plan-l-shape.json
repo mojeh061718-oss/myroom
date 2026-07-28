@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "0190a000-0000-7000-8000-000000000002",
+  "units": "m",
+  "vertices": [
+    { "id": "v1", "x": 0, "y": 5 },
+    { "id": "v2", "x": 3, "y": 5 },
+    { "id": "v3", "x": 3, "y": 3 },
+    { "id": "v4", "x": 6, "y": 3 },
+    { "id": "v5", "x": 6, "y": 0 },
+    { "id": "v6", "x": 0, "y": 0 }
+  ],
+  "walls": [
+    { "id": "w1", "label": "A", "start": "v1", "end": "v2", "thickness": 0.115, "height": 2.7, "openings": [] },
+    { "id": "w2", "label": "B", "start": "v2", "end": "v3", "thickness": 0.115, "height": 2.7, "openings": [] },
+    {
+      "id": "w3",
+      "label": "C",
+      "start": "v3",
+      "end": "v4",
+      "thickness": 0.115,
+      "height": 2.7,
+      "openings": [
+        { "id": "o1", "kind": "window", "offset": 0.6, "width": 1.2, "sillHeight": 0.9, "headHeight": 2.1, "swing": null }
+      ]
+    },
+    { "id": "w4", "label": "D", "start": "v4", "end": "v5", "thickness": 0.115, "height": 2.7, "openings": [] },
+    {
+      "id": "w5",
+      "label": "E",
+      "start": "v5",
+      "end": "v6",
+      "thickness": 0.115,
+      "height": 2.7,
+      "openings": [
+        { "id": "o2", "kind": "door", "offset": 2.5, "width": 0.82, "sillHeight": 0, "headHeight": 2.03, "swing": "right" }
+      ]
+    },
+    { "id": "w6", "label": "F", "start": "v6", "end": "v1", "thickness": 0.115, "height": 2.7, "openings": [] }
+  ],
+  "closed": true,
+  "floorArea": 24,
+  "source": "drawn",
+  "curvedWalls": null,
+  "roomGroups": null
+}

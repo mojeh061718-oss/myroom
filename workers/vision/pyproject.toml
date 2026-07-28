@@ -1,0 +1,6 @@
+[project]
+name = "myroom-vision-workers"
+version = "0.1.0"
+description = "My Room Sandbox reconstruction pipeline workers (built in M4)"
+requires-python = ">=3.11"
+dependencies = []
