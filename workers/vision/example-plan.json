@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "example",
+  "units": "m",
+  "ceilingHeight": 2.4,
+  "vertices": [
+    { "id": "v0", "x": 0.0, "y": 0.0 },
+    { "id": "v1", "x": 4.0, "y": 0.0 },
+    { "id": "v2", "x": 4.0, "y": 3.0 },
+    { "id": "v3", "x": 0.0, "y": 3.0 }
+  ],
+  "walls": [
+    { "id": "w0", "label": "A", "start": "v0", "end": "v1", "thickness": 0.1 },
+    { "id": "w1", "label": "B", "start": "v1", "end": "v2", "thickness": 0.1 },
+    { "id": "w2", "label": "C", "start": "v2", "end": "v3", "thickness": 0.1 },
+    { "id": "w3", "label": "D", "start": "v3", "end": "v0", "thickness": 0.1 }
+  ]
+}

@@ -50,10 +50,25 @@ for deployments that have a hosted multimodal model but no accelerator:
   intersects rays with the room's own floor and wall planes.
 
 ```
+pip install -e ".[dev,bedrock]"
+
+# AWS credentials come from boto3's normal chain — an IAM role, `aws configure`,
+# or these two variables. They are never read from a file in this repository.
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+
 export MYROOM_BEDROCK_MODEL_ID=...      # the model or inference-profile id
 export MYROOM_BEDROCK_REGION=...        # the region it is enabled in
-python -m myroom_vision.photo_pipeline --plan plan.json --wall A --photo wall-a.jpg
+
+python -m myroom_vision.photo_pipeline \
+  --plan example-plan.json --wall A --photo wall-a.jpg
 ```
+
+`example-plan.json` is a 4 m × 3 m rectangle with a 2.4 m ceiling and walls
+A–D. Two numbers have to be true for the answer to mean anything: the length of
+the wall in the photo, and the ceiling height — everything is solved against
+that rectangle. Edit them to match the room you photograph, stand back far
+enough that all four of that wall's corners are in frame, and pass its label.
 
 What it measures honestly, and what it does not:
 
