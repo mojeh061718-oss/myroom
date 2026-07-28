@@ -88,6 +88,11 @@ function gridLines(v: Viewport, w: number, h: number) {
   return lines;
 }
 
+/** How close to an edge a drag must get before the board starts scrolling. */
+const EDGE_PAN_MARGIN = 56;
+/** Pan speed in px/frame at the very edge, ramping down to zero at the margin. */
+const EDGE_PAN_SPEED = 9;
+
 interface DragState {
   kind: "vertex" | "opening";
   vertexId?: string;
@@ -123,9 +128,78 @@ export function BoardCanvas() {
   const pointers = useRef(new Map<number, Vec2>());
   const gesture = useRef<GestureState | null>(null);
   const drag = useRef<DragState | null>(null);
+  /**
+   * Edge auto-pan while dragging (docs/04 §3). Without it a room can only ever
+   * grow as far as the screen edge, because a finger cannot travel past it —
+   * so dragging a corner "further out" was impossible on a phone. Holding near
+   * an edge now scrolls the board under the pointer instead.
+   */
+  const edgePan = useRef<{ frame: number; at: Vec2; vx: number; vy: number } | null>(null);
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
   const shiftHeld = useRef(false);
   const tapTracker = useRef({ maxPointers: 0, startedAt: 0, moved: false });
   const lastTap = useRef({ at: 0, x: 0, y: 0 });
+
+  // --- vertex drag, with auto-pan at the edges -----------------------------
+
+  /** Move the dragged vertex to a screen point, under a given viewport. */
+  const applyVertexDrag = (sp: Vec2, v: Viewport) => {
+    const id = drag.current?.vertexId;
+    if (!id) return;
+    const state = drawing();
+    const { w, h } = sizeRef.current;
+    const raw = toPlan(sp, v, w, h);
+    const others = state.plan.vertices.filter((x) => x.id !== id).map((x) => ({ x: x.x, y: x.y }));
+    const snapped = resolveSnap(raw, { vertices: others, pxPerMeter: v.ppm, orthoDisabled: true });
+    state.moveVertex(id, snapped.point, false);
+  };
+
+  const stopEdgePan = () => {
+    if (edgePan.current) cancelAnimationFrame(edgePan.current.frame);
+    edgePan.current = null;
+  };
+
+  /**
+   * Pan when the pointer is held near an edge, and keep the vertex under it.
+   * Speed ramps from nothing at the margin to full at the edge itself, so a
+   * drag that merely passes near an edge doesn't lurch.
+   */
+  const updateEdgePan = (sp: Vec2) => {
+    const { w, h } = sizeRef.current;
+    const push = (near: number, far: number) =>
+      near < EDGE_PAN_MARGIN
+        ? -(1 - Math.max(0, near) / EDGE_PAN_MARGIN)
+        : far < EDGE_PAN_MARGIN
+          ? 1 - Math.max(0, far) / EDGE_PAN_MARGIN
+          : 0;
+    const vx = push(sp.x, w - sp.x) * EDGE_PAN_SPEED;
+    const vy = push(sp.y, h - sp.y) * EDGE_PAN_SPEED;
+
+    if (vx === 0 && vy === 0) return stopEdgePan();
+    if (edgePan.current) {
+      edgePan.current.at = sp;
+      edgePan.current.vx = vx;
+      edgePan.current.vy = vy;
+      return;
+    }
+
+    const step = () => {
+      const pan = edgePan.current;
+      if (!pan || !drag.current) return stopEdgePan();
+      const v = viewportRef.current;
+      const next: Viewport = { ...v, cx: v.cx + pan.vx / v.ppm, cy: v.cy - pan.vy / v.ppm };
+      viewportRef.current = next;
+      setViewport(next);
+      applyVertexDrag(pan.at, next);
+      pan.frame = requestAnimationFrame(step);
+    };
+    edgePan.current = { at: sp, vx, vy, frame: requestAnimationFrame(step) };
+  };
+
+  useEffect(() => stopEdgePan, []);
 
   // --- size tracking -------------------------------------------------------
   useEffect(() => {
@@ -284,6 +358,7 @@ export function BoardCanvas() {
 
     if (count === 2) {
       // Enter pan/zoom gesture; cancel any drag.
+      stopEdgePan();
       const [p1, p2] = [...pointers.current.values()];
       gesture.current = {
         startMid: midpoint(p1!, p2!),
@@ -345,12 +420,8 @@ export function BoardCanvas() {
       drag.current.moved = true;
       const state = drawing();
       if (drag.current.kind === "vertex") {
-        const raw = toPlan(sp, viewport, size.w, size.h);
-        const others = plan.vertices
-          .filter((v) => v.id !== drag.current!.vertexId)
-          .map((v) => ({ x: v.x, y: v.y }));
-        const snapped = resolveSnap(raw, { vertices: others, pxPerMeter: viewport.ppm, orthoDisabled: true });
-        state.moveVertex(drag.current.vertexId!, snapped.point, false);
+        applyVertexDrag(sp, viewport);
+        updateEdgePan(sp);
       } else {
         const g = geo.find((x) => x.wall.id === drag.current!.wallId);
         const o = g?.wall.openings.find((x) => x.id === drag.current!.openingId);
@@ -390,6 +461,7 @@ export function BoardCanvas() {
     }
 
     if (drag.current) {
+      stopEdgePan();
       const state = drawing();
       if (drag.current.moved) {
         if (drag.current.kind === "vertex") {
@@ -462,6 +534,15 @@ export function BoardCanvas() {
   // Outward direction: away from the polygon interior (closed) or +normal (open).
   // For a CCW loop the interior is left of each edge ⇒ outward = -perp(dir).
   const outward = (g: WallGeo): Vec2 => (loop && loopIsCCW ? scale(g.normal, -1) : g.normal);
+
+  /**
+   * Keep a label fully on screen. A dimension that runs off the edge is the one
+   * a user most wants to read — it belongs to the wall they are stretching.
+   */
+  const clampToView = (s: Vec2, halfW: number, halfH: number): Vec2 => ({
+    x: Math.min(Math.max(s.x, halfW + 4), Math.max(halfW + 4, size.w - halfW - 4)),
+    y: Math.min(Math.max(s.y, halfH + 4), Math.max(halfH + 4, size.h - halfH - 4)),
+  });
 
   const labelPos = (g: WallGeo, offsetPx = 22): Vec2 =>
     add(midpoint(g.a, g.b), scale(outward(g), px(offsetPx) + g.wall.thickness / 2));
@@ -667,7 +748,7 @@ export function BoardCanvas() {
           <g>
             {/* dimension labels — click-through while placing openings/measuring */}
             {geo.map((g) => {
-              const s = toScreen(labelPos(g), viewport, size.w, size.h);
+              const s = clampToView(toScreen(labelPos(g), viewport, size.w, size.h), 34, 13);
               const selected = selection?.kind === "wall" && selection.wallId === g.wall.id;
               const labelsInteractive = tool === "wall" || tool === "select";
               return (
@@ -764,9 +845,9 @@ export function BoardCanvas() {
 
       {/* scale bar */}
       <div className="scale-bar">
-        <div className="bar" style={{ width: scaleBarMeters(viewport.ppm) * viewport.ppm }} />
+        <div className="bar" style={{ width: scaleBarMeters(viewport.ppm, unit) * viewport.ppm }} />
         <span className="type-metric" style={{ fontSize: "0.6875rem", color: "var(--text-dim)" }}>
-          {formatLength(scaleBarMeters(viewport.ppm), unit)}
+          {formatLength(scaleBarMeters(viewport.ppm, unit), unit)}
         </span>
       </div>
 

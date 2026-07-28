@@ -1,4 +1,4 @@
-import type { Vec2 } from "@myroom/geometry";
+import type { DisplayUnit, Vec2 } from "@myroom/geometry";
 
 /**
  * Board viewport (docs/04 §2): pan/zoom over the plan. `ppm` = CSS px per meter.
@@ -28,9 +28,21 @@ export function planGroupTransform(v: Viewport, w: number, h: number): string {
   return `translate(${w / 2 - v.cx * v.ppm}, ${h / 2 + v.cy * v.ppm}) scale(${v.ppm}, ${-v.ppm})`;
 }
 
-/** Nice round scale-bar length (m) targeting ~80 px on screen. */
-export function scaleBarMeters(ppm: number): number {
+const METERS_PER_FOOT = 0.3048;
+
+/**
+ * Nice round scale-bar length (m) targeting ~80 px on screen.
+ *
+ * The steps are round in the unit being *displayed*, not in metres. A bar
+ * labelled `3'3¼"` is a metre in disguise and tells an imperial reader nothing;
+ * in feet the rungs are 1, 2, 5, 10… feet, same as they are 0.1, 0.2, 0.5, 1…
+ * metres in metric.
+ */
+export function scaleBarMeters(ppm: number, unit: DisplayUnit = "m"): number {
   const target = 80 / ppm;
-  const steps = [0.1, 0.2, 0.5, 1, 2, 5, 10];
+  const steps =
+    unit === "ft"
+      ? [0.5, 1, 2, 5, 10, 20, 50].map((feet) => feet * METERS_PER_FOOT)
+      : [0.1, 0.2, 0.5, 1, 2, 5, 10];
   return steps.reduce((best, s) => (Math.abs(s - target) < Math.abs(best - target) ? s : best), steps[0]!);
 }

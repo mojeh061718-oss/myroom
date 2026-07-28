@@ -279,7 +279,10 @@ export function DrawingBoard() {
         <button className="icon-button glass" style={{ borderRadius: "var(--radius-pill)" }} aria-label="Back to projects" onClick={() => navigate("/")}>
           <ChevronLeft size={22} />
         </button>
-        <span className="type-label" style={{ maxWidth: "26vw", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span
+          className="type-label board-title"
+          style={{ maxWidth: "26vw", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
           {projectName}
         </span>
         <div className="spacer" />

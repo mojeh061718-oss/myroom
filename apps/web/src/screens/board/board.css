@@ -39,8 +39,15 @@
    than being clipped off the edge (docs/02 §9 — no layout breakage). */
 .board-topbar .primary-action { margin-left: auto; }
 @media (max-width: 620px) {
+  .board-topbar { gap: 8px; padding-bottom: 6px; }
   .board-topbar .primary-action { width: 100%; }
   .board-topbar .primary-action .pill-button { width: 100%; }
+  /* The project name is the one thing here that costs a whole row and earns
+     nothing: it is the card you just tapped, and Back returns to it. Dropping
+     it fits Back, the badge and the unit toggle on one row, which gives the
+     drawing back a quarter of the screen it was losing to chrome. */
+  .board-topbar .board-title { display: none; }
+  .board-topbar .validation-badge { font-size: 0.75rem; padding: 5px 10px; }
 }
 
 .board-toolbar {
