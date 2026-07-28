@@ -4,13 +4,41 @@
 
 **My Room Sandbox** is a premium, iOS-feeling progressive web app that turns a hand-drawn wall outline, a handful of photos, and (optionally) a LiDAR scan into a perfectly scaled, fully **editable** 3D sandbox of a real room. Move the couch across the room, paint the walls sage green, rehang the gallery wall — and see every idea visualized at true scale before touching a single real object.
 
-This repository currently contains the **complete build blueprint**: a hand-off-ready specification set from which a development team can build the entire product.
+## Status: Milestone M1 (Draw)
+
+The installable PWA, tutorial shell, and the full drawing board are built. See
+[`docs/09-roadmap.md`](docs/09-roadmap.md) for what each milestone ships.
+
+```bash
+pnpm install
+pnpm dev:web     # drawing board at http://localhost:5173
+pnpm dev:api     # API at http://localhost:8787
+pnpm test        # unit tests (geometry, schema, catalog, api, web stores)
+pnpm test:e2e    # Playwright golden path
+pnpm lint:licenses
+```
+
+**Repository layout** (docs/03 §2):
+
+| Path | Contains |
+|---|---|
+| `apps/web` | The PWA: splash, tutorial, projects home, drawing board |
+| `apps/api` | Fastify API: auth, project CRUD, plan save |
+| `packages/schema` | zod schemas + generated JSON Schema — the single source of truth for every data shape |
+| `packages/geometry` | Wall/polygon/unit math shared by the 2D board and (from M2) the 3D extruder |
+| `packages/catalog` | Object taxonomy; CC0 asset pipeline lands in M3 |
+| `workers/vision` | Python reconstruction workers; built in M4 |
+
+Judgment calls made where the specification was silent are recorded in
+[`DECISIONS.md`](DECISIONS.md).
 
 ## Start here
 
 📘 **[BLUEPRINT.md](BLUEPRINT.md)** — the master document: vision, the core architectural principle, locked technology decisions, and the reading order.
 
 ## The specification set
+
+The blueprint is normative — it is built as written, not reinterpreted.
 
 | Doc | Covers |
 |---|---|

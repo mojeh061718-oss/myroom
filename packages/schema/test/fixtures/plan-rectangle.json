@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "id": "0190a000-0000-7000-8000-000000000001",
+  "units": "m",
+  "vertices": [
+    { "id": "v-nw", "x": 0, "y": 4.8 },
+    { "id": "v-ne", "x": 6.2, "y": 4.8 },
+    { "id": "v-se", "x": 6.2, "y": 0 },
+    { "id": "v-sw", "x": 0, "y": 0 }
+  ],
+  "walls": [
+    {
+      "id": "w-a",
+      "label": "A",
+      "start": "v-nw",
+      "end": "v-ne",
+      "thickness": 0.115,
+      "height": 2.44,
+      "openings": [
+        {
+          "id": "o-window-1",
+          "kind": "window",
+          "offset": 2,
+          "width": 1.2,
+          "sillHeight": 0.9,
+          "headHeight": 2.1,
+          "swing": null
+        }
+      ]
+    },
+    {
+      "id": "w-b",
+      "label": "B",
+      "start": "v-ne",
+      "end": "v-se",
+      "thickness": 0.115,
+      "height": 2.44,
+      "openings": []
+    },
+    {
+      "id": "w-c",
+      "label": "C",
+      "start": "v-se",
+      "end": "v-sw",
+      "thickness": 0.115,
+      "height": 2.44,
+      "openings": [
+        {
+          "id": "o-door-1",
+          "kind": "door",
+          "offset": 1.2,
+          "width": 0.82,
+          "sillHeight": 0,
+          "headHeight": 2.03,
+          "swing": "left"
+        }
+      ]
+    },
+    {
+      "id": "w-d",
+      "label": "D",
+      "start": "v-sw",
+      "end": "v-nw",
+      "thickness": 0.115,
+      "height": 2.44,
+      "openings": []
+    }
+  ],
+  "closed": true,
+  "floorArea": 29.76,
+  "source": "drawn",
+  "curvedWalls": null,
+  "roomGroups": null
+}

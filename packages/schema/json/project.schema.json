@@ -1,0 +1,80 @@
+{
+  "$ref": "#/definitions/project",
+  "definitions": {
+    "project": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "planId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "currentSceneId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accuracyTier": {
+          "type": "string",
+          "enum": [
+            "sketch",
+            "photo",
+            "lidar"
+          ]
+        },
+        "thumbnailRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "createdAt",
+        "updatedAt",
+        "planId",
+        "currentSceneId",
+        "accuracyTier",
+        "thumbnailRef"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

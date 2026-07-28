@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+playwright-report/
+test-results/
+storybook-static/
+__pycache__/
+*.pyc
+.venv/
