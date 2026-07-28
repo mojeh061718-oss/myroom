@@ -198,14 +198,23 @@ test("A/B compare renders two versions from the same camera (docs/06 §6)", asyn
   await expect(overlay).toBeVisible({ timeout: 20_000 });
 
   // Both frames captured, and they differ — the empty room vs the furnished one.
-  const sources = await overlay.locator("img").evaluateAll((imgs) =>
-    imgs.map((i) => (i as HTMLImageElement).src),
+  //
+  // Fingerprint the two sources *in the page* rather than pulling them across
+  // CDP. Each src is a multi-megabyte base64 PNG; returning both in one protocol
+  // message crashed the browser session on a two-core software-WebGL runner.
+  // Prefix + length + tail is enough to prove "two PNGs, and not the same one".
+  const shots = await overlay.locator("img").evaluateAll((imgs) =>
+    imgs.map((i) => {
+      const src = (i as HTMLImageElement).src;
+      return { prefix: src.slice(0, 15), length: src.length, tail: src.slice(-96) };
+    }),
   );
-  expect(sources).toHaveLength(2);
-  const [before, after] = sources as [string, string];
-  expect(before.startsWith("data:image/png")).toBe(true);
-  expect(after.startsWith("data:image/png")).toBe(true);
-  expect(before).not.toBe(after);
+  expect(shots).toHaveLength(2);
+  const [before, after] = shots as [(typeof shots)[number], (typeof shots)[number]];
+  expect(before.prefix).toBe("data:image/png;");
+  expect(after.prefix).toBe("data:image/png;");
+  expect(before.length).toBeGreaterThan(1000);
+  expect(`${before.length}:${before.tail}`).not.toBe(`${after.length}:${after.tail}`);
 
   await page.getByTestId("compare-range").fill("20");
   await page.getByTestId("compare-close").click();
