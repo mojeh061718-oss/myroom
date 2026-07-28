@@ -1,6 +1,23 @@
 [project]
 name = "myroom-vision-workers"
 version = "0.1.0"
-description = "My Room Sandbox reconstruction pipeline workers (built in M4)"
+description = "My Room Sandbox reconstruction pipeline workers (docs/03 §4, docs/05)"
 requires-python = ">=3.11"
-dependencies = []
+# Runtime deps are BSD/MIT only, per the docs/08 §7 allowlist. The model-backed
+# stages add torch (BSD-3) + transformers (Apache-2.0) through the `models`
+# extra, so the CPU stages install and run without them.
+dependencies = ["numpy>=1.26", "jsonschema>=4.20"]
+
+[project.optional-dependencies]
+models = ["torch>=2.2", "transformers>=4.40", "pillow>=10.0"]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["myroom_vision*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

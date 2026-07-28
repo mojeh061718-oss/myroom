@@ -1,0 +1,4037 @@
+[
+  {
+    "id": "sofa",
+    "label": "Sofa",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 2.1,
+      "d": 0.92,
+      "h": 0.83
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "sofa",
+      "couch",
+      "settee"
+    ]
+  },
+  {
+    "id": "sectional",
+    "label": "Sectional",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 2.6,
+      "d": 1.8,
+      "h": 0.84
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "sectional",
+      "l-shaped sofa",
+      "corner sofa"
+    ]
+  },
+  {
+    "id": "loveseat",
+    "label": "Loveseat",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.5,
+      "d": 0.9,
+      "h": 0.83
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "loveseat",
+      "two-seat sofa"
+    ]
+  },
+  {
+    "id": "armchair",
+    "label": "Armchair",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.85,
+      "d": 0.88,
+      "h": 0.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "armchair"
+    ]
+  },
+  {
+    "id": "accent-chair",
+    "label": "Accent Chair",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.7,
+      "d": 0.72,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "accent chair"
+    ]
+  },
+  {
+    "id": "recliner",
+    "label": "Recliner",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.95,
+      "h": 1.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "base"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "recliner"
+    ]
+  },
+  {
+    "id": "dining-chair",
+    "label": "Dining Chair",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.46,
+      "d": 0.52,
+      "h": 0.9
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dining chair"
+    ]
+  },
+  {
+    "id": "office-chair",
+    "label": "Office Chair",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.65,
+      "d": 0.65,
+      "h": 1.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "base"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "office chair",
+      "desk chair",
+      "task chair"
+    ]
+  },
+  {
+    "id": "rocking-chair",
+    "label": "Rocking Chair",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.65,
+      "d": 0.9,
+      "h": 1.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "rocking chair"
+    ]
+  },
+  {
+    "id": "folding-chair",
+    "label": "Folding Chair",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.5,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "folding chair"
+    ]
+  },
+  {
+    "id": "stool",
+    "label": "Stool",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.36,
+      "d": 0.36,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "stool"
+    ]
+  },
+  {
+    "id": "bar-stool",
+    "label": "Bar Stool",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.4,
+      "d": 0.4,
+      "h": 0.75
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bar stool",
+      "counter stool"
+    ]
+  },
+  {
+    "id": "bench",
+    "label": "Bench",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.4,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bench"
+    ]
+  },
+  {
+    "id": "ottoman",
+    "label": "Ottoman",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.7,
+      "d": 0.7,
+      "h": 0.42
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "ottoman",
+      "footstool",
+      "footrest"
+    ]
+  },
+  {
+    "id": "pouf",
+    "label": "Pouf",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.55,
+      "d": 0.55,
+      "h": 0.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "pouf"
+    ]
+  },
+  {
+    "id": "chaise-lounge",
+    "label": "Chaise Lounge",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 1.65,
+      "h": 0.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "chaise lounge"
+    ]
+  },
+  {
+    "id": "beanbag",
+    "label": "Beanbag",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.9,
+      "h": 0.7
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "beanbag",
+      "bean bag chair"
+    ]
+  },
+  {
+    "id": "floor-cushion",
+    "label": "Floor Cushion",
+    "group": "Seating",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.15
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "floor cushion"
+    ]
+  },
+  {
+    "id": "coffee-table",
+    "label": "Coffee Table",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.6,
+      "h": 0.42
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "coffee table"
+    ]
+  },
+  {
+    "id": "side-table",
+    "label": "Side Table",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.45,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "side table",
+      "end table"
+    ]
+  },
+  {
+    "id": "console-table",
+    "label": "Console Table",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.35,
+      "h": 0.78
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "console table",
+      "hall table"
+    ]
+  },
+  {
+    "id": "dining-table",
+    "label": "Dining Table",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.8,
+      "d": 0.9,
+      "h": 0.75
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dining table"
+    ]
+  },
+  {
+    "id": "nesting-tables",
+    "label": "Nesting Tables",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.55,
+      "d": 0.55,
+      "h": 0.5
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "nesting tables"
+    ]
+  },
+  {
+    "id": "desk",
+    "label": "Desk",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.4,
+      "d": 0.7,
+      "h": 0.75
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "desk",
+      "writing desk",
+      "computer desk"
+    ]
+  },
+  {
+    "id": "nightstand",
+    "label": "Nightstand",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.4,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "nightstand",
+      "bedside table"
+    ]
+  },
+  {
+    "id": "vanity-table",
+    "label": "Vanity Table",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.1,
+      "d": 0.45,
+      "h": 0.78
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "vanity table",
+      "dressing table"
+    ]
+  },
+  {
+    "id": "bar-cart",
+    "label": "Bar Cart",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.75,
+      "d": 0.4,
+      "h": 0.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bar cart",
+      "serving trolley"
+    ]
+  },
+  {
+    "id": "folding-table",
+    "label": "Folding Table",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.6,
+      "h": 0.74
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "folding table"
+    ]
+  },
+  {
+    "id": "kitchen-island",
+    "label": "Kitchen Island",
+    "group": "Tables & Desks",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.6,
+      "d": 0.9,
+      "h": 0.92
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "counter",
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "kitchen island"
+    ]
+  },
+  {
+    "id": "bookshelf",
+    "label": "Bookshelf",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.3,
+      "h": 1.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bookshelf",
+      "bookcase",
+      "shelving unit"
+    ]
+  },
+  {
+    "id": "floating-shelf",
+    "label": "Floating Shelf",
+    "group": "Storage",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.22,
+      "h": 0.04
+    },
+    "mountHeight": 1.4,
+    "materialSlots": [
+      "shelf"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "floating shelf",
+      "wall shelf",
+      "shelf"
+    ]
+  },
+  {
+    "id": "wall-shelf-unit",
+    "label": "Wall Shelf Unit",
+    "group": "Storage",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.25,
+      "h": 0.7
+    },
+    "mountHeight": 1.3,
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "wall shelf unit",
+      "hanging shelves",
+      "shelves"
+    ]
+  },
+  {
+    "id": "cabinet",
+    "label": "Cabinet",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.45,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "cabinet",
+      "storage cabinet",
+      "cupboard"
+    ]
+  },
+  {
+    "id": "wall-cabinet",
+    "label": "Wall Cabinet",
+    "group": "Storage",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.35,
+      "h": 0.7
+    },
+    "mountHeight": 1.65,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "wall cabinet",
+      "upper cabinet",
+      "wall cupboard"
+    ]
+  },
+  {
+    "id": "kitchen-base-cabinet",
+    "label": "Kitchen Base Cabinet",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.88
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "kitchen base cabinet",
+      "base cabinet",
+      "kitchen cabinet"
+    ]
+  },
+  {
+    "id": "pantry-cabinet",
+    "label": "Pantry Cabinet",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 2.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "pantry cabinet",
+      "tall cabinet",
+      "larder"
+    ]
+  },
+  {
+    "id": "display-cabinet",
+    "label": "Display Cabinet",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.4,
+      "h": 1.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "display cabinet",
+      "china cabinet",
+      "curio cabinet"
+    ]
+  },
+  {
+    "id": "media-console",
+    "label": "Media Console",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.6,
+      "d": 0.4,
+      "h": 0.5
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "media console",
+      "tv stand",
+      "tv console",
+      "entertainment center"
+    ]
+  },
+  {
+    "id": "sideboard",
+    "label": "Sideboard",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.6,
+      "d": 0.45,
+      "h": 0.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "sideboard",
+      "credenza"
+    ]
+  },
+  {
+    "id": "buffet",
+    "label": "Buffet",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.5,
+      "d": 0.45,
+      "h": 0.9
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "buffet"
+    ]
+  },
+  {
+    "id": "dresser",
+    "label": "Dresser",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.5,
+      "h": 0.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "drawers",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dresser"
+    ]
+  },
+  {
+    "id": "chest-of-drawers",
+    "label": "Chest of Drawers",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.45,
+      "h": 1.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "drawers",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "chest of drawers",
+      "tallboy"
+    ]
+  },
+  {
+    "id": "wardrobe",
+    "label": "Wardrobe",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.6,
+      "h": 2
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "wardrobe",
+      "closet",
+      "armoire"
+    ]
+  },
+  {
+    "id": "filing-cabinet",
+    "label": "Filing Cabinet",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.4,
+      "d": 0.6,
+      "h": 0.72
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "drawers"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "filing cabinet"
+    ]
+  },
+  {
+    "id": "storage-bench",
+    "label": "Storage Bench",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.1,
+      "d": 0.4,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "storage bench"
+    ]
+  },
+  {
+    "id": "cube-storage",
+    "label": "Cube Storage",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.75,
+      "d": 0.35,
+      "h": 0.75
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "cube storage",
+      "cubby shelf",
+      "storage cubes"
+    ]
+  },
+  {
+    "id": "shoe-rack",
+    "label": "Shoe Rack",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.7,
+      "d": 0.3,
+      "h": 0.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "shoe rack"
+    ]
+  },
+  {
+    "id": "coat-rack",
+    "label": "Coat Rack",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.5,
+      "d": 0.5,
+      "h": 1.75
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "coat rack",
+      "coat stand",
+      "hall tree",
+      "hat stand"
+    ]
+  },
+  {
+    "id": "wall-coat-hooks",
+    "label": "Wall Coat Hooks",
+    "group": "Storage",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.08,
+      "h": 0.12
+    },
+    "mountHeight": 1.6,
+    "materialSlots": [
+      "rail",
+      "hooks"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "wall coat hooks",
+      "coat hooks",
+      "wall hooks"
+    ]
+  },
+  {
+    "id": "umbrella-stand",
+    "label": "Umbrella Stand",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.25,
+      "d": 0.25,
+      "h": 0.5
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "umbrella stand"
+    ]
+  },
+  {
+    "id": "storage-trunk",
+    "label": "Storage Trunk",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.45,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "storage trunk",
+      "chest"
+    ]
+  },
+  {
+    "id": "toy-chest",
+    "label": "Toy Chest",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.42,
+      "h": 0.5
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "toy chest",
+      "toy box"
+    ]
+  },
+  {
+    "id": "magazine-rack",
+    "label": "Magazine Rack",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.25,
+      "h": 0.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "magazine rack"
+    ]
+  },
+  {
+    "id": "storage-basket",
+    "label": "Storage Basket",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.35,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "storage basket",
+      "woven basket"
+    ]
+  },
+  {
+    "id": "laundry-hamper",
+    "label": "Laundry Hamper",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.35,
+      "h": 0.6
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "laundry hamper",
+      "laundry basket"
+    ]
+  },
+  {
+    "id": "room-divider",
+    "label": "Room Divider",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.8,
+      "d": 0.4,
+      "h": 1.7
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "panels",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "room divider",
+      "folding screen"
+    ]
+  },
+  {
+    "id": "safe",
+    "label": "Safe",
+    "group": "Storage",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.4,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "safe"
+    ]
+  },
+  {
+    "id": "bed",
+    "label": "Double Bed",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.6,
+      "d": 2.1,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "bedding"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "double bed",
+      "queen bed"
+    ]
+  },
+  {
+    "id": "single-bed",
+    "label": "Single Bed",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1,
+      "d": 2.05,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "bedding"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "single bed",
+      "twin bed"
+    ]
+  },
+  {
+    "id": "king-bed",
+    "label": "King Bed",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.95,
+      "d": 2.1,
+      "h": 0.6
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "bedding"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "king bed"
+    ]
+  },
+  {
+    "id": "bunk-bed",
+    "label": "Bunk Bed",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.05,
+      "d": 2.05,
+      "h": 1.65
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "bedding"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bunk bed"
+    ]
+  },
+  {
+    "id": "daybed",
+    "label": "Daybed",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.05,
+      "d": 2,
+      "h": 0.9
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "upholstery"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "daybed"
+    ]
+  },
+  {
+    "id": "mattress",
+    "label": "Mattress",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.5,
+      "d": 2,
+      "h": 0.25
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "bedding"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "mattress"
+    ]
+  },
+  {
+    "id": "crib",
+    "label": "Crib",
+    "group": "Beds",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.75,
+      "d": 1.35,
+      "h": 1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "bedding"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "crib",
+      "cot"
+    ]
+  },
+  {
+    "id": "headboard",
+    "label": "Headboard",
+    "group": "Beds",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.6,
+      "d": 0.08,
+      "h": 1.1
+    },
+    "mountHeight": 1.05,
+    "materialSlots": [
+      "upholstery",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "headboard"
+    ]
+  },
+  {
+    "id": "refrigerator",
+    "label": "Refrigerator",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.75,
+      "d": 0.7,
+      "h": 1.8
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "refrigerator",
+      "fridge",
+      "freezer fridge"
+    ]
+  },
+  {
+    "id": "freezer",
+    "label": "Freezer",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.65,
+      "h": 1.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "freezer",
+      "chest freezer"
+    ]
+  },
+  {
+    "id": "oven",
+    "label": "Oven",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "oven",
+      "wall oven"
+    ]
+  },
+  {
+    "id": "range",
+    "label": "Range",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.76,
+      "d": 0.66,
+      "h": 0.92
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "range",
+      "stove",
+      "cooker"
+    ]
+  },
+  {
+    "id": "cooktop",
+    "label": "Cooktop",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.52,
+      "h": 0.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "surface"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "cooktop",
+      "hob",
+      "stovetop"
+    ]
+  },
+  {
+    "id": "range-hood",
+    "label": "Range Hood",
+    "group": "Kitchen Appliances",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.76,
+      "d": 0.5,
+      "h": 0.6
+    },
+    "mountHeight": 1.85,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "range hood",
+      "extractor hood",
+      "cooker hood"
+    ]
+  },
+  {
+    "id": "microwave",
+    "label": "Microwave",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.5,
+      "d": 0.38,
+      "h": 0.3
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "microwave",
+      "microwave oven"
+    ]
+  },
+  {
+    "id": "air-fryer",
+    "label": "Air Fryer",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.32,
+      "d": 0.36,
+      "h": 0.34
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "air fryer",
+      "airfryer",
+      "air fryer oven"
+    ]
+  },
+  {
+    "id": "toaster",
+    "label": "Toaster",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.28,
+      "d": 0.18,
+      "h": 0.2
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "toaster"
+    ]
+  },
+  {
+    "id": "toaster-oven",
+    "label": "Toaster Oven",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.33,
+      "h": 0.28
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "toaster oven"
+    ]
+  },
+  {
+    "id": "kettle",
+    "label": "Kettle",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.22,
+      "d": 0.16,
+      "h": 0.25
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "kettle",
+      "electric kettle"
+    ]
+  },
+  {
+    "id": "coffee-maker",
+    "label": "Coffee Maker",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.28,
+      "d": 0.2,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "coffee maker",
+      "coffee machine",
+      "drip coffee maker"
+    ]
+  },
+  {
+    "id": "espresso-machine",
+    "label": "Espresso Machine",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.35,
+      "h": 0.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "espresso machine"
+    ]
+  },
+  {
+    "id": "blender",
+    "label": "Blender",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.18,
+      "d": 0.2,
+      "h": 0.42
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "jug"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "blender"
+    ]
+  },
+  {
+    "id": "stand-mixer",
+    "label": "Stand Mixer",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.36,
+      "d": 0.22,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "stand mixer"
+    ]
+  },
+  {
+    "id": "rice-cooker",
+    "label": "Rice Cooker",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.28,
+      "d": 0.28,
+      "h": 0.26
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "rice cooker"
+    ]
+  },
+  {
+    "id": "slow-cooker",
+    "label": "Slow Cooker",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.26,
+      "h": 0.3
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "slow cooker",
+      "instant pot",
+      "pressure cooker"
+    ]
+  },
+  {
+    "id": "dishwasher",
+    "label": "Dishwasher",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "handles"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dishwasher"
+    ]
+  },
+  {
+    "id": "kitchen-sink",
+    "label": "Kitchen Sink",
+    "group": "Kitchen Appliances",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.5,
+      "h": 0.2
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "basin",
+      "tap"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "kitchen sink",
+      "sink"
+    ]
+  },
+  {
+    "id": "water-dispenser",
+    "label": "Water Dispenser",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.32,
+      "d": 0.32,
+      "h": 1.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "water dispenser",
+      "water cooler"
+    ]
+  },
+  {
+    "id": "trash-can",
+    "label": "Trash Can",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.35,
+      "h": 0.65
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "trash can",
+      "bin",
+      "waste bin",
+      "rubbish bin"
+    ]
+  },
+  {
+    "id": "recycling-bin",
+    "label": "Recycling Bin",
+    "group": "Kitchen Appliances",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.35,
+      "h": 0.65
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "recycling bin"
+    ]
+  },
+  {
+    "id": "washing-machine",
+    "label": "Washing Machine",
+    "group": "Laundry",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "washing machine",
+      "washer"
+    ]
+  },
+  {
+    "id": "clothes-dryer",
+    "label": "Clothes Dryer",
+    "group": "Laundry",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "clothes dryer",
+      "tumble dryer",
+      "dryer"
+    ]
+  },
+  {
+    "id": "drying-rack",
+    "label": "Drying Rack",
+    "group": "Laundry",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.55,
+      "h": 1.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "drying rack",
+      "clothes airer"
+    ]
+  },
+  {
+    "id": "ironing-board",
+    "label": "Ironing Board",
+    "group": "Laundry",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.38,
+      "h": 0.9
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "ironing board"
+    ]
+  },
+  {
+    "id": "vacuum-cleaner",
+    "label": "Vacuum Cleaner",
+    "group": "Laundry",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.4,
+      "h": 1.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "vacuum cleaner",
+      "vacuum",
+      "hoover"
+    ]
+  },
+  {
+    "id": "tv",
+    "label": "TV",
+    "group": "Electronics",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.23,
+      "d": 0.07,
+      "h": 0.71
+    },
+    "mountHeight": 1.15,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "tv",
+      "television",
+      "flat screen tv",
+      "wall-mounted tv"
+    ]
+  },
+  {
+    "id": "monitor",
+    "label": "Monitor",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.62,
+      "d": 0.2,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "stand"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "monitor",
+      "computer monitor",
+      "display"
+    ]
+  },
+  {
+    "id": "computer-tower",
+    "label": "Computer Tower",
+    "group": "Electronics",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.2,
+      "d": 0.45,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "computer tower",
+      "desktop pc",
+      "pc tower"
+    ]
+  },
+  {
+    "id": "laptop",
+    "label": "Laptop",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.25,
+      "h": 0.02
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "laptop",
+      "notebook computer"
+    ]
+  },
+  {
+    "id": "soundbar",
+    "label": "Soundbar",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 1,
+      "d": 0.1,
+      "h": 0.07
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "soundbar"
+    ]
+  },
+  {
+    "id": "floor-speaker",
+    "label": "Floor Speaker",
+    "group": "Electronics",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.2,
+      "d": 0.25,
+      "h": 1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "grille"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "floor speaker",
+      "tower speaker",
+      "speaker"
+    ]
+  },
+  {
+    "id": "bookshelf-speaker",
+    "label": "Bookshelf Speaker",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.18,
+      "d": 0.22,
+      "h": 0.3
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "grille"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bookshelf speaker"
+    ]
+  },
+  {
+    "id": "subwoofer",
+    "label": "Subwoofer",
+    "group": "Electronics",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.35,
+      "h": 0.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "subwoofer"
+    ]
+  },
+  {
+    "id": "game-console",
+    "label": "Game Console",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.25,
+      "h": 0.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "game console",
+      "games console"
+    ]
+  },
+  {
+    "id": "printer",
+    "label": "Printer",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.38,
+      "h": 0.25
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "printer"
+    ]
+  },
+  {
+    "id": "projector",
+    "label": "Projector",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.32,
+      "d": 0.25,
+      "h": 0.12
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "projector"
+    ]
+  },
+  {
+    "id": "projector-screen",
+    "label": "Projector Screen",
+    "group": "Electronics",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.8,
+      "d": 0.06,
+      "h": 1.3
+    },
+    "mountHeight": 1.6,
+    "materialSlots": [
+      "screen",
+      "frame"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "projector screen"
+    ]
+  },
+  {
+    "id": "turntable",
+    "label": "Turntable",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.35,
+      "h": 0.15
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "turntable",
+      "record player"
+    ]
+  },
+  {
+    "id": "stereo-receiver",
+    "label": "Stereo Receiver",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.44,
+      "d": 0.35,
+      "h": 0.15
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "stereo receiver",
+      "amplifier",
+      "av receiver"
+    ]
+  },
+  {
+    "id": "router",
+    "label": "Router",
+    "group": "Electronics",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.22,
+      "d": 0.16,
+      "h": 0.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "router",
+      "wifi router",
+      "modem"
+    ]
+  },
+  {
+    "id": "ceiling-fan",
+    "label": "Ceiling Fan",
+    "group": "Fans & Climate",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 1.32,
+      "d": 1.32,
+      "h": 0.35
+    },
+    "mountHeight": 2.26,
+    "materialSlots": [
+      "blades",
+      "motor"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "ceiling fan",
+      "fan"
+    ]
+  },
+  {
+    "id": "floor-fan",
+    "label": "Floor Fan",
+    "group": "Fans & Climate",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.4,
+      "h": 1.3
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "blades",
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "floor fan",
+      "pedestal fan",
+      "standing fan",
+      "fan"
+    ]
+  },
+  {
+    "id": "tower-fan",
+    "label": "Tower Fan",
+    "group": "Fans & Climate",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.3,
+      "h": 1.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "tower fan",
+      "bladeless fan"
+    ]
+  },
+  {
+    "id": "desk-fan",
+    "label": "Desk Fan",
+    "group": "Fans & Climate",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.32,
+      "d": 0.2,
+      "h": 0.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "blades",
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "desk fan",
+      "table fan"
+    ]
+  },
+  {
+    "id": "exhaust-fan",
+    "label": "Exhaust Fan",
+    "group": "Fans & Climate",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.3,
+      "h": 0.12
+    },
+    "mountHeight": 2.38,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "exhaust fan",
+      "ventilation fan"
+    ]
+  },
+  {
+    "id": "air-purifier",
+    "label": "Air Purifier",
+    "group": "Fans & Climate",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.3,
+      "h": 0.6
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "air purifier"
+    ]
+  },
+  {
+    "id": "humidifier",
+    "label": "Humidifier",
+    "group": "Fans & Climate",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.25,
+      "d": 0.25,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "humidifier"
+    ]
+  },
+  {
+    "id": "dehumidifier",
+    "label": "Dehumidifier",
+    "group": "Fans & Climate",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.28,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dehumidifier"
+    ]
+  },
+  {
+    "id": "space-heater",
+    "label": "Space Heater",
+    "group": "Fans & Climate",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.4,
+      "d": 0.25,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "space heater",
+      "portable heater"
+    ]
+  },
+  {
+    "id": "radiator",
+    "label": "Radiator",
+    "group": "Fans & Climate",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1,
+      "d": 0.1,
+      "h": 0.6
+    },
+    "mountHeight": 0.45,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "radiator"
+    ]
+  },
+  {
+    "id": "air-conditioner",
+    "label": "Air Conditioner",
+    "group": "Fans & Climate",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.25,
+      "h": 0.35
+    },
+    "mountHeight": 2,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "air conditioner",
+      "ac unit",
+      "split ac",
+      "aircon"
+    ]
+  },
+  {
+    "id": "thermostat",
+    "label": "Thermostat",
+    "group": "Fans & Climate",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.12,
+      "d": 0.03,
+      "h": 0.12
+    },
+    "mountHeight": 1.5,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "thermostat"
+    ]
+  },
+  {
+    "id": "floor-lamp",
+    "label": "Floor Lamp",
+    "group": "Lighting",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.4,
+      "d": 0.4,
+      "h": 1.6
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "shade",
+      "base"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "floor lamp",
+      "standing lamp"
+    ]
+  },
+  {
+    "id": "table-lamp",
+    "label": "Table Lamp",
+    "group": "Lighting",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.32,
+      "d": 0.32,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "shade",
+      "base"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "table lamp"
+    ]
+  },
+  {
+    "id": "desk-lamp",
+    "label": "Desk Lamp",
+    "group": "Lighting",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.2,
+      "d": 0.2,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "shade",
+      "base"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "desk lamp"
+    ]
+  },
+  {
+    "id": "pendant-light",
+    "label": "Pendant Light",
+    "group": "Lighting",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.35,
+      "h": 0.45
+    },
+    "mountHeight": 1.95,
+    "materialSlots": [
+      "shade",
+      "cord"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "pendant light",
+      "pendant",
+      "hanging light"
+    ]
+  },
+  {
+    "id": "chandelier",
+    "label": "Chandelier",
+    "group": "Lighting",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 0.7,
+      "d": 0.7,
+      "h": 0.6
+    },
+    "mountHeight": 2.05,
+    "materialSlots": [
+      "frame",
+      "shades"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "chandelier"
+    ]
+  },
+  {
+    "id": "ceiling-light",
+    "label": "Ceiling Light",
+    "group": "Lighting",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.45,
+      "h": 0.15
+    },
+    "mountHeight": 2.36,
+    "materialSlots": [
+      "shade"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "ceiling light",
+      "flush mount light",
+      "ceiling lamp"
+    ]
+  },
+  {
+    "id": "track-lighting",
+    "label": "Track Lighting",
+    "group": "Lighting",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.1,
+      "h": 0.15
+    },
+    "mountHeight": 2.36,
+    "materialSlots": [
+      "track",
+      "heads"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "track lighting"
+    ]
+  },
+  {
+    "id": "wall-sconce",
+    "label": "Wall Sconce",
+    "group": "Lighting",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.18,
+      "d": 0.2,
+      "h": 0.3
+    },
+    "mountHeight": 1.7,
+    "materialSlots": [
+      "shade",
+      "base"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "wall sconce",
+      "wall light"
+    ]
+  },
+  {
+    "id": "string-lights",
+    "label": "String Lights",
+    "group": "Lighting",
+    "support": "wall",
+    "defaultSize": {
+      "w": 2,
+      "d": 0.05,
+      "h": 0.2
+    },
+    "mountHeight": 2.1,
+    "materialSlots": [
+      "lights"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "string lights",
+      "fairy lights"
+    ]
+  },
+  {
+    "id": "lantern",
+    "label": "Lantern",
+    "group": "Lighting",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.2,
+      "d": 0.2,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "lantern"
+    ]
+  },
+  {
+    "id": "framed-picture",
+    "label": "Framed Picture",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.04,
+      "h": 0.8
+    },
+    "mountHeight": 1.55,
+    "materialSlots": [
+      "frame",
+      "mat"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "framed picture",
+      "framed art",
+      "picture",
+      "painting",
+      "framed photo",
+      "wall art"
+    ]
+  },
+  {
+    "id": "canvas-art",
+    "label": "Canvas Art",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.05,
+      "h": 0.6
+    },
+    "mountHeight": 1.55,
+    "materialSlots": [
+      "canvas"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "canvas art",
+      "canvas print"
+    ]
+  },
+  {
+    "id": "poster",
+    "label": "Poster",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.02,
+      "h": 0.9
+    },
+    "mountHeight": 1.55,
+    "materialSlots": [
+      "print"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "poster"
+    ]
+  },
+  {
+    "id": "gallery-wall-set",
+    "label": "Gallery Wall Set",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.4,
+      "d": 0.04,
+      "h": 1
+    },
+    "mountHeight": 1.55,
+    "materialSlots": [
+      "frames"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "gallery wall set",
+      "picture wall",
+      "photo wall"
+    ]
+  },
+  {
+    "id": "photo-frame",
+    "label": "Photo Frame",
+    "group": "Wall Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.2,
+      "d": 0.06,
+      "h": 0.25
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "photo frame",
+      "picture frame",
+      "tabletop frame"
+    ]
+  },
+  {
+    "id": "mirror",
+    "label": "Mirror",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.05,
+      "h": 0.9
+    },
+    "mountHeight": 1.55,
+    "materialSlots": [
+      "frame",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "mirror",
+      "wall mirror"
+    ]
+  },
+  {
+    "id": "floor-mirror",
+    "label": "Floor Mirror",
+    "group": "Wall Decor",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.55,
+      "d": 0.1,
+      "h": 1.7
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "glass"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "floor mirror",
+      "full-length mirror",
+      "leaning mirror"
+    ]
+  },
+  {
+    "id": "wall-clock",
+    "label": "Wall Clock",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.06,
+      "h": 0.35
+    },
+    "mountHeight": 1.9,
+    "materialSlots": [
+      "frame",
+      "face"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "wall clock",
+      "clock"
+    ]
+  },
+  {
+    "id": "tapestry",
+    "label": "Tapestry",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.03,
+      "h": 1.5
+    },
+    "mountHeight": 1.6,
+    "materialSlots": [
+      "fabric"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "tapestry",
+      "wall hanging"
+    ]
+  },
+  {
+    "id": "whiteboard",
+    "label": "Whiteboard",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.04,
+      "h": 0.9
+    },
+    "mountHeight": 1.5,
+    "materialSlots": [
+      "board",
+      "frame"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "whiteboard",
+      "dry erase board"
+    ]
+  },
+  {
+    "id": "bulletin-board",
+    "label": "Bulletin Board",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.04,
+      "h": 0.6
+    },
+    "mountHeight": 1.5,
+    "materialSlots": [
+      "board",
+      "frame"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "bulletin board",
+      "corkboard",
+      "pin board"
+    ]
+  },
+  {
+    "id": "pegboard",
+    "label": "Pegboard",
+    "group": "Wall Decor",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1,
+      "d": 0.03,
+      "h": 0.6
+    },
+    "mountHeight": 1.5,
+    "materialSlots": [
+      "board"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "pegboard"
+    ]
+  },
+  {
+    "id": "rug",
+    "label": "Rug",
+    "group": "Soft Furnishings",
+    "support": "floor",
+    "defaultSize": {
+      "w": 2.4,
+      "d": 1.7,
+      "h": 0.02
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "pile"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "rug",
+      "area rug",
+      "carpet"
+    ]
+  },
+  {
+    "id": "runner-rug",
+    "label": "Runner Rug",
+    "group": "Soft Furnishings",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 2.4,
+      "h": 0.02
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "pile"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "runner rug",
+      "hallway runner"
+    ]
+  },
+  {
+    "id": "curtain",
+    "label": "Curtains",
+    "group": "Soft Furnishings",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.12,
+      "h": 2.2
+    },
+    "mountHeight": 1.2,
+    "materialSlots": [
+      "fabric",
+      "rod"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "curtains",
+      "drapes",
+      "curtains"
+    ]
+  },
+  {
+    "id": "blinds",
+    "label": "Blinds",
+    "group": "Soft Furnishings",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.08,
+      "h": 1.6
+    },
+    "mountHeight": 1.55,
+    "materialSlots": [
+      "slats"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "blinds",
+      "window blinds",
+      "shades"
+    ]
+  },
+  {
+    "id": "throw-pillow",
+    "label": "Throw Pillow",
+    "group": "Soft Furnishings",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.15,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "fabric"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "throw pillow",
+      "cushion",
+      "pillow"
+    ]
+  },
+  {
+    "id": "floor-pillow",
+    "label": "Floor Pillow",
+    "group": "Soft Furnishings",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.5,
+      "d": 0.5,
+      "h": 0.12
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "fabric"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "floor pillow"
+    ]
+  },
+  {
+    "id": "throw-blanket",
+    "label": "Throw Blanket",
+    "group": "Soft Furnishings",
+    "support": "surface",
+    "defaultSize": {
+      "w": 1.4,
+      "d": 0.3,
+      "h": 0.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "fabric"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "throw blanket",
+      "blanket",
+      "throw"
+    ]
+  },
+  {
+    "id": "floor-plant",
+    "label": "Floor Plant",
+    "group": "Plants & Decor",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.6,
+      "h": 1.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "foliage",
+      "pot"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "floor plant",
+      "large potted plant",
+      "indoor tree",
+      "plant"
+    ]
+  },
+  {
+    "id": "potted-plant",
+    "label": "Potted Plant",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.3,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "foliage",
+      "pot"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "potted plant",
+      "houseplant",
+      "plant"
+    ]
+  },
+  {
+    "id": "hanging-plant",
+    "label": "Hanging Plant",
+    "group": "Plants & Decor",
+    "support": "ceiling",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.35,
+      "h": 0.6
+    },
+    "mountHeight": 1.9,
+    "materialSlots": [
+      "foliage",
+      "pot"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "hanging plant"
+    ]
+  },
+  {
+    "id": "vase",
+    "label": "Vase",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.2,
+      "d": 0.2,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "vase"
+    ]
+  },
+  {
+    "id": "sculpture",
+    "label": "Sculpture",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.25,
+      "d": 0.25,
+      "h": 0.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "sculpture",
+      "figurine",
+      "ornament"
+    ]
+  },
+  {
+    "id": "candle",
+    "label": "Candle",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.08,
+      "d": 0.08,
+      "h": 0.15
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "candle",
+      "candles",
+      "candle holder"
+    ]
+  },
+  {
+    "id": "books",
+    "label": "Books",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.25,
+      "d": 0.18,
+      "h": 0.22
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "covers"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "books",
+      "stack of books"
+    ]
+  },
+  {
+    "id": "decorative-bowl",
+    "label": "Decorative Bowl",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.3,
+      "d": 0.3,
+      "h": 0.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "decorative bowl",
+      "bowl"
+    ]
+  },
+  {
+    "id": "tray",
+    "label": "Tray",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.4,
+      "d": 0.28,
+      "h": 0.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "tray"
+    ]
+  },
+  {
+    "id": "aquarium",
+    "label": "Aquarium",
+    "group": "Plants & Decor",
+    "support": "surface",
+    "defaultSize": {
+      "w": 1,
+      "d": 0.4,
+      "h": 0.5
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "glass",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "aquarium",
+      "fish tank"
+    ]
+  },
+  {
+    "id": "toilet",
+    "label": "Toilet",
+    "group": "Bathroom",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.38,
+      "d": 0.7,
+      "h": 0.78
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "seat"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "toilet"
+    ]
+  },
+  {
+    "id": "bathtub",
+    "label": "Bathtub",
+    "group": "Bathroom",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.7,
+      "d": 0.75,
+      "h": 0.55
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bathtub",
+      "bath tub"
+    ]
+  },
+  {
+    "id": "shower-enclosure",
+    "label": "Shower",
+    "group": "Bathroom",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.9,
+      "h": 2
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "glass",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "shower",
+      "shower cubicle"
+    ]
+  },
+  {
+    "id": "bathroom-vanity",
+    "label": "Bathroom Vanity",
+    "group": "Bathroom",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.8,
+      "d": 0.48,
+      "h": 0.85
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "basin"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "bathroom vanity",
+      "washbasin cabinet"
+    ]
+  },
+  {
+    "id": "towel-rack",
+    "label": "Towel Rack",
+    "group": "Bathroom",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.1,
+      "h": 0.08
+    },
+    "mountHeight": 1.3,
+    "materialSlots": [
+      "rail"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "towel rack",
+      "towel rail",
+      "towel bar"
+    ]
+  },
+  {
+    "id": "medicine-cabinet",
+    "label": "Medicine Cabinet",
+    "group": "Bathroom",
+    "support": "wall",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.15,
+      "h": 0.7
+    },
+    "mountHeight": 1.6,
+    "materialSlots": [
+      "body",
+      "mirror"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "medicine cabinet",
+      "bathroom cabinet"
+    ]
+  },
+  {
+    "id": "high-chair",
+    "label": "High Chair",
+    "group": "Kids",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.55,
+      "d": 0.6,
+      "h": 1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "seat",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "high chair"
+    ]
+  },
+  {
+    "id": "changing-table",
+    "label": "Changing Table",
+    "group": "Kids",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.55,
+      "h": 1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "pad"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "changing table"
+    ]
+  },
+  {
+    "id": "play-mat",
+    "label": "Play Mat",
+    "group": "Kids",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.5,
+      "d": 1.5,
+      "h": 0.02
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "surface"
+    ],
+    "faceSlot": "face",
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "play mat"
+    ]
+  },
+  {
+    "id": "stroller",
+    "label": "Stroller",
+    "group": "Kids",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 1,
+      "h": 1.05
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "fabric"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "stroller",
+      "pushchair",
+      "pram"
+    ]
+  },
+  {
+    "id": "treadmill",
+    "label": "Treadmill",
+    "group": "Fitness",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.85,
+      "d": 1.8,
+      "h": 1.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "deck"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "treadmill",
+      "running machine"
+    ]
+  },
+  {
+    "id": "exercise-bike",
+    "label": "Exercise Bike",
+    "group": "Fitness",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.55,
+      "d": 1.1,
+      "h": 1.3
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "exercise bike",
+      "stationary bike",
+      "spin bike"
+    ]
+  },
+  {
+    "id": "weight-bench",
+    "label": "Weight Bench",
+    "group": "Fitness",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 1.2,
+      "h": 0.45
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery",
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "weight bench"
+    ]
+  },
+  {
+    "id": "dumbbell-rack",
+    "label": "Dumbbell Rack",
+    "group": "Fitness",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1,
+      "d": 0.45,
+      "h": 0.75
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame",
+      "weights"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dumbbell rack"
+    ]
+  },
+  {
+    "id": "yoga-mat",
+    "label": "Yoga Mat",
+    "group": "Fitness",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.61,
+      "d": 1.73,
+      "h": 0.01
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "surface"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "yoga mat",
+      "exercise mat"
+    ]
+  },
+  {
+    "id": "fireplace",
+    "label": "Fireplace",
+    "group": "Hobbies & Pets",
+    "support": "wall",
+    "defaultSize": {
+      "w": 1.2,
+      "d": 0.35,
+      "h": 1.1
+    },
+    "mountHeight": 0.55,
+    "materialSlots": [
+      "surround",
+      "firebox"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "fireplace",
+      "mantelpiece"
+    ]
+  },
+  {
+    "id": "wood-stove",
+    "label": "Wood Stove",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.6,
+      "d": 0.55,
+      "h": 0.9
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "wood stove",
+      "log burner"
+    ]
+  },
+  {
+    "id": "upright-piano",
+    "label": "Upright Piano",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.5,
+      "d": 0.6,
+      "h": 1.25
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "keys"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "upright piano",
+      "piano"
+    ]
+  },
+  {
+    "id": "grand-piano",
+    "label": "Grand Piano",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.5,
+      "d": 1.9,
+      "h": 1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body",
+      "keys"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "grand piano"
+    ]
+  },
+  {
+    "id": "guitar",
+    "label": "Guitar",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.4,
+      "d": 0.15,
+      "h": 1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "guitar",
+      "acoustic guitar",
+      "electric guitar"
+    ]
+  },
+  {
+    "id": "guitar-stand",
+    "label": "Guitar Stand",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.35,
+      "d": 0.35,
+      "h": 0.6
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "guitar stand"
+    ]
+  },
+  {
+    "id": "drum-kit",
+    "label": "Drum Kit",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 1.4,
+      "d": 1.2,
+      "h": 1.1
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "shells",
+      "hardware"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "drum kit",
+      "drums"
+    ]
+  },
+  {
+    "id": "easel",
+    "label": "Easel",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.65,
+      "d": 0.6,
+      "h": 1.6
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "easel"
+    ]
+  },
+  {
+    "id": "sewing-machine",
+    "label": "Sewing Machine",
+    "group": "Hobbies & Pets",
+    "support": "surface",
+    "defaultSize": {
+      "w": 0.45,
+      "d": 0.25,
+      "h": 0.35
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "sewing machine"
+    ]
+  },
+  {
+    "id": "step-ladder",
+    "label": "Step Ladder",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.5,
+      "d": 0.8,
+      "h": 1.5
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "step ladder",
+      "ladder"
+    ]
+  },
+  {
+    "id": "pet-bed",
+    "label": "Pet Bed",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.7,
+      "d": 0.55,
+      "h": 0.18
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "upholstery"
+    ],
+    "faceSlot": null,
+    "collisionExempt": true,
+    "detectionPrompts": [
+      "pet bed",
+      "dog bed",
+      "cat bed"
+    ]
+  },
+  {
+    "id": "dog-crate",
+    "label": "Dog Crate",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.9,
+      "d": 0.6,
+      "h": 0.65
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "dog crate",
+      "pet crate"
+    ]
+  },
+  {
+    "id": "litter-box",
+    "label": "Litter Box",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.5,
+      "d": 0.38,
+      "h": 0.2
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "litter box",
+      "cat litter tray"
+    ]
+  },
+  {
+    "id": "birdcage",
+    "label": "Birdcage",
+    "group": "Hobbies & Pets",
+    "support": "floor",
+    "defaultSize": {
+      "w": 0.5,
+      "d": 0.5,
+      "h": 1.4
+    },
+    "mountHeight": null,
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "collisionExempt": false,
+    "detectionPrompts": [
+      "birdcage",
+      "bird cage"
+    ]
+  }
+]

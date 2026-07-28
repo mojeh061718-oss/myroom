@@ -50,6 +50,30 @@ jobs:
       - name: Build PWA
         run: pnpm --filter @myroom/web build
 
+  workers:
+    name: Vision workers (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pnpm install --frozen-lockfile
+      - name: Generate the schemas and taxonomy the workers validate against
+        run: |
+          pnpm --filter @myroom/schema generate:jsonschema
+          pnpm --filter @myroom/catalog build:taxonomy
+      - name: Install worker package
+        run: pip install -e "workers/vision[dev]"
+      - name: Stage tests
+        run: python -m pytest -q
+        working-directory: workers/vision
+
   # docs/09 cross-milestone rule 1: the golden path stays green on every merge.
   e2e:
     name: Playwright golden path
