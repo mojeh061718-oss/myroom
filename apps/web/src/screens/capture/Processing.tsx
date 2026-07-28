@@ -7,7 +7,7 @@ import {
   type JobStage,
 } from "@myroom/schema";
 import { getProject, listUploads, putProject, type LocalProject } from "../../lib/db.js";
-import { DEMO_NOTICE, hasApi, reconstruct } from "../../lib/reconstruct.js";
+import { DEMO_NOTICE, reconstruct, refineFromScan } from "../../lib/reconstruct.js";
 import { PillButton } from "../../components/PillButton.js";
 import { MiniPlan } from "./MiniPlan.js";
 import "./capture.css";
@@ -55,6 +55,24 @@ export function Processing() {
       setProject(found);
       const uploads = await listUploads(id);
 
+      // Stage 0 first (docs/05 §2): a scan corrects the plan the rest of the
+      // pipeline measures against, so it has to happen before anything else.
+      let plan = found.plan;
+      let refined = false;
+      let seeds: Awaited<ReturnType<typeof refineFromScan>>["seeds"] = [];
+      if (uploads.some((u) => u.kind === "lidar")) {
+        setStage("lidar-parse");
+        const result = await refineFromScan(found.plan, uploads);
+        plan = result.plan;
+        refined = result.refined;
+        seeds = result.seeds;
+        setWarnings((current) => [...current, ...result.notes]);
+        if (plan !== found.plan) {
+          await putProject({ ...found, plan, updatedAt: new Date().toISOString() });
+          setProject({ ...found, plan });
+        }
+      }
+
       const onEvent = (event: JobEvent) => {
         if (event.type === "stage") setStage(event.stage);
         if (event.type === "object") {
@@ -70,14 +88,17 @@ export function Processing() {
       try {
         const result = await reconstruct({
           projectId: id,
-          plan: found.plan,
+          plan,
           uploads,
+          scanParsed: refined,
+          seeds,
           onEvent,
           signal: controller.signal,
         });
         setDemo(result.demo);
         await putProject({
           ...found,
+          plan,
           updatedAt: new Date().toISOString(),
           scene: result.scene,
           versions: [
@@ -136,7 +157,9 @@ export function Processing() {
         })}
       </ol>
 
-      {(demo || !hasApi) && (
+      {/* Shown the moment the demo path announces itself, and never when the
+          objects came from a scan or from a real worker run. */}
+      {(demo || warnings.includes(DEMO_NOTICE)) && (
         <p className="processing-demo" data-testid="processing-demo">
           {DEMO_NOTICE}
         </p>

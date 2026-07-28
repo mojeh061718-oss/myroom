@@ -97,3 +97,69 @@ test("a room built with no photos is still a room, and says why it's empty", asy
   // The shell is exact even with nothing in it — never a dead end (docs/05 §8).
   await expect(page.getByTestId("accuracy-badge")).toContainText("Sketch");
 });
+
+/**
+ * A RoomPlan export is already parametric and metric, so this path needs no GPU
+ * at all: the scan corrects the plan and furnishes the room with objects it
+ * measured itself (docs/05 §2, §5). This is the M5 acceptance path.
+ */
+function roomPlanExport(scale = 1.05): string {
+  const transform = ([x, y, z]: [number, number, number], yaw = 0) => {
+    const c = Math.cos(yaw);
+    const s = Math.sin(yaw);
+    const rows = [
+      [c, 0, s, x],
+      [0, 1, 0, y],
+      [-s, 0, c, z],
+      [0, 0, 0, 1],
+    ];
+    return [0, 1, 2, 3].flatMap((col) => [0, 1, 2, 3].map((row) => rows[row]![col]!));
+  };
+  // The drawn room in the E2E is 3.6 × 2.8 m at 2.44 m; the "scan" is the same
+  // room measured 5% larger with a slightly lower ceiling.
+  const w = 3.6 * scale;
+  const d = 2.8 * scale;
+  return JSON.stringify({
+    walls: [
+      { transform: transform([0, 1.16, -d / 2]), dimensions: [w, 2.32, 0.1] },
+      { transform: transform([0, 1.16, d / 2]), dimensions: [w, 2.32, 0.1] },
+      { transform: transform([-w / 2, 1.16, 0], Math.PI / 2), dimensions: [d, 2.32, 0.1] },
+      { transform: transform([w / 2, 1.16, 0], Math.PI / 2), dimensions: [d, 2.32, 0.1] },
+    ],
+    objects: [
+      { transform: transform([0.4, 0.42, -0.9]), dimensions: [2.14, 0.84, 0.92], category: "sofa" },
+      { transform: transform([-0.8, 0.37, 0.7]), dimensions: [1.4, 0.74, 0.9], category: "table" },
+    ],
+  });
+}
+
+test("a RoomPlan scan corrects the room and furnishes it from its own measurements", async ({ page }) => {
+  const projectUrl = await drawRoom(page);
+
+  await page.goto(`${projectUrl}/scan`);
+  await page.getByTestId("scan-upload").waitFor();
+  await page.getByTestId("scan-input").setInputFiles({
+    name: "room.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(roomPlanExport()),
+  });
+
+  // The preview draws the scan over the plan before anything is uploaded.
+  await expect(page.getByTestId("scan-preview")).toBeVisible();
+  await expect(page.getByTestId("scan-preview")).toContainText("4 walls and 2 objects");
+  await expect(page.getByTestId("scan-continue")).toContainText("Build my room");
+  await page.getByTestId("scan-continue").click();
+
+  await page.getByTestId("processing").waitFor();
+  await expect(page.getByTestId("processing-open")).toBeEnabled({ timeout: 20_000 });
+  // The objects came from the scan, so nothing is presented as a demo.
+  await expect(page.getByTestId("processing-warnings")).toContainText("came from your scan");
+  await expect(page.getByTestId("processing-demo")).toHaveCount(0);
+
+  await page.getByTestId("processing-open").click();
+  await page.getByTestId("sandbox").waitFor({ timeout: 25_000 });
+  await expect(page.getByTestId("accuracy-badge")).toContainText("LiDAR-verified");
+
+  const listed = page.locator(".scene-a11y-list li");
+  await expect(listed.filter({ hasText: "Sofa" })).toHaveCount(1);
+});

@@ -68,11 +68,45 @@ export function checkScanFile(filename: string, size: number, head: Uint8Array):
   return { ok: true, format, reason: null };
 }
 
+/**
+ * RoomPlan's object classes → our taxonomy ids. An unmapped class keeps its
+ * box but no name: "something this size is here" is true, and a guessed
+ * category would not be. Mirrors `CATEGORY_MAP` in the worker's roomplan.py.
+ */
+export const ROOMPLAN_CATEGORIES: Record<string, string> = {
+  bathtub: "bathtub",
+  bed: "bed",
+  chair: "dining-chair",
+  dishwasher: "dishwasher",
+  fireplace: "fireplace",
+  oven: "oven",
+  refrigerator: "refrigerator",
+  sink: "kitchen-sink",
+  sofa: "sofa",
+  storage: "cabinet",
+  stove: "range",
+  table: "dining-table",
+  television: "tv",
+  toilet: "toilet",
+  washerDryer: "washing-machine",
+};
+
+export interface ScanSeedObject {
+  /** null when RoomPlan named a class we don't have a category for */
+  category: string | null;
+  /** world metres, Y-up; y is the box's base */
+  position: { x: number; y: number; z: number };
+  rotationY: number;
+  size: { w: number; d: number; h: number };
+}
+
 export interface RoomPlanPreview {
   /** wall segments in plan coordinates, metres */
   walls: { start: [number, number]; end: [number, number] }[];
   ceilingHeight: number | null;
   objectCount: number;
+  /** the furniture the scan itself found, already metric and categorized */
+  objects: ScanSeedObject[];
 }
 
 /**
@@ -90,7 +124,7 @@ export function parseRoomPlanJson(text: string): RoomPlanPreview | null {
   const walls = (doc as { walls?: unknown }).walls;
   if (!Array.isArray(walls)) return null;
 
-  const out: RoomPlanPreview = { walls: [], ceilingHeight: null, objectCount: 0 };
+  const out: RoomPlanPreview = { walls: [], ceilingHeight: null, objectCount: 0, objects: [] };
   let tallest = 0;
 
   for (const wall of walls) {
@@ -119,6 +153,24 @@ export function parseRoomPlanJson(text: string): RoomPlanPreview | null {
 
   const objects = (doc as { objects?: unknown }).objects;
   out.objectCount = Array.isArray(objects) ? objects.length : 0;
+  for (const object of Array.isArray(objects) ? objects : []) {
+    if (typeof object !== "object" || object === null) continue;
+    const matrix = flat16((object as { transform?: unknown }).transform);
+    const dims = flat3((object as { dimensions?: unknown }).dimensions);
+    if (!matrix || !dims) continue;
+    const [w, h, d] = [dims[0]!, dims[1]!, dims[2]!];
+    if (w <= 0 || h <= 0 || d <= 0) continue;
+    let raw = (object as { category?: unknown }).category;
+    // Some exporters wrap the enum: {"storage": {…}}.
+    if (raw && typeof raw === "object") raw = Object.keys(raw as object)[0];
+    out.objects.push({
+      category: ROOMPLAN_CATEGORIES[String(raw)] ?? null,
+      // RoomPlan reports the box centre; our objects sit on their base.
+      position: { x: matrix[12]!, y: matrix[13]! - h / 2, z: matrix[14]! },
+      rotationY: Math.atan2(matrix[0]!, matrix[2]!),
+      size: { w, d, h },
+    });
+  }
   out.ceilingHeight = tallest > 0 ? tallest : null;
   return out.walls.length > 0 ? out : null;
 }

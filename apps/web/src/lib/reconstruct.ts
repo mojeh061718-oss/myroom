@@ -1,11 +1,16 @@
+import { planToShell, type JobEvent, type RoomPlan, type Scene } from "@myroom/schema";
 import {
-  planToShell,
-  type JobEvent,
-  type RoomPlan,
-  type Scene,
-  type ScanParse,
-} from "@myroom/schema";
-import { assembleScene, demoMeasuredObjects, matchCatalog } from "@myroom/recon";
+  applyRefinements,
+  assembleScene,
+  demoMeasuredObjects,
+  describeRefinements,
+  fuseSeedBoxes,
+  matchCatalog,
+  parseRoomPlanJson,
+  proposeRefinements,
+  sniffScanFormat,
+  type ScanSeedObject,
+} from "@myroom/recon";
 import { getCategory } from "@myroom/catalog";
 import { uuidv7 } from "./uuid.js";
 import type { LocalUpload } from "./db.js";
@@ -41,13 +46,78 @@ export interface ReconstructInput {
   projectId: string;
   plan: RoomPlan;
   uploads: LocalUpload[];
-  scan?: ScanParse | null;
+  /** true when stage 0 actually read the scan and used it (docs/05 §9) */
+  scanParsed?: boolean;
+  /** objects the scan measured, fused into stage 3 (docs/05 §5) */
+  seeds?: ScanSeedObject[];
   onEvent: (event: JobEvent) => void;
   signal?: AbortSignal;
 }
 
 export async function reconstruct(input: ReconstructInput): Promise<ReconstructResult> {
   return hasApi ? viaApi(input) : locally(input);
+}
+
+export interface ScanRefinement {
+  plan: RoomPlan;
+  /** what changed, and what we deliberately left alone (docs/05 §2) */
+  notes: string[];
+  /** true only when the scan was actually read and used */
+  refined: boolean;
+  /** the furniture the scan itself measured, ready for stage 3 fusion */
+  seeds: ScanSeedObject[];
+}
+
+/**
+ * Stage 0 on the device (docs/05 §2), for the formats we can read here.
+ *
+ * A RoomPlan export is already parametric, so its measurements can correct the
+ * drawn plan without a worker: a consistent scale error and the ceiling height
+ * are applied, and anything bigger is reported for the user to decide. Meshes
+ * and point clouds need the worker tier, and say so rather than silently doing
+ * nothing.
+ */
+export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Promise<ScanRefinement> {
+  const scan = uploads.find((u) => u.kind === "lidar");
+  if (!scan) return { plan, notes: [], refined: false, seeds: [] };
+
+  const head = new Uint8Array(await scan.blob.slice(0, 64).arrayBuffer());
+  if (sniffScanFormat(head) !== "roomplan-json") {
+    return {
+      plan,
+      notes: [
+        hasApi
+          ? "We'll read your scan on the server while your room is built."
+          : "This scan needs the reconstruction server to read — your room is built from the plan and photos for now.",
+      ],
+      refined: false,
+      seeds: [],
+    };
+  }
+
+  const preview = parseRoomPlanJson(await scan.blob.text());
+  if (!preview) {
+    // docs/05 §8: a scan we can't read is a toast, not a failure.
+    return {
+      plan,
+      notes: ["We couldn't read that scan, so we used your plan and photos."],
+      refined: false,
+      seeds: [],
+    };
+  }
+
+  const proposal = proposeRefinements(plan, preview.walls, preview.ceilingHeight);
+  if (!proposal.comparable) {
+    return {
+      plan,
+      notes: [`We couldn't line the scan up with your plan (${proposal.reason}), so we left your drawing as it is.`],
+      refined: false,
+      seeds: preview.objects,
+    };
+  }
+  const refinedPlan = applyRefinements(plan, proposal);
+  const notes = describeRefinements(proposal, refinedPlan, plan);
+  return { plan: refinedPlan, notes, refined: true, seeds: preview.objects };
 }
 
 // --- demo path ---------------------------------------------------------------
@@ -61,15 +131,30 @@ const sleep = (ms: number, signal?: AbortSignal) =>
     });
   });
 
-async function locally({ plan, uploads, scan, onEvent, signal }: ReconstructInput): Promise<ReconstructResult> {
+async function locally({ plan, uploads, scanParsed, seeds, onEvent, signal }: ReconstructInput): Promise<ReconstructResult> {
   const shell = planToShell(plan);
   if (!shell) throw new Error("Draw and close the room before building it.");
 
   const photos = uploads.filter((u) => u.kind === "photo");
+  const scanned = scanParsed ?? false;
   onEvent({ type: "stage", stage: "detect-segment", progress: null });
   await sleep(240, signal);
 
-  const measured = photos.length > 0 ? demoMeasuredObjects(shell, { newId: uuidv7 }) : [];
+  // A scan that named its own objects is measured data about this room, so it
+  // replaces the demo layout rather than being mixed with it — half-real
+  // furniture would be impossible for anyone to reason about.
+  const scanSeeds = seeds ?? [];
+  const named = scanSeeds.filter((s) => s.category !== null);
+  const measured =
+    named.length > 0
+      ? fuseSeedBoxes([], scanSeeds, { newId: uuidv7 }).measured
+      : photos.length > 0
+        ? demoMeasuredObjects(shell, { newId: uuidv7 })
+        : [];
+  const fromScan = named.length > 0;
+  // Say it before the first fabricated object appears, not after the room is
+  // finished — a label that arrives late has already misled someone.
+  if (!fromScan && photos.length > 0) onEvent({ type: "warning", message: DEMO_NOTICE, wallLabel: null });
   onEvent({ type: "stage", stage: "depth-scale", progress: 1 });
   await sleep(200, signal);
 
@@ -94,7 +179,10 @@ async function locally({ plan, uploads, scan, onEvent, signal }: ReconstructInpu
   }
 
   onEvent({ type: "stage", stage: "scene-assemble", progress: 0 });
-  const tier: Scene["provenance"]["tier"] = scan ? "lidar" : photos.length > 0 ? "photo" : "sketch";
+  // The LiDAR tier is claimed only when a scan was actually read and used —
+  // uploading a file we couldn't parse doesn't make the room more accurate
+  // (docs/05 §9: the badge is the honesty contract).
+  const tier: Scene["provenance"]["tier"] = scanned ? "lidar" : photos.length > 0 ? "photo" : "sketch";
   const { scene, warnings } = assembleScene({
     sceneId: uuidv7(),
     planId: plan.id,
@@ -108,14 +196,21 @@ async function locally({ plan, uploads, scan, onEvent, signal }: ReconstructInpu
   });
 
   const notices = [
-    ...(photos.length > 0 ? [DEMO_NOTICE] : ["No photos yet — add pieces yourself from the catalog whenever you like."]),
+    ...(fromScan
+      ? [`${measured.length} pieces came from your scan, at the sizes it measured.`]
+      : photos.length > 0
+        ? [DEMO_NOTICE]
+        : ["No photos yet — add pieces yourself from the catalog whenever you like."]),
     ...warnings,
   ];
-  for (const message of notices) onEvent({ type: "warning", message, wallLabel: null });
+  // The demo notice already went out above; don't say it twice.
+  for (const message of notices) {
+    if (message !== DEMO_NOTICE) onEvent({ type: "warning", message, wallLabel: null });
+  }
   onEvent({ type: "stage", stage: "done", progress: 1 });
   onEvent({ type: "done", status: "partial", sceneId: scene.id, tier });
 
-  return { scene, warnings: notices, tier, demo: photos.length > 0 };
+  return { scene, warnings: notices, tier, demo: !fromScan && photos.length > 0 };
 }
 
 // --- server path -------------------------------------------------------------

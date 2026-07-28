@@ -4,6 +4,142 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [0.5.0-m5] — Milestone M5: LiDAR *(partial — see Not met)*
+
+**Ships:** the optional scan upload that upgrades accuracy.
+
+### Added
+
+**S5 — scan upload** (docs/01 §7) — drag-and-drop or file picker for `.usdz`,
+`.json`, `.ply`, `.glb`, `.e57` and `.las`, validated by extension *and* magic
+bytes before a byte is uploaded, with expandable "how do I get a scan?" cards
+for RoomPlan apps, Polycam, Scaniverse and 3d Scanner App. Skippable in one tap.
+
+**Parsed preview** — a RoomPlan export is parsed on the device and drawn over
+the drawn plan, to the same scale, so "is this the right room?" is answered
+before anything is uploaded and while still offline.
+
+**Stage 0 — scan parse** (`workers/vision`, docs/05 §2) — RoomPlan JSON parsing,
+PLY reading (ASCII and binary), RANSAC wall fitting with a one-sided test that
+tells a wall from the flat front of a wardrobe, voxel clustering for seed boxes,
+and 2D ICP registration against the drawn outline with per-wall length
+comparison.
+
+**Plan refinement** (`packages/recon/refine.ts`) — corrections that preserve the
+closed polygon the user drew are applied (a consistent scale error, and the
+ceiling height); anything else is reported for the user to decide, because
+correcting one wall of a closed polygon moves its neighbours and there is no one
+right way to absorb that. Disagreements over 0.4 m are always surfaced, never
+silently applied (docs/05 §2).
+
+**Seed-box fusion** (`packages/recon/fuse.ts`, docs/05 §5) — the scan wins
+geometry, the photo keeps the class and the colours it sampled. Objects the scan
+named and the photos missed join the room, so **a RoomPlan export furnishes a
+room on its own, with no GPU anywhere in the path**. An unnamed box corrects an
+object the photos did name, but never becomes an object with a guessed class.
+
+**Accuracy badge, end to end** — `Sketch` → `Photo-calibrated` → `LiDAR-verified`
+is driven by what actually happened: the LiDAR tier is claimed only when a scan
+was read and used, not when a file was uploaded.
+
+### Verified
+
+- 34 unit tests in `packages/recon` and 24 pytest cases in `workers/vision`.
+- E2E: a RoomPlan export corrects the room's scale and ceiling height, furnishes
+  it from its own measurements, and lands on the LiDAR-verified badge.
+- Registration recovers a known rotation and translation to under a centimetre;
+  a 60 cm wall disagreement is flagged for review and a 5% uniform error is
+  applied without touching the drawing.
+
+### Not met
+
+- **No stock-iPhone round trip.** docs/09 M5 asks for a RoomPlan export from a
+  real iPhone Pro to round-trip with zero manual fixes. The exports tested here
+  are synthesized to Apple's documented `CapturedRoom` shape; a real device
+  export has not been through it.
+- **`.e57`, `.las`/`.laz` are accepted and stored but not parsed.** The upload
+  path validates them; Stage 0 reads RoomPlan JSON and PLY.
+- **The ±2 cm / ±5 cm LiDAR-verified accuracy targets are unverified** — the
+  golden-room suite has no fixture rooms (see M4 below).
+
+## [0.4.0-m4] — Milestone M4: Reconstruct *(partial — see Not met)*
+
+**Ships:** the capture-to-room path, everything in it that does not need a GPU.
+
+### Added
+
+**S4 — guided capture** (docs/01 §6) — the plan generates the shot list: one
+photo per wall to proceed, a wide shot per opposing corner pair offered,
+close-ups unlimited. Each photo gets an on-device quality check (variance of the
+Laplacian for focus, mean luma for exposure) whose verdict is *advice, never a
+block*, and is tagged to a wall with one tap on the mini-plan. Photos stay on the
+device until a reconstruction needs them, and are deleted with the project.
+
+**S6 — processing** (docs/01 §8) — driven entirely by the pipeline's own events:
+stage checklist, objects announced by name and size as they land, partial results
+and a way into the room on failure. Never a dead end.
+
+**Pipeline contracts** (`packages/schema`) — capture plan, photo quality, and
+every stage artifact (detection, camera solve, measured object, catalog match,
+scan parse), plus the job record and the SSE event union. JSON Schema is
+generated from these and the Python workers validate against it.
+
+**Stage 4 — catalog match** and **stage 6 — assembly** (`packages/recon`) —
+ranking by dimension fit within each model's allowed scale bounds, runners-up
+kept for the swap sheet, and a parametric placeholder rather than a forced match;
+then dedupe by 3D IoU, support and collision resolution, wall snapping, and the
+`Scene` write. Both are pure operations over the TypeScript catalog and geometry
+(DECISIONS.md §18).
+
+**Vision workers** (`workers/vision`) — stage 2's EXIF intrinsics, depth rescale
+against the plan's known wall distance, and back-projection; stage 3's
+floor-aligned oriented boxes with outlier trimming; stage 5's Lab k-means
+palettes with the illumination divided out in linear space. Stage 1 imports
+safely without weights and raises an actionable error naming the models to
+deploy. The detection vocabulary is generated from `packages/catalog`, so the
+classes the detector can name and the classes the app can place cannot drift.
+
+**API** (`apps/api`) — presigned uploads with checksum and magic-byte validation
+on completion, the reconstruct orchestrator with the full docs/05 §8 fallback
+table, resumable SSE progress (`Last-Event-ID` replays what a backgrounded phone
+missed), scene GET/PUT with ETag concurrency, versions, share tokens, and catalog
+search. 10 reconstructions per project per day.
+
+**"Wrong item?"** (docs/01 §9, docs/05 §6) — the object card shows the
+pipeline's confidence and the runners-up it stored, so swapping is one tap with
+no search. Objects placed from a wall tag rather than a solved camera pose get an
+amber outline.
+
+**Golden-room harness** (docs/05 §9) — position/size error, detection recall over
+major furniture, match quality, and a baseline check that blocks a change making
+any room worse. Scored on the 90th percentile, not the median: a median inside
+15 cm with a quarter of the room a metre out is not "positions ± 15 cm".
+
+### Not met
+
+These are the reasons this milestone is marked partial. None is a design
+decision; each is a thing this environment cannot do.
+
+- **No GPU inference.** Stages 1 and 2's model-backed halves — Grounding DINO,
+  SAM 2, Depth Anything V2 — are not running anywhere in this repository's CI or
+  in the staging build. The code path exists and refuses loudly rather than
+  returning nothing.
+- **No golden fixture rooms, so no accuracy numbers.** docs/05 §9 requires
+  ≥ 5 real measured rooms with hand-labelled ground truth. Those are tape-measure
+  measurements of physical rooms; synthesizing them would produce numbers that
+  read like accuracy while measuring nothing but our own assumptions. The suite
+  reports that it certified nothing (`fixtures/golden-rooms/README.md`).
+  **Every accuracy claim in docs/05 §9 is therefore unverified.**
+- **No queue-driven worker dispatch.** docs/03 §4's BullMQ-over-Valkey consumer
+  is not written; the orchestrator calls its stage driver in-process. The seam
+  (`StageWorkers`) is the interface the consumer would implement.
+- **The demo stage driver is not a detector.** Where no worker tier is
+  configured — including the staging build — a typical room is laid out from the
+  floor plan, and every surface that shows it says so. With no photos uploaded it
+  produces nothing rather than furnishing a room nobody photographed.
+- **The fault-injection matrix and the "< 3 min wall-clock" end-to-end target**
+  are untested for the same reason: there is no end-to-end run with real models.
+
 ## [0.3.0-m3] — Milestone M3: Furnish
 
 **Ships:** the full manual editor — a genuinely useful room-design product.
@@ -77,7 +213,8 @@ corrected.
   Poly Haven is wired into the pipeline so far; ambientCG, Quaternius and
   Kenney are not.
 - **Share *links* are not implemented.** Render export and A/B compare are;
-  the read-only share URL needs the API's share-token endpoint (docs/03 §3).
+  the read-only share URL needs the API's share-token endpoint (docs/03 §3) —
+  *the endpoint landed in 0.4.0-m4; the client still exports a render only.*
 - Frame rate on the reference device matrix is still unverified (no GPU in CI).
 
 ## [0.2.0-m2] — Milestone M2: Extrude

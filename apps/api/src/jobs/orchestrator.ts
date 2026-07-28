@@ -7,7 +7,7 @@ import {
   type Scene,
   type Upload,
 } from "@myroom/schema";
-import { assembleScene, demoMeasuredObjects, matchCatalog } from "@myroom/recon";
+import { assembleScene, demoMeasuredObjects, fuseSeedBoxes, matchCatalog } from "@myroom/recon";
 import { getCategory } from "@myroom/catalog";
 import type { EventBus, QueuedJob } from "./queue.js";
 import type { Store } from "../store.js";
@@ -149,6 +149,20 @@ export async function runReconstruction(opts: RunOptions): Promise<Reconstructio
     warnings.push("We couldn't read the photos this time, so here's your room with nothing in it yet.");
     bus.publish(job.jobId, { type: "warning", message: warnings[warnings.length - 1]!, wallLabel: null });
     void error;
+  }
+
+  // Stage 3 fusion (docs/05 §5): the scan wins geometry, the photo keeps the
+  // class and the colour. Objects the scan named and the photos missed join the
+  // room — a RoomPlan export can furnish it on its own.
+  if (scan && scan.seedBoxes.length > 0) {
+    const fused = fuseSeedBoxes(measured, scan.seedBoxes, { newId });
+    measured = fused.measured;
+    if (fused.corrected > 0) {
+      warnings.push(`Your scan corrected the size and position of ${fused.corrected} piece(s).`);
+    }
+    if (fused.added > 0) {
+      warnings.push(`${fused.added} piece(s) came from your scan alone.`);
+    }
   }
 
   if (measured.length === 0) {
