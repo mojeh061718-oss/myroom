@@ -45,8 +45,13 @@ phone's screen.
 
 ### Verified
 
-- Lighthouse on the built PWA, mobile-throttled: **performance 87** (target 85),
-  **accessibility 100** (target 95), best practices 100, SEO 91. Wired into CI.
+- Lighthouse on the built PWA, mobile-throttled: **accessibility 100** (target
+  95), best practices 100, SEO 91, and **performance 87** on a developer
+  container. The same build scores **70** on a shared GitHub runner, because
+  Lighthouse throttles the CPU 4× on top of whatever the host already is — so CI
+  gates the machine-independent categories and reports performance without
+  gating it. Neither machine is the iPhone 12-class device docs/09 M6 names, so
+  the ≥ 85 target should be read as *not yet verified on target hardware*.
 - 48 web unit tests, 28 API tests, 24 pytest cases, and a Playwright suite
   covering the golden path, the reconstruct path and the accessibility checklist.
 
@@ -58,6 +63,12 @@ white-on-blue; the light theme's dim text, amber and success green were all unde
 their bars; the tutorial dots claimed a 44 px hit area through an overlay that
 measured 10 px to anything reading element boxes; and no document had a `<main>`
 landmark.
+
+A pre-existing E2E failure on the desktop viewport: the self-crossing test aimed
+its final click at a point the board's own snapping moved, so the wall it drew
+didn't cross anything. It now aims along an exact 45° from the last vertex,
+where every snap is a no-op. The drawing board itself has not changed since M1;
+only the test was wrong.
 
 Also a pre-existing flaky property test, which asserted that the northernmost
 wall by "first index wins" gets label A while `labelWalls` breaks that tie
