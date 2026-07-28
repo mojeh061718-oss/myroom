@@ -142,18 +142,273 @@ reachable by touch.
 
 ---
 
-## Deferred to their own milestones
+## M2 — Extrude
 
-These are **not** decisions — they are blueprint items whose milestone has not
-started. Recorded so their absence is not mistaken for an omission.
+### 9. Analytic opening cutouts instead of CSG
 
-| Item | Lands in |
+**Unspecified.** docs/06 §1 says openings are "boolean-subtract[ed]" and
+docs/08 §1 lists `three-bvh-csg` for that job. Neither says the subtraction must
+be a general mesh boolean.
+
+**Chosen.** Wall faces are triangulated directly by grid decomposition: collect
+the opening edges along the wall and up its height, emit the cells that aren't
+inside an opening, then add the reveal surfaces. No CSG library; `three-bvh-csg`
+is not a dependency.
+
+**Why.** Every opening is an axis-aligned rectangle in the wall's own frame, so
+the general case never arises. The direct construction is deterministic (which
+is what makes the golden geometry tests meaningful), produces clean real-world
+UVs for painting in M3, and emits far fewer triangles than a boolean would —
+an empty room shell renders in ~150 triangles and 8 draw calls.
+
+**Would change it.** Curved walls or non-rectangular openings, both explicit
+v1 non-goals (docs/04 §1).
+
+### 10. Mitered wall offsets rather than overlapping boxes
+
+**Unspecified.** docs/06 §1 says the polygon extrudes into walls at thickness
+and height; it doesn't say how walls meet at corners.
+
+**Chosen.** The interior and exterior faces are computed as mitered offset
+polygons of the drawn centreline, so adjacent walls share exact corner points.
+
+**Why.** Extruding each wall as its own box leaves overlapping corners that
+z-fight and show seams from inside — visible in the very first "wow, that's my
+room" moment M2 exists to deliver. Mitering also supports per-wall thickness,
+which docs/04 §1 allows.
+
+### 11. Procedural IBL before the HDRI asset
+
+**Unspecified.** docs/02 §7 specifies a Poly Haven CC0 HDRI for image-based
+lighting. M2 has no asset pipeline yet (that's M3) and no network fetch is
+acceptable on a cold offline load (docs/03 §6).
+
+**Chosen.** The environment is generated at runtime from three's built-in
+`RoomEnvironment` (MIT, bundled). The curated HDRI lands in M6 with the rest of
+the visual polish; swapping it changes one component.
+
+### 12. Gradient exterior backdrop
+
+**Unspecified.** Nothing says what is visible *through* a door or window.
+
+**Chosen.** A large gradient backdrop sphere: dark ground, a luminous horizon
+band, soft daylight above.
+
+**Why.** Against the plain background an opening reads as a black hole punched
+in the wall rather than a way outside — clearly wrong in the Inside view, where
+a doorway can fill the frame. The gradient also keeps the dollhouse sitting on a
+dark, premium ground rather than a bright sky.
+
+### 13. Field of view is derived from the horizontal axis
+
+**Unspecified.** docs/02 §7 specifies a "35 mm-equivalent default FOV" without
+saying which axis, and three's `fov` is vertical.
+
+**Chosen.** The vertical FOV is computed from the 35 mm-equivalent *horizontal*
+FOV and the viewport aspect, clamped to 38°–60°.
+
+**Why.** A fixed 38° vertical FOV becomes roughly a 19° horizontal view on a
+portrait phone — a telephoto. In practice that made a doorway three metres away
+fill the entire screen. Deriving from the horizontal axis keeps the framing
+consistent with the intent on every aspect ratio.
+
+### 14. The 3D route is code-split
+
+**Unspecified.** The roadmap doesn't discuss bundling.
+
+**Chosen.** The sandbox is a lazy route; three.js lives in its own chunk,
+prefetched on idle.
+
+**Why.** three.js roughly quadrupled the bundle. Splitting keeps the splash,
+tutorial, home and drawing board at their M1 weight (docs/01 §2 cold-start
+budget) while the idle prefetch preserves the docs/06 §8 "< 2 s from tap on the
+project card" budget for opening a room.
+
+---
+
+## M3 — Furnish
+
+### 15. Parametric geometry backs the CC0 catalog, it doesn't replace it
+
+**Correction.** An earlier revision of this file claimed the CC0 asset sources
+were unreachable from the build environment and that the catalog therefore
+could not be built. **That was wrong** — I asserted it without testing. Poly
+Haven's API and CDN are reachable, and the catalog has since been built from
+them. The claim was published in `0.3.0-m3` before being checked; this entry
+replaces it.
+
+**Unspecified.** docs/09 M3 calls for ~600 CC0 items. The available CC0
+furniture libraries do not currently hold 600 *interior* models that also meet
+the docs/07 §5 budgets, and the blueprint doesn't say what to do about the
+shortfall.
+
+**Chosen.** Two tiers, with the data model already built for exactly this
+(docs/07 §4: `catalogId | placeholder` are alternatives):
+
+1. **Real CC0 models** — `packages/catalog/scripts/build-catalog.mjs` fetches
+   Poly Haven's CC0 library, maps each asset to a taxonomy category by name,
+   bundles glTF + textures into a Draco-compressed GLB, measures real-world
+   size from the world-space bounding box, and records `license` and `source`
+   per item. Anything over 15 k triangles is rejected rather than shipped.
+2. **Parametric geometry** — the box/cylinder composition the blueprint
+   specifies as the pipeline's fallback (docs/05 §6), covering all 183
+   categories so nothing is ever unplaceable.
+
+**Why.** Every category stays usable now, and each new batch of real models
+displaces stand-ins without touching edit mode. The catalog currently holds 77
+models across 36 categories — short of 600, and recorded as such.
+
+**Would change it.** More CC0 sources (ambientCG materials, Quaternius,
+Kenney) run through the same pipeline; the count is a function of how many
+sources are wired up, not of the design.
+
+### 16. New objects land in clear floor space
+
+**Unspecified.** docs/06 §5 says placement "drops it at the tapped spot already
+snapped and wall-aligned", but the catalog can also be opened without a tapped
+spot.
+
+**Chosen.** `findFreeSpot` walks candidate positions flush along each wall and
+takes the first whose footprint is clear.
+
+**Why.** Dropping everything at the room centre stacked every new piece on the
+last one — visibly wrong the moment a second item is added.
+
+### 17. Version zero is captured on first entering Edit
+
+**Unspecified.** docs/06 §6 says "Version zero, *Original room*, is created
+automatically at first reconstruction" — but reconstruction is M4, and M3 rooms
+are furnished by hand.
+
+**Chosen.** The locked "Original room" snapshot is taken the first time the user
+taps Edit, capturing the room as it was before any edit.
+
+**Why.** It preserves the guarantee that matters — an untouched state you can
+always return to — a milestone before reconstruction exists to trigger it.
+
+---
+
+## M4 — Reconstruct
+
+### 18. Where the pipeline's non-pixel stages run
+
+**Unspecified.** docs/03 §4 puts every pipeline stage in a Python worker;
+docs/05 §6 requires stage 4 to rank against "the CC0 catalog … build spec in
+`packages/catalog`", which is a TypeScript package.
+
+**Chosen.** Stages 0, 1, 2, 3 and 5 — scan parsing, detection, pose/depth,
+measurement, appearance — stay in `workers/vision`. Stages 4 (catalog match) and
+6 (assembly) run in TypeScript, in `packages/recon`, called by the orchestrator.
+
+**Why.** Both are pure operations over the catalog manifest and the room
+geometry, and both of those are TypeScript packages. Running them in Python
+would mean a second copy of the catalog and a second copy of the snapping rules
+in `packages/geometry` — two more things that can drift apart from what the app
+actually does. Nothing that touches a pixel or a point cloud moved.
+
+### 19. Demo reconstruction is labelled, and never invents from nothing
+
+**Unspecified.** docs/03 §8 requires the CI golden path to run
+"draw → mock-reconstruct → edit" on a laptop with no GPU, but does not say what
+a *user* of a build without a worker tier should see.
+
+**Chosen.** The CPU-only stage driver lays a typical room out from the floor
+plan. Every surface that shows its output — the processing screen and the
+room's own warning list — states plainly that the pieces are examples, not
+objects detected in the photos. With no photos uploaded it produces nothing at
+all rather than furnishing a room nobody photographed.
+
+**Why.** The static staging build has no API, so this is the path a visitor
+actually walks. Furniture presented as "what we found in your room" when nothing
+looked at the room would be a lie about the user's own home — and the accuracy
+badge exists precisely to keep that from happening (docs/05 §9).
+
+### 20. Two RoomPlan parsers, for two different jobs
+
+**Unspecified.** docs/01 §7 requires a parsed preview *before* upload; docs/05
+§2 requires the authoritative parse in the worker.
+
+**Chosen.** `workers/vision/roomplan.py` is authoritative and feeds the
+pipeline. `packages/recon/scan.ts` parses the same format on the device, only to
+draw the preview overlay.
+
+**Why.** The preview has to answer "is this the right room?" in front of the
+user, offline, before any bytes leave the phone. Round-tripping to a worker to
+answer that would defeat the point of asking. The two are tested against the
+same fixture shape, and only the worker's output enters the pipeline.
+
+### 21. The demo path's object reveal is paced
+
+**Unspecified.** docs/01 §8 describes silhouettes popping in "one by one" as the
+pipeline reports them.
+
+**Chosen.** The demo driver emits its object events with a short delay between
+them. The stage events are not padded.
+
+**Why.** The objects genuinely exist by then; the spacing is the reveal
+animation the blueprint asks for, not a progress bar pretending to work. A real
+pipeline run takes 30–120 s and needs no help looking busy.
+
+---
+
+## M6 — Polish
+
+### 22. Two accent tokens, not one darker accent
+
+**Unspecified.** docs/02 §3 gives one accent colour; docs/02 §9 requires 4.5:1
+for text and 3:1 for essential UI. The single accent satisfies the second and
+not the first.
+
+**Chosen.** `--accent` keeps its value for outlines, highlights and selection;
+`--accent-strong` is a darker variant used wherever white text sits on a filled
+surface. Same for `--danger`.
+
+**Why.** Darkening the one token would have dulled every highlight in the app to
+fix a bar that only applies to text. Two tokens keep the design language and the
+contrast requirement from trading against each other.
+
+### 23. Quality stepping is asymmetric
+
+**Unspecified.** docs/06 §8 says step down below threshold and "back up when
+headroom returns", without saying how fast.
+
+**Chosen.** Two consecutive bad seconds step down; six consecutive good ones
+step up. A frame rate between the floor and the headroom moves nothing.
+
+**Why.** Two seconds of stutter is already a bad experience, so falling should
+be quick. A level that just failed is likely to fail again, so climbing should
+be slow — and flapping between two levels is worse than sitting on the lower one.
+
+### 24. The demo path never runs on an empty upload set
+
+**Unspecified.** docs/03 §8 requires a mock reconstruct for CI but says nothing
+about a user with no photos.
+
+**Chosen.** With no photos, the CPU-only driver returns nothing and the room is
+built empty, with a nudge into manual furnishing.
+
+**Why.** Furnishing a room nobody photographed is a claim about someone's home
+made from nothing at all. The empty accurate room is already the docs/05 §8
+fallback, and it is honest.
+
+---
+
+## Not built, and why
+
+These are **not** decisions — they are blueprint items this repository does not
+contain. Recorded so their absence is not mistaken for an oversight. Each is
+described in full, with its acceptance criterion, in `CHANGELOG.md`.
+
+| Item | Why |
 |---|---|
-| 3D shell extrusion, opening CSG, sandbox viewer | M2 (docs/09) |
-| CC0 catalog assets, edit mode, versions/compare/share | M3 |
-| Photo capture, upload pipeline, vision workers, golden-room fixtures | M4 |
-| LiDAR ingestion and accuracy-tier wiring | M5 |
-| Tutorial T2–T5 final animations, splash room-loop video, a11y audit | M6 |
+| GPU inference: Grounding DINO, SAM 2, Depth Anything V2 | No GPU in this environment |
+| Golden-room accuracy fixtures (docs/05 §9) | Tape-measure measurements of five real rooms; cannot be synthesized without inventing the numbers they exist to check |
+| Queue-driven worker dispatch (BullMQ over Valkey) | The orchestrator calls its stage driver in-process; `StageWorkers` is the seam a consumer would implement |
+| The 60-second demo video (docs/09 M6's definition of done) | Films a photo reconstruction, which needs the GPU tier |
+| Tutorial T2–T5 final animations, splash room-loop video | Asset production |
+| Low-end device lab pass (2 GB Android, 30 fps floor) | No device lab |
+| Web Push proper (VAPID + server) | Needs the hosted API; the local notification works without it |
 
-`workers/vision/` and the catalog *asset* pipeline are scaffolded but empty for
-this reason; the taxonomy above is the part M4 and M3 will build against.
+Everything above is stated in the app itself where a user could otherwise be
+misled — the accuracy badge, the demo-reconstruction notice, and the golden-room
+suite's "certified nothing" output.

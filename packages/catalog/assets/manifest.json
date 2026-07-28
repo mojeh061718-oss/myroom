@@ -1,0 +1,2213 @@
+[
+  {
+    "id": "nightstand/classicnightstand_01",
+    "category": "nightstand",
+    "name": "Classic Nightstand 01",
+    "asset": {
+      "glb": "catalog/models/ClassicNightstand_01.glb",
+      "tris": 2002
+    },
+    "nativeSize": {
+      "w": 0.568,
+      "h": 0.7,
+      "d": 0.424
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "handles"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/ClassicNightstand_01",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "coffee-table/coffeetable_01",
+    "category": "coffee-table",
+    "name": "Coffee Table 01",
+    "asset": {
+      "glb": "catalog/models/CoffeeTable_01.glb",
+      "tris": 10404
+    },
+    "nativeSize": {
+      "w": 1.54,
+      "h": 0.523,
+      "d": 0.973
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/CoffeeTable_01",
+    "attribution": "Fernando Quinn"
+  },
+  {
+    "id": "cabinet/gothiccabinet_01",
+    "category": "cabinet",
+    "name": "Gothic Cabinet 01",
+    "asset": {
+      "glb": "catalog/models/GothicCabinet_01.glb",
+      "tris": 12170
+    },
+    "nativeSize": {
+      "w": 1.719,
+      "h": 2.361,
+      "d": 1.117
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/GothicCabinet_01",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "ottoman/ottoman_01",
+    "category": "ottoman",
+    "name": "Ottoman 01",
+    "asset": {
+      "glb": "catalog/models/Ottoman_01.glb",
+      "tris": 4240
+    },
+    "nativeSize": {
+      "w": 0.885,
+      "h": 0.624,
+      "d": 0.621
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/Ottoman_01",
+    "attribution": "Caspian Fortune"
+  },
+  {
+    "id": "desk/schooldesk_01",
+    "category": "desk",
+    "name": "School Desk 01",
+    "asset": {
+      "glb": "catalog/models/SchoolDesk_01.glb",
+      "tris": 4162
+    },
+    "nativeSize": {
+      "w": 0.712,
+      "h": 0.883,
+      "d": 0.546
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/SchoolDesk_01",
+    "attribution": "Ethan Place"
+  },
+  {
+    "id": "floating-shelf/shelf_01",
+    "category": "floating-shelf",
+    "name": "Shelf 01",
+    "asset": {
+      "glb": "catalog/models/Shelf_01.glb",
+      "tris": 182
+    },
+    "nativeSize": {
+      "w": 1.003,
+      "h": 2.08,
+      "d": 0.257
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "shelf"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/Shelf_01",
+    "attribution": "Gabriel Radić"
+  },
+  {
+    "id": "sofa/sofa_01",
+    "category": "sofa",
+    "name": "Sofa 01",
+    "asset": {
+      "glb": "catalog/models/Sofa_01.glb",
+      "tris": 4101
+    },
+    "nativeSize": {
+      "w": 1.571,
+      "h": 0.797,
+      "d": 0.658
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/Sofa_01",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "tv/television_01",
+    "category": "tv",
+    "name": "Television 01",
+    "asset": {
+      "glb": "catalog/models/Television_01.glb",
+      "tris": 1918
+    },
+    "nativeSize": {
+      "w": 0.6,
+      "h": 0.457,
+      "d": 0.471
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/Television_01",
+    "attribution": "Gabriel Radić"
+  },
+  {
+    "id": "wall-clock/alarm_clock_01",
+    "category": "wall-clock",
+    "name": "Alarm Clock 01",
+    "asset": {
+      "glb": "catalog/models/alarm_clock_01.glb",
+      "tris": 8985
+    },
+    "nativeSize": {
+      "w": 0.132,
+      "h": 0.174,
+      "d": 0.067
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "face"
+    ],
+    "faceSlot": "face",
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/alarm_clock_01",
+    "attribution": "Yann Kervran, James Ray Cock"
+  },
+  {
+    "id": "vase/antique_ceramic_vase_01",
+    "category": "vase",
+    "name": "Antique Ceramic Vase 01",
+    "asset": {
+      "glb": "catalog/models/antique_ceramic_vase_01.glb",
+      "tris": 9408
+    },
+    "nativeSize": {
+      "w": 0.255,
+      "h": 0.44,
+      "d": 0.255
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/antique_ceramic_vase_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "range/barrel_stove",
+    "category": "range",
+    "name": "Barrel Stove",
+    "asset": {
+      "glb": "catalog/models/barrel_stove.glb",
+      "tris": 9216
+    },
+    "nativeSize": {
+      "w": 0.593,
+      "h": 0.856,
+      "d": 0.593
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/barrel_stove",
+    "attribution": "MP"
+  },
+  {
+    "id": "bench/bench_vice_01",
+    "category": "bench",
+    "name": "Bench Vice 01",
+    "asset": {
+      "glb": "catalog/models/bench_vice_01.glb",
+      "tris": 2864
+    },
+    "nativeSize": {
+      "w": 0.2,
+      "h": 0.285,
+      "d": 0.396
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/bench_vice_01",
+    "attribution": "Yann Kervran, Antanas Kep"
+  },
+  {
+    "id": "lantern/brass_diya_lantern",
+    "category": "lantern",
+    "name": "Brass Diya Lantern",
+    "asset": {
+      "glb": "catalog/models/brass_diya_lantern.glb",
+      "tris": 12742
+    },
+    "nativeSize": {
+      "w": 0.123,
+      "h": 0.381,
+      "d": 0.123
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "glass"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brass_diya_lantern",
+    "attribution": "Bhargav Kubal"
+  },
+  {
+    "id": "vase/brass_vase_02",
+    "category": "vase",
+    "name": "Brass Vase 02",
+    "asset": {
+      "glb": "catalog/models/brass_vase_02.glb",
+      "tris": 6890
+    },
+    "nativeSize": {
+      "w": 0.21,
+      "h": 0.529,
+      "d": 0.21
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brass_vase_02",
+    "attribution": "Rico Cilliers"
+  },
+  {
+    "id": "vase/brass_vase_03",
+    "category": "vase",
+    "name": "Brass Vase 03",
+    "asset": {
+      "glb": "catalog/models/brass_vase_03.glb",
+      "tris": 2616
+    },
+    "nativeSize": {
+      "w": 0.083,
+      "h": 0.2,
+      "d": 0.083
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brass_vase_03",
+    "attribution": "Rico Cilliers"
+  },
+  {
+    "id": "vase/brass_vase_04",
+    "category": "vase",
+    "name": "Brass Vase 04",
+    "asset": {
+      "glb": "catalog/models/brass_vase_04.glb",
+      "tris": 2760
+    },
+    "nativeSize": {
+      "w": 0.082,
+      "h": 0.17,
+      "d": 0.061
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/brass_vase_04",
+    "attribution": "Rico Cilliers"
+  },
+  {
+    "id": "vase/ceramic_vase_01",
+    "category": "vase",
+    "name": "Ceramic Vase 01",
+    "asset": {
+      "glb": "catalog/models/ceramic_vase_01.glb",
+      "tris": 10296
+    },
+    "nativeSize": {
+      "w": 0.204,
+      "h": 0.4,
+      "d": 0.204
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/ceramic_vase_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "vase/ceramic_vase_02",
+    "category": "vase",
+    "name": "Ceramic Vase 02",
+    "asset": {
+      "glb": "catalog/models/ceramic_vase_02.glb",
+      "tris": 11128
+    },
+    "nativeSize": {
+      "w": 0.218,
+      "h": 0.309,
+      "d": 0.218
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/ceramic_vase_02",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "vase/ceramic_vase_03",
+    "category": "vase",
+    "name": "Ceramic Vase 03",
+    "asset": {
+      "glb": "catalog/models/ceramic_vase_03.glb",
+      "tris": 11136
+    },
+    "nativeSize": {
+      "w": 0.112,
+      "h": 0.414,
+      "d": 0.112
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/ceramic_vase_03",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "vase/ceramic_vase_04",
+    "category": "vase",
+    "name": "Ceramic Vase 04",
+    "asset": {
+      "glb": "catalog/models/ceramic_vase_04.glb",
+      "tris": 9000
+    },
+    "nativeSize": {
+      "w": 0.181,
+      "h": 0.342,
+      "d": 0.181
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/ceramic_vase_04",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "armchair/chinese_armchair",
+    "category": "armchair",
+    "name": "Chinese Armchair",
+    "asset": {
+      "glb": "catalog/models/chinese_armchair.glb",
+      "tris": 2675
+    },
+    "nativeSize": {
+      "w": 0.848,
+      "h": 1.587,
+      "d": 0.789
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/chinese_armchair",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "chandelier/chinese_chandelier",
+    "category": "chandelier",
+    "name": "Chinese Chandelier",
+    "asset": {
+      "glb": "catalog/models/chinese_chandelier.glb",
+      "tris": 7828
+    },
+    "nativeSize": {
+      "w": 0.878,
+      "h": 0.748,
+      "d": 0.879
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "shades"
+    ],
+    "faceSlot": null,
+    "support": "ceiling",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/chinese_chandelier",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "console-table/chinese_console_table",
+    "category": "console-table",
+    "name": "Chinese Console Table",
+    "asset": {
+      "glb": "catalog/models/chinese_console_table.glb",
+      "tris": 13648
+    },
+    "nativeSize": {
+      "w": 1.72,
+      "h": 0.661,
+      "d": 0.339
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/chinese_console_table",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "sofa/chinese_sofa",
+    "category": "sofa",
+    "name": "Chinese Sofa",
+    "asset": {
+      "glb": "catalog/models/chinese_sofa.glb",
+      "tris": 704
+    },
+    "nativeSize": {
+      "w": 2.285,
+      "h": 0.86,
+      "d": 0.969
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/chinese_sofa",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "stool/chinese_stool",
+    "category": "stool",
+    "name": "Chinese Stool",
+    "asset": {
+      "glb": "catalog/models/chinese_stool.glb",
+      "tris": 1090
+    },
+    "nativeSize": {
+      "w": 0.599,
+      "h": 0.631,
+      "d": 0.506
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/chinese_stool",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "laptop/classic_laptop",
+    "category": "laptop",
+    "name": "Classic Laptop",
+    "asset": {
+      "glb": "catalog/models/classic_laptop.glb",
+      "tris": 14450
+    },
+    "nativeSize": {
+      "w": 0.652,
+      "h": 0.543,
+      "d": 0.486
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": "face",
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/classic_laptop",
+    "attribution": "Arrangemonk"
+  },
+  {
+    "id": "coffee-table/coffee_table_round_01",
+    "category": "coffee-table",
+    "name": "Coffee Table Round 01",
+    "asset": {
+      "glb": "catalog/models/coffee_table_round_01.glb",
+      "tris": 4044
+    },
+    "nativeSize": {
+      "w": 1.301,
+      "h": 0.491,
+      "d": 1.301
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/coffee_table_round_01",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "dining-table/dining_table",
+    "category": "dining-table",
+    "name": "Dining Table",
+    "asset": {
+      "glb": "catalog/models/dining_table.glb",
+      "tris": 1048
+    },
+    "nativeSize": {
+      "w": 2.256,
+      "h": 0.877,
+      "d": 1.39
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/dining_table",
+    "attribution": "Aron Łyczek"
+  },
+  {
+    "id": "range/electric_stove",
+    "category": "range",
+    "name": "Electric Stove",
+    "asset": {
+      "glb": "catalog/models/electric_stove.glb",
+      "tris": 13914
+    },
+    "nativeSize": {
+      "w": 0.503,
+      "h": 0.859,
+      "d": 0.648
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/electric_stove",
+    "attribution": "Kuutti Siitonen"
+  },
+  {
+    "id": "stool/folding_wooden_stool",
+    "category": "stool",
+    "name": "Folding Wooden Stool",
+    "asset": {
+      "glb": "catalog/models/folding_wooden_stool.glb",
+      "tris": 6324
+    },
+    "nativeSize": {
+      "w": 0.528,
+      "h": 0.442,
+      "d": 0.547
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/folding_wooden_stool",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "photo-frame/hanging_picture_frame_02",
+    "category": "photo-frame",
+    "name": "Hanging Picture Frame 02",
+    "asset": {
+      "glb": "catalog/models/hanging_picture_frame_02.glb",
+      "tris": 3678
+    },
+    "nativeSize": {
+      "w": 0.752,
+      "h": 0.5,
+      "d": 0.033
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/hanging_picture_frame_02",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "wall-sconce/industrial_wall_sconce",
+    "category": "wall-sconce",
+    "name": "Industrial Wall Sconce",
+    "asset": {
+      "glb": "catalog/models/industrial_wall_sconce.glb",
+      "tris": 9826
+    },
+    "nativeSize": {
+      "w": 0.15,
+      "h": 0.342,
+      "d": 0.252
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "shade",
+      "base"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/industrial_wall_sconce",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "chandelier/lantern_chandelier_01",
+    "category": "chandelier",
+    "name": "Lantern Chandelier 01",
+    "asset": {
+      "glb": "catalog/models/lantern_chandelier_01.glb",
+      "tris": 5971
+    },
+    "nativeSize": {
+      "w": 0.579,
+      "h": 0.878,
+      "d": 0.575
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "shades"
+    ],
+    "faceSlot": null,
+    "support": "ceiling",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/lantern_chandelier_01",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "desk/metal_office_desk",
+    "category": "desk",
+    "name": "Metal Office Desk",
+    "asset": {
+      "glb": "catalog/models/metal_office_desk.glb",
+      "tris": 6898
+    },
+    "nativeSize": {
+      "w": 2,
+      "h": 0.788,
+      "d": 0.947
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/metal_office_desk",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "stool/metal_stool_01",
+    "category": "stool",
+    "name": "Metal Stool 01",
+    "asset": {
+      "glb": "catalog/models/metal_stool_01.glb",
+      "tris": 8334
+    },
+    "nativeSize": {
+      "w": 0.352,
+      "h": 0.883,
+      "d": 0.355
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/metal_stool_01",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "stool/metal_stool_02",
+    "category": "stool",
+    "name": "Metal Stool 02",
+    "asset": {
+      "glb": "catalog/models/metal_stool_02.glb",
+      "tris": 6532
+    },
+    "nativeSize": {
+      "w": 0.448,
+      "h": 0.458,
+      "d": 0.473
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/metal_stool_02",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "stool/metal_stool_03",
+    "category": "stool",
+    "name": "Metal Stool 03",
+    "asset": {
+      "glb": "catalog/models/metal_stool_03.glb",
+      "tris": 6576
+    },
+    "nativeSize": {
+      "w": 0.461,
+      "h": 1.023,
+      "d": 0.471
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/metal_stool_03",
+    "attribution": "Flo Tasser"
+  },
+  {
+    "id": "storage-trunk/metal_tool_chest",
+    "category": "storage-trunk",
+    "name": "Metal Tool Chest",
+    "asset": {
+      "glb": "catalog/models/metal_tool_chest.glb",
+      "tris": 13360
+    },
+    "nativeSize": {
+      "w": 0.685,
+      "h": 0.652,
+      "d": 0.407
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/metal_tool_chest",
+    "attribution": "Yann Kervran, John Hutcheson"
+  },
+  {
+    "id": "trash-can/metal_trash_can",
+    "category": "trash-can",
+    "name": "Metal Trash Can",
+    "asset": {
+      "glb": "catalog/models/metal_trash_can.glb",
+      "tris": 13960
+    },
+    "nativeSize": {
+      "w": 1.778,
+      "h": 0.906,
+      "d": 0.556
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/metal_trash_can",
+    "attribution": "GurJas Studios"
+  },
+  {
+    "id": "ceiling-light/modern_ceiling_lamp_01",
+    "category": "ceiling-light",
+    "name": "Modern Ceiling Lamp 01",
+    "asset": {
+      "glb": "catalog/models/modern_ceiling_lamp_01.glb",
+      "tris": 5602
+    },
+    "nativeSize": {
+      "w": 0.432,
+      "h": 0.952,
+      "d": 0.432
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "shade"
+    ],
+    "faceSlot": null,
+    "support": "ceiling",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/modern_ceiling_lamp_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "coffee-table/modern_coffee_table_01",
+    "category": "coffee-table",
+    "name": "Modern Coffee Table 01",
+    "asset": {
+      "glb": "catalog/models/modern_coffee_table_01.glb",
+      "tris": 4504
+    },
+    "nativeSize": {
+      "w": 0.6,
+      "h": 0.39,
+      "d": 1.202
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/modern_coffee_table_01",
+    "attribution": "Amin"
+  },
+  {
+    "id": "coffee-table/modern_coffee_table_02",
+    "category": "coffee-table",
+    "name": "Modern Coffee Table 02",
+    "asset": {
+      "glb": "catalog/models/modern_coffee_table_02.glb",
+      "tris": 13645
+    },
+    "nativeSize": {
+      "w": 1.199,
+      "h": 0.369,
+      "d": 1.2
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/modern_coffee_table_02",
+    "attribution": "Amin"
+  },
+  {
+    "id": "mirror/ornate_mirror_01",
+    "category": "mirror",
+    "name": "Ornate Mirror 01",
+    "asset": {
+      "glb": "catalog/models/ornate_mirror_01.glb",
+      "tris": 14246
+    },
+    "nativeSize": {
+      "w": 0.486,
+      "h": 0.744,
+      "d": 0.026
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "glass"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/ornate_mirror_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "bench/painted_wooden_bench",
+    "category": "bench",
+    "name": "Painted Wooden Bench",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_bench.glb",
+      "tris": 630
+    },
+    "nativeSize": {
+      "w": 1.165,
+      "h": 0.889,
+      "d": 0.497
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_bench",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "cabinet/painted_wooden_cabinet",
+    "category": "cabinet",
+    "name": "Painted Wooden Cabinet",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_cabinet.glb",
+      "tris": 2227
+    },
+    "nativeSize": {
+      "w": 1.195,
+      "h": 1.182,
+      "d": 0.617
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_cabinet",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "cabinet/painted_wooden_cabinet_02",
+    "category": "cabinet",
+    "name": "Painted Wooden Cabinet 02",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_cabinet_02.glb",
+      "tris": 966
+    },
+    "nativeSize": {
+      "w": 0.997,
+      "h": 2.569,
+      "d": 0.722
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "doors",
+      "handles"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_cabinet_02",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "nightstand/painted_wooden_nightstand",
+    "category": "nightstand",
+    "name": "Painted Wooden Nightstand",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_nightstand.glb",
+      "tris": 470
+    },
+    "nativeSize": {
+      "w": 0.505,
+      "h": 0.616,
+      "d": 0.509
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "handles"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_nightstand",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "wall-shelf-unit/painted_wooden_shelves",
+    "category": "wall-shelf-unit",
+    "name": "Painted Wooden Shelves",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_shelves.glb",
+      "tris": 524
+    },
+    "nativeSize": {
+      "w": 0.511,
+      "h": 1.125,
+      "d": 0.367
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_shelves",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "sofa/painted_wooden_sofa",
+    "category": "sofa",
+    "name": "Painted Wooden Sofa",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_sofa.glb",
+      "tris": 5826
+    },
+    "nativeSize": {
+      "w": 2.452,
+      "h": 1.281,
+      "d": 0.787
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_sofa",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "stool/painted_wooden_stool",
+    "category": "stool",
+    "name": "Painted Wooden Stool",
+    "asset": {
+      "glb": "catalog/models/painted_wooden_stool.glb",
+      "tris": 676
+    },
+    "nativeSize": {
+      "w": 0.385,
+      "h": 0.579,
+      "d": 0.406
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/painted_wooden_stool",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "potted-plant/potted_plant_04",
+    "category": "potted-plant",
+    "name": "Potted Plant 04",
+    "asset": {
+      "glb": "catalog/models/potted_plant_04.glb",
+      "tris": 8929
+    },
+    "nativeSize": {
+      "w": 0.168,
+      "h": 0.267,
+      "d": 0.185
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "foliage",
+      "pot"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/potted_plant_04",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "projector-screen/projector_screen",
+    "category": "projector-screen",
+    "name": "Projector Screen",
+    "asset": {
+      "glb": "catalog/models/projector_screen.glb",
+      "tris": 8727
+    },
+    "nativeSize": {
+      "w": 1.094,
+      "h": 1.799,
+      "d": 0.916
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "screen",
+      "frame"
+    ],
+    "faceSlot": "face",
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/projector_screen",
+    "attribution": "PeterM"
+  },
+  {
+    "id": "tray/seeding_tray_01",
+    "category": "tray",
+    "name": "Seedling Tray 01",
+    "asset": {
+      "glb": "catalog/models/seeding_tray_01.glb",
+      "tris": 8334
+    },
+    "nativeSize": {
+      "w": 0.22,
+      "h": 0.061,
+      "d": 0.22
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/seeding_tray_01",
+    "attribution": "Satyaki Mandal"
+  },
+  {
+    "id": "side-table/side_table_01",
+    "category": "side-table",
+    "name": "Side Table 01",
+    "asset": {
+      "glb": "catalog/models/side_table_01.glb",
+      "tris": 2756
+    },
+    "nativeSize": {
+      "w": 0.55,
+      "h": 0.551,
+      "d": 0.45
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/side_table_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "side-table/side_table_tall_01",
+    "category": "side-table",
+    "name": "Side Table Tall 01",
+    "asset": {
+      "glb": "catalog/models/side_table_tall_01.glb",
+      "tris": 6408
+    },
+    "nativeSize": {
+      "w": 0.384,
+      "h": 0.761,
+      "d": 0.384
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "top",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/side_table_tall_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "sofa/sofa_02",
+    "category": "sofa",
+    "name": "Sofa 02",
+    "asset": {
+      "glb": "catalog/models/sofa_02.glb",
+      "tris": 2728
+    },
+    "nativeSize": {
+      "w": 1.807,
+      "h": 0.709,
+      "d": 0.818
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/sofa_02",
+    "attribution": "Kirill Sannikov"
+  },
+  {
+    "id": "sofa/sofa_03",
+    "category": "sofa",
+    "name": "Sofa 03",
+    "asset": {
+      "glb": "catalog/models/sofa_03.glb",
+      "tris": 8004
+    },
+    "nativeSize": {
+      "w": 2.731,
+      "h": 1.118,
+      "d": 0.925
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "upholstery",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/sofa_03",
+    "attribution": "Fran Calvente"
+  },
+  {
+    "id": "photo-frame/standing_picture_frame_01",
+    "category": "photo-frame",
+    "name": "Standing Picture Frame 01",
+    "asset": {
+      "glb": "catalog/models/standing_picture_frame_01.glb",
+      "tris": 1634
+    },
+    "nativeSize": {
+      "w": 0.1,
+      "h": 0.25,
+      "d": 0.201
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/standing_picture_frame_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "photo-frame/standing_picture_frame_02",
+    "category": "photo-frame",
+    "name": "Standing Picture Frame 02",
+    "asset": {
+      "glb": "catalog/models/standing_picture_frame_02.glb",
+      "tris": 2986
+    },
+    "nativeSize": {
+      "w": 0.102,
+      "h": 0.266,
+      "d": 0.217
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/standing_picture_frame_02",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "wall-shelf-unit/steel_frame_shelves_02",
+    "category": "wall-shelf-unit",
+    "name": "Steel Frame Shelves 02",
+    "asset": {
+      "glb": "catalog/models/steel_frame_shelves_02.glb",
+      "tris": 4348
+    },
+    "nativeSize": {
+      "w": 0.593,
+      "h": 2.142,
+      "d": 0.502
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/steel_frame_shelves_02",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "wall-shelf-unit/steel_frame_shelves_03",
+    "category": "wall-shelf-unit",
+    "name": "Steel Frame Shelves 03",
+    "asset": {
+      "glb": "catalog/models/steel_frame_shelves_03.glb",
+      "tris": 8396
+    },
+    "nativeSize": {
+      "w": 2.351,
+      "h": 2.312,
+      "d": 0.721
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/steel_frame_shelves_03",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "tv/television_02",
+    "category": "tv",
+    "name": "Television 02",
+    "asset": {
+      "glb": "catalog/models/television_02.glb",
+      "tris": 2310
+    },
+    "nativeSize": {
+      "w": 0.4,
+      "h": 0.411,
+      "d": 0.35
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": "face",
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/television_02",
+    "attribution": "Benny Weimer"
+  },
+  {
+    "id": "throw-blanket/throw_pillows_01",
+    "category": "throw-blanket",
+    "name": "Throw Pillows 01",
+    "asset": {
+      "glb": "catalog/models/throw_pillows_01.glb",
+      "tris": 6362
+    },
+    "nativeSize": {
+      "w": 0.94,
+      "h": 0.45,
+      "d": 0.452
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "fabric"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/throw_pillows_01",
+    "attribution": "Serhii Khromov"
+  },
+  {
+    "id": "kettle/vintage_electric_kettle",
+    "category": "kettle",
+    "name": "Vintage Electric Kettle",
+    "asset": {
+      "glb": "catalog/models/vintage_electric_kettle.glb",
+      "tris": 14838
+    },
+    "nativeSize": {
+      "w": 0.321,
+      "h": 0.305,
+      "d": 0.249
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/vintage_electric_kettle",
+    "attribution": "SV Garip"
+  },
+  {
+    "id": "wall-clock/vintage_grandfather_clock_01",
+    "category": "wall-clock",
+    "name": "Vintage Grandfather Clock 01",
+    "asset": {
+      "glb": "catalog/models/vintage_grandfather_clock_01.glb",
+      "tris": 8582
+    },
+    "nativeSize": {
+      "w": 0.626,
+      "h": 2.191,
+      "d": 0.427
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "face"
+    ],
+    "faceSlot": "face",
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/vintage_grandfather_clock_01",
+    "attribution": "Yann Kervran, James Ray Cock"
+  },
+  {
+    "id": "microwave/vintage_microwave",
+    "category": "microwave",
+    "name": "Vintage Microwave",
+    "asset": {
+      "glb": "catalog/models/vintage_microwave.glb",
+      "tris": 8120
+    },
+    "nativeSize": {
+      "w": 1.074,
+      "h": 0.526,
+      "d": 0.746
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "glass"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/vintage_microwave",
+    "attribution": "Adam Nekola"
+  },
+  {
+    "id": "wall-clock/wall_clock",
+    "category": "wall-clock",
+    "name": "Wall Clock",
+    "asset": {
+      "glb": "catalog/models/wall_clock.glb",
+      "tris": 3658
+    },
+    "nativeSize": {
+      "w": 0.32,
+      "h": 0.32,
+      "d": 0.047
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "face"
+    ],
+    "faceSlot": "face",
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wall_clock",
+    "attribution": "PierreB3D"
+  },
+  {
+    "id": "potted-plant/weed_plant_02",
+    "category": "potted-plant",
+    "name": "Weed Plant 02",
+    "asset": {
+      "glb": "catalog/models/weed_plant_02.glb",
+      "tris": 11116
+    },
+    "nativeSize": {
+      "w": 2.125,
+      "h": 0.075,
+      "d": 0.291
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "foliage",
+      "pot"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/weed_plant_02",
+    "attribution": "Rob Tuytel, Rico Cilliers"
+  },
+  {
+    "id": "bookshelf/wooden_bookshelf_worn",
+    "category": "bookshelf",
+    "name": "Wooden Bookshelf Worn",
+    "asset": {
+      "glb": "catalog/models/wooden_bookshelf_worn.glb",
+      "tris": 10106
+    },
+    "nativeSize": {
+      "w": 1.374,
+      "h": 2.063,
+      "d": 0.581
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_bookshelf_worn",
+    "attribution": "Ulan Cabanilla"
+  },
+  {
+    "id": "decorative-bowl/wooden_bowl_01",
+    "category": "decorative-bowl",
+    "name": "Wooden Bowl 01",
+    "asset": {
+      "glb": "catalog/models/wooden_bowl_01.glb",
+      "tris": 14122
+    },
+    "nativeSize": {
+      "w": 0.313,
+      "h": 0.094,
+      "d": 0.309
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_bowl_01",
+    "attribution": "Oliver Harries"
+  },
+  {
+    "id": "decorative-bowl/wooden_bowl_02",
+    "category": "decorative-bowl",
+    "name": "Wooden Bowl 02",
+    "asset": {
+      "glb": "catalog/models/wooden_bowl_02.glb",
+      "tris": 4666
+    },
+    "nativeSize": {
+      "w": 0.131,
+      "h": 0.073,
+      "d": 0.125
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_bowl_02",
+    "attribution": "Kuutti Siitonen"
+  },
+  {
+    "id": "wall-shelf-unit/wooden_display_shelves_01",
+    "category": "wall-shelf-unit",
+    "name": "Wooden Display Shelves 01",
+    "asset": {
+      "glb": "catalog/models/wooden_display_shelves_01.glb",
+      "tris": 3174
+    },
+    "nativeSize": {
+      "w": 0.372,
+      "h": 1.556,
+      "d": 1.078
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "body",
+      "shelves"
+    ],
+    "faceSlot": null,
+    "support": "wall",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_display_shelves_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "step-ladder/wooden_ladder",
+    "category": "step-ladder",
+    "name": "Wooden Ladder",
+    "asset": {
+      "glb": "catalog/models/wooden_ladder.glb",
+      "tris": 8492
+    },
+    "nativeSize": {
+      "w": 0.959,
+      "h": 1.335,
+      "d": 0.5
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_ladder",
+    "attribution": "Miroslav Turura"
+  },
+  {
+    "id": "step-ladder/wooden_ladder_02",
+    "category": "step-ladder",
+    "name": "Wooden Ladder 02",
+    "asset": {
+      "glb": "catalog/models/wooden_ladder_02.glb",
+      "tris": 6126
+    },
+    "nativeSize": {
+      "w": 0.99,
+      "h": 1.722,
+      "d": 0.618
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_ladder_02",
+    "attribution": "JN_3DPRINTINGNERD"
+  },
+  {
+    "id": "lantern/wooden_lantern_01",
+    "category": "lantern",
+    "name": "Wooden Lantern 01",
+    "asset": {
+      "glb": "catalog/models/wooden_lantern_01.glb",
+      "tris": 8321
+    },
+    "nativeSize": {
+      "w": 0.221,
+      "h": 0.53,
+      "d": 0.235
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "frame",
+      "glass"
+    ],
+    "faceSlot": null,
+    "support": "surface",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_lantern_01",
+    "attribution": "James Ray Cock"
+  },
+  {
+    "id": "stool/wooden_stool_01",
+    "category": "stool",
+    "name": "Wooden Stool 01",
+    "asset": {
+      "glb": "catalog/models/wooden_stool_01.glb",
+      "tris": 10946
+    },
+    "nativeSize": {
+      "w": 0.425,
+      "h": 0.437,
+      "d": 0.442
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_stool_01",
+    "attribution": "Kuutti Siitonen"
+  },
+  {
+    "id": "stool/wooden_stool_02",
+    "category": "stool",
+    "name": "Wooden Stool 02",
+    "asset": {
+      "glb": "catalog/models/wooden_stool_02.glb",
+      "tris": 11146
+    },
+    "nativeSize": {
+      "w": 0.265,
+      "h": 0.182,
+      "d": 0.183
+    },
+    "scaleBounds": {
+      "min": 0.8,
+      "max": 1.25,
+      "nonUniform": true
+    },
+    "materialSlots": [
+      "seat",
+      "legs"
+    ],
+    "faceSlot": null,
+    "support": "floor",
+    "embedding": null,
+    "license": "CC0",
+    "source": "https://polyhaven.com/a/wooden_stool_02",
+    "attribution": "Kuutti Siitonen"
+  }
+]

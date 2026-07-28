@@ -4,30 +4,40 @@
 
 **My Room Sandbox** is a premium, iOS-feeling progressive web app that turns a hand-drawn wall outline, a handful of photos, and (optionally) a LiDAR scan into a perfectly scaled, fully **editable** 3D sandbox of a real room. Move the couch across the room, paint the walls sage green, rehang the gallery wall — and see every idea visualized at true scale before touching a single real object.
 
-## Status: Milestone M1 (Draw)
+## Status: M1–M3 complete, M4–M6 partial
 
-The installable PWA, tutorial shell, and the full drawing board are built. See
-[`docs/09-roadmap.md`](docs/09-roadmap.md) for what each milestone ships.
+The installable PWA, the drawing board, 3D extrusion, the full manual editor,
+guided photo capture, scan upload, the reconstruction pipeline's non-GPU stages,
+and the M6 polish pass are built. **Two things this repository cannot do are
+marked partial and listed in [`CHANGELOG.md`](CHANGELOG.md): GPU inference for
+the vision stages, and the golden-room accuracy fixtures — which are tape-measure
+measurements of real rooms.** Every accuracy target in docs/05 §9 is therefore
+unverified, and the app says so where it matters.
 
 ```bash
 pnpm install
-pnpm dev:web     # drawing board at http://localhost:5173
-pnpm dev:api     # API at http://localhost:8787
-pnpm test        # unit tests (geometry, schema, catalog, api, web stores)
-pnpm test:e2e    # Playwright golden path
+pnpm dev:web       # the app at http://localhost:5173
+pnpm dev:api       # API at http://localhost:8787
+pnpm test          # unit tests across every package
+pnpm test:e2e      # Playwright: golden path, reconstruct path, accessibility
+pnpm test:golden   # golden-room accuracy suite (no fixtures yet — says so)
 pnpm lint:licenses
+
+cd workers/vision && pip install -e ".[dev]" && python -m pytest -q
 ```
 
 **Repository layout** (docs/03 §2):
 
 | Path | Contains |
 |---|---|
-| `apps/web` | The PWA: splash, tutorial, projects home, drawing board |
-| `apps/api` | Fastify API: auth, project CRUD, plan save |
+| `apps/web` | The PWA: splash, tutorial, home, drawing board, capture, scan upload, processing, 3D sandbox |
+| `apps/api` | Fastify API: auth, projects, uploads, the reconstruct orchestrator, SSE progress, scenes, versions, sharing |
 | `packages/schema` | zod schemas + generated JSON Schema — the single source of truth for every data shape |
-| `packages/geometry` | Wall/polygon/unit math shared by the 2D board and (from M2) the 3D extruder |
-| `packages/catalog` | Object taxonomy; CC0 asset pipeline lands in M3 |
-| `workers/vision` | Python reconstruction workers; built in M4 |
+| `packages/geometry` | Wall/polygon/unit math, shell extrusion, object snapping |
+| `packages/catalog` | Object taxonomy (187 categories) and the CC0 asset pipeline |
+| `packages/recon` | Catalog matching, scene assembly, scan parsing and refinement, golden-room scoring |
+| `workers/vision` | Python pipeline stages: scan parse, camera/depth solve, measurement, appearance |
+| `fixtures/golden-rooms` | Where the accuracy fixtures go, and why they can't be generated |
 
 Judgment calls made where the specification was silent are recorded in
 [`DECISIONS.md`](DECISIONS.md).

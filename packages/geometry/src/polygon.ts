@@ -105,6 +105,25 @@ export function isSimplePolygon(loop: readonly Vec2[]): boolean {
 }
 
 /**
+ * Ray-casting containment test. Correct for concave rooms, where a bounding-box
+ * centre says nothing useful about which side of a wall the interior is on.
+ * Points exactly on an edge count as inside.
+ */
+export function pointInPolygon(p: Vec2, loop: readonly Vec2[]): boolean {
+  const n = loop.length;
+  if (n < 3) return false;
+  let inside = false;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const a = loop[i]!;
+    const b = loop[j]!;
+    if (Math.abs(orient(a, b, p)) <= EPS && onSegment(a, b, p)) return true;
+    const intersects = a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+/**
  * Input-time guard (docs/04 §5): would appending segment [from,to] to the open
  * chain cross any existing chain segment? The joint with the last segment is
  * exempt (they share `from`), as is closing onto the chain origin.

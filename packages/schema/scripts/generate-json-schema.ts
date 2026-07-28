@@ -11,6 +11,15 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { RoomPlanSchema } from "../src/roomplan.js";
 import { SceneSchema, CatalogItemSchema, PlacedObjectSchema, ObjectCategorySchema } from "../src/scene.js";
 import { ProjectSchema, UploadSchema, VersionSchema } from "../src/records.js";
+import {
+  CameraSolveSchema,
+  CatalogMatchSchema,
+  DetectionSchema,
+  JobEventSchema,
+  MeasuredObjectSchema,
+  ReconstructionJobSchema,
+  ScanParseSchema,
+} from "../src/reconstruction.js";
 
 const outDir = join(dirname(fileURLToPath(import.meta.url)), "..", "json");
 mkdirSync(outDir, { recursive: true });
@@ -24,6 +33,15 @@ const entries = {
   project: ProjectSchema,
   version: VersionSchema,
   upload: UploadSchema,
+  // Pipeline artifacts — each stage's Python worker validates its input and
+  // output against these before writing to object storage (docs/05 §1).
+  detection: DetectionSchema,
+  "camera-solve": CameraSolveSchema,
+  "measured-object": MeasuredObjectSchema,
+  "catalog-match": CatalogMatchSchema,
+  "scan-parse": ScanParseSchema,
+  "reconstruction-job": ReconstructionJobSchema,
+  "job-event": JobEventSchema,
 } as const;
 
 for (const [name, schema] of Object.entries(entries)) {

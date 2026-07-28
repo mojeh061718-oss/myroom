@@ -93,9 +93,17 @@ describe("labelWalls (docs/04 §5: A, B, C… clockwise from northernmost)", () 
         expect(new Set(labels).size).toBe(loop.length);
         const mids = loop.map((v, i) => ({
           y: (v.y + loop[(i + 1) % loop.length]!.y) / 2,
+          x: (v.x + loop[(i + 1) % loop.length]!.x) / 2,
           i,
         }));
-        const north = mids.reduce((a, b) => (b.y > a.y ? b : a));
+        // Northernmost midpoint, ties broken west-most — the same rule
+        // `labelWalls` uses. A symmetric room genuinely has two northernmost
+        // walls, and "whichever came first in the array" is not a rule anyone
+        // could rely on; this test previously used exactly that and failed
+        // whenever the generator produced a symmetric polygon.
+        const north = mids.reduce((a, b) =>
+          b.y > a.y + 1e-9 || (Math.abs(b.y - a.y) <= 1e-9 && b.x < a.x - 1e-9) ? b : a,
+        );
         expect(labels[north.i]).toBe("A");
       }),
       { numRuns: 200 },

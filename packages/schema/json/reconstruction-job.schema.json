@@ -1,0 +1,93 @@
+{
+  "$ref": "#/definitions/reconstruction-job",
+  "definitions": {
+    "reconstruction-job": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "succeeded",
+            "partial",
+            "failed"
+          ]
+        },
+        "stage": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "lidar-parse",
+            "detect-segment",
+            "depth-scale",
+            "match-texture",
+            "scene-assemble",
+            "done"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sceneId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "sketch",
+            "photo",
+            "lidar"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "status",
+        "stage",
+        "createdAt",
+        "finishedAt",
+        "warnings",
+        "sceneId",
+        "tier"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

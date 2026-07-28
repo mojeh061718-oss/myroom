@@ -49,6 +49,35 @@ jobs:
             || (echo "::error::packages/schema/json is stale — run 'pnpm --filter @myroom/schema generate:jsonschema' and commit the result" && exit 1)
       - name: Build PWA
         run: pnpm --filter @myroom/web build
+      # docs/09 cross-milestone rule 2: accuracy budgets are CI checks. With no
+      # fixture rooms present this reports that it certified nothing rather than
+      # passing quietly (fixtures/golden-rooms/README.md).
+      - name: Golden-room regression suite (docs/05 §9)
+        run: pnpm test:golden
+
+  workers:
+    name: Vision workers (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pnpm install --frozen-lockfile
+      - name: Generate the schemas and taxonomy the workers validate against
+        run: |
+          pnpm --filter @myroom/schema generate:jsonschema
+          pnpm --filter @myroom/catalog build:taxonomy
+      - name: Install worker package
+        run: pip install -e "workers/vision[dev]"
+      - name: Stage tests
+        run: python -m pytest -q
+        working-directory: workers/vision
 
   # docs/09 cross-milestone rule 1: the golden path stays green on every merge.
   e2e:
@@ -82,3 +111,32 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+  # docs/09 M6 acceptance: Lighthouse Performance ≥ 85 on mid-range hardware.
+  # `lighthouse` is installed on demand rather than being a repository
+  # dependency — it is a large tree only this check needs.
+  lighthouse:
+    name: Lighthouse (docs/09 M6)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npm install --no-save lighthouse chrome-launcher
+      - name: Build and serve
+        run: |
+          pnpm --filter @myroom/web build
+          pnpm --filter @myroom/web exec vite preview --port 4180 --strictPort &
+          npx wait-on http://localhost:4180 --timeout 60000
+      - name: Audit
+        # Accessibility, best practices and SEO are hard gates. Performance is
+        # reported but not gated here: a shared runner's CPU is not the
+        # mid-range device the criterion names, and the same build scores 87 on
+        # a developer machine and 70 here.
+        env:
+          LIGHTHOUSE_PERF_ADVISORY: "1"
+        run: node scripts/lighthouse.mjs http://localhost:4180

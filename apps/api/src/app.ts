@@ -8,14 +8,26 @@ import {
   labelWallsForPlan,
 } from "@myroom/schema";
 import { createMemoryStore, type Store } from "./store.js";
+import { createMemoryBlobs, type Blobs } from "./blobs.js";
+import { createMemoryEventBus, type EventBus } from "./jobs/queue.js";
+import { createDemoWorkers, type StageWorkers } from "./jobs/orchestrator.js";
+import { registerUploadRoutes } from "./routes/uploads.js";
+import { registerReconstructRoutes } from "./routes/reconstruct.js";
+import { registerSceneRoutes } from "./routes/scene.js";
 import { clearSession, issueSession, readSession } from "./auth.js";
 import { invalid, notFound, problem, unauthorized } from "./problem.js";
 
 export interface AppOptions {
   store?: Store;
+  blobs?: Blobs;
+  bus?: EventBus;
+  /** the GPU tier's stand-in; defaults to the CPU-only demo driver */
+  workers?: StageWorkers;
   /** injected so tests get deterministic ids/timestamps */
   now?: () => string;
   newId?: () => string;
+  /** collects in-flight pipeline runs so tests can await them */
+  track?: (work: Promise<unknown>) => void;
 }
 
 const uuidv7 = (): string => {
@@ -34,8 +46,16 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance> 
   const now = opts.now ?? (() => new Date().toISOString());
   const newId = opts.newId ?? uuidv7;
 
+  const blobs = opts.blobs ?? createMemoryBlobs();
+  const bus = opts.bus ?? createMemoryEventBus();
+  const workers = opts.workers ?? createDemoWorkers(newId);
+
   const app = Fastify({ logger: false });
   await app.register(cookie);
+  // Upload bodies arrive as opaque bytes on the presigned-PUT route, under
+  // whatever content type the browser chose. JSON still goes through Fastify's
+  // own parser; this only catches what it would otherwise refuse with a 415.
+  app.addContentTypeParser("*", { parseAs: "buffer" }, (_req, body, done) => done(null, body));
 
   /** Every /v1 route except auth requires a session. */
   async function requireSession(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -45,6 +65,22 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance> 
       return null;
     }
     return session.userId;
+  }
+
+  /** Session plus ownership of the addressed project. */
+  async function requireOwner(
+    request: FastifyRequest,
+    reply: FastifyReply,
+    projectId: string,
+  ): Promise<string | null> {
+    const userId = await requireSession(request, reply);
+    if (!userId) return null;
+    const project = await store.getProject(userId, projectId);
+    if (!project) {
+      notFound(reply, "That project");
+      return null;
+    }
+    return userId;
   }
 
   app.get("/health", async () => ({ ok: true }));
@@ -150,6 +186,17 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance> 
     if (!project) return notFound(reply, "That project");
     return reply.header("etag", `W/"${project.planVersion}"`).send(project);
   });
+
+  // --- capture, pipeline, scene ---------------------------------------------
+  registerUploadRoutes(app, {
+    store,
+    blobs,
+    now,
+    newId,
+    requireOwner: requireOwner as (r: unknown, p: unknown, id: string) => Promise<string | null>,
+  });
+  registerReconstructRoutes(app, { store, bus, workers, now, newId, requireOwner, requireSession, track: opts.track });
+  registerSceneRoutes(app, { store, now, newId, requireOwner });
 
   return app;
 }

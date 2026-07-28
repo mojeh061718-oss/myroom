@@ -10,9 +10,14 @@
   --text: #f2f3f5;
   --text-dim: #9ba0aa;
   --accent: #4c8dff;
+  /* Filled surfaces that carry white text need 4.5:1 (docs/02 §9); --accent is
+     tuned for outlines and highlights, where the 3:1 essential-UI bar applies.
+     Keeping two tokens beats darkening every highlight in the app. */
+  --accent-strong: #2f6fe0;
   --accent-warm: #ffb35c;
   --success: #5ecc8f;
   --danger: #ff6b6b;
+  --danger-strong: #c53434;
   --canvas-grid: #26282e;
   --surface-border: rgba(255, 255, 255, 0.08);
   --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.35);
@@ -30,11 +35,19 @@
   --surface: rgba(255, 255, 255, 0.78);
   --surface-solid: #ffffff;
   --text: #17181c;
-  --text-dim: #6e7480;
+  /* 4.9:1 on the light background — the previous #6e7480 was 4.4:1, and dim
+     text still carries wall lengths and areas. */
+  --text-dim: #666c77;
   --accent: #2f6fe4;
-  --accent-warm: #e8933a;
-  --success: #2fa36b;
+  --accent-strong: #2f6fe4;
+  /* Amber on a light background is the hardest hue to keep legible; this is
+     3.4:1, over the 3:1 essential-UI bar. */
+  --accent-warm: #bf7413;
+  /* 3.7:1; the previous #2fa36b was 3.0:1 against a light background, right on
+     the line and below it once anti-aliasing thins the stroke. */
+  --success: #28925f;
   --danger: #d64545;
+  --danger-strong: #c53434;
   --canvas-grid: #e4e6ea;
   --surface-border: rgba(255, 255, 255, 0.6);
   --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.12);

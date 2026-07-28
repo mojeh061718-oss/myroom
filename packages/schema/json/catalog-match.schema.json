@@ -1,0 +1,40 @@
+{
+  "$ref": "#/definitions/catalog-match",
+  "definitions": {
+    "catalog-match": {
+      "type": "object",
+      "properties": {
+        "measuredId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "catalogId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "runnerUpCatalogIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "measuredId",
+        "catalogId",
+        "score",
+        "runnerUpCatalogIds"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -107,9 +107,18 @@ test("input discipline: short walls and crossings are rejected", async ({ page }
   await planClick(page, w + 0.1, 0);
   await expect(page.getByText("at least 0.3 m")).toBeVisible();
   await expect(page.getByTestId("validation-badge")).toContainText("1 wall");
-  // crossing wall → rejected
+  // crossing wall → rejected.
+  //
+  // Two things this click has to survive. First, the crossing check runs
+  // against committed state, so wait for the chain to actually grow rather than
+  // racing it. Second, the board snaps the pending point (docs/04 §4) — so aim
+  // along an exact 45° from the last vertex, where every snap is a no-op, and
+  // far from any vertex the snap could grab. From (w, h) that is (w − h − 1, −1),
+  // which crosses the first wall regardless of the room's size.
   await planClick(page, w, h);
-  await planClick(page, w / 2, -1.5);
+  await expect(page.getByTestId("validation-badge")).toContainText("2 walls");
+  await page.waitForTimeout(400);
+  await planClick(page, w - h - 1, -1);
   await expect(page.getByText("can't cross")).toBeVisible();
   await expect(page.getByTestId("validation-badge")).toContainText("2 walls");
 });

@@ -1,0 +1,76 @@
+{
+  "$ref": "#/definitions/camera-solve",
+  "definitions": {
+    "camera-solve": {
+      "type": "object",
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wallLabel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
+          "additionalProperties": false
+        },
+        "yaw": {
+          "type": "number"
+        },
+        "pitch": {
+          "type": "number"
+        },
+        "fovY": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depthScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "solved": {
+          "type": "boolean"
+        },
+        "failure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "photoId",
+        "wallLabel",
+        "position",
+        "yaw",
+        "pitch",
+        "fovY",
+        "depthScale",
+        "solved",
+        "failure"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

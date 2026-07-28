@@ -16,10 +16,10 @@
 }
 .pill-button:active { transform: scale(0.97); }
 .pill-button:disabled { opacity: 0.4; cursor: default; }
-.pill-button.primary { background: var(--accent); color: #fff; }
+.pill-button.primary { background: var(--accent-strong); color: #fff; }
 .pill-button.secondary { background: var(--surface-solid); color: var(--text); border: 1px solid var(--surface-border); }
 .pill-button.ghost { color: var(--text-dim); }
-.pill-button.danger { background: var(--danger); color: #fff; }
+.pill-button.danger { background: var(--danger-strong); color: #fff; }
 
 .app-bar {
   position: fixed;
@@ -79,7 +79,7 @@
   font-weight: 500;
   color: var(--text-dim);
 }
-.segmented button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.segmented button[aria-pressed="true"] { background: var(--accent-strong); color: #fff; }
 
 .sheet-backdrop {
   position: fixed;
@@ -179,4 +179,26 @@
   0% { transform: scale(1); }
   50% { transform: scale(1.6); }
   100% { transform: scale(1); }
+}
+
+/* docs/02 §5 — errors shake 3× 60 ms, and never move for reduced motion. */
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  16% { transform: translateX(-6px); }
+  33% { transform: translateX(6px); }
+  50% { transform: translateX(-4px); }
+  66% { transform: translateX(4px); }
+  83% { transform: translateX(-2px); }
+}
+.shake {
+  animation: error-shake 180ms linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shake { animation: none; }
+}
+
+/* docs/02 §5 — the processing checkmark draws on rather than popping. */
+@keyframes tick-draw {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
