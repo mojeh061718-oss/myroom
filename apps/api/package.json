@@ -14,7 +14,9 @@
     "@myroom/schema": "workspace:*",
     "fastify": "^4.28.1",
     "jose": "^5.6.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@myroom/recon": "workspace:*",
+    "@myroom/catalog": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

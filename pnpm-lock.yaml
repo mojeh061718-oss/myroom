@@ -13,6 +13,12 @@ importers:
       '@fastify/cookie':
         specifier: ^9.4.0
         version: 9.4.0
+      '@myroom/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
+      '@myroom/recon':
+        specifier: workspace:*
+        version: link:../../packages/recon
       '@myroom/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -154,6 +160,25 @@ importers:
       fast-check:
         specifier: ^3.19.0
         version: 3.23.2
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.5
+        version: 2.1.9(@types/node@20.19.43)(terser@5.49.0)
+
+  packages/recon:
+    dependencies:
+      '@myroom/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@myroom/geometry':
+        specifier: workspace:*
+        version: link:../geometry
+      '@myroom/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
       typescript:
         specifier: ^5.5.4
         version: 5.9.3
