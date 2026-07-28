@@ -9,29 +9,34 @@ import { DrawingBoard } from "./screens/board/DrawingBoard.js";
 import { StubScreen } from "./screens/StubScreen.js";
 import { ToastRegion } from "./components/Toast.js";
 
-const router = createBrowserRouter([
-  { path: "/", element: <Home /> },
-  { path: "/tutorial", element: <Tutorial /> },
-  { path: "/p/:id/draw", element: <DrawingBoard /> },
-  {
-    path: "/p/:id/capture",
-    element: (
-      <StubScreen
-        title="Guided photo capture"
-        body="Photo capture and reconstruction arrive in Milestone M4. Your plan is saved — this room is ready for photos the moment the pipeline ships."
-      />
-    ),
-  },
-  {
-    path: "/p/:id",
-    element: (
-      <StubScreen
-        title="3D Sandbox"
-        body="The 3D room shell arrives in Milestone M2. Your drawn plan is saved and will extrude into a navigable room."
-      />
-    ),
-  },
-]);
+// BASE_URL follows Vite's `base`, so the app works at the domain root and
+// under a staging subpath without route changes.
+const router = createBrowserRouter(
+  [
+    { path: "/", element: <Home /> },
+    { path: "/tutorial", element: <Tutorial /> },
+    { path: "/p/:id/draw", element: <DrawingBoard /> },
+    {
+      path: "/p/:id/capture",
+      element: (
+        <StubScreen
+          title="Guided photo capture"
+          body="Photo capture and reconstruction arrive in Milestone M4. Your plan is saved — this room is ready for photos the moment the pipeline ships."
+        />
+      ),
+    },
+    {
+      path: "/p/:id",
+      element: (
+        <StubScreen
+          title="3D Sandbox"
+          body="The 3D room shell arrives in Milestone M2. Your drawn plan is saved and will extrude into a navigable room."
+        />
+      ),
+    },
+  ],
+  { basename: import.meta.env.BASE_URL },
+);
 
 export function App() {
   const settingsHydrated = useSettings((s) => s.hydrated);

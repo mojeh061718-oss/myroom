@@ -58,6 +58,12 @@ depend on a `Store` interface; M1 ships the in-memory implementation.
 Playwright golden path (desktop + mobile), and the docs/08 §7 license gate with
 its own unit tests proving it rejects AGPL, GPL, SSPL, CC-BY and CC-BY-NC.
 
+**Staging deploy** — `.github/workflows/deploy-staging.yml` publishes the PWA to
+GitHub Pages on pushes to `main` and on `v*` tags. The build is subpath-aware
+(`PUBLIC_BASE_PATH`), with an SPA fallback so deep links survive a reload.
+Requires a one-time repository setting: **Settings → Pages → Source: GitHub
+Actions**. The staging URL is then `https://<owner>.github.io/<repo>/`.
+
 ### Notes
 
 - Judgment calls where the specification was silent are recorded in
@@ -67,3 +73,5 @@ its own unit tests proving it rejects AGPL, GPL, SSPL, CC-BY and CC-BY-NC.
 - The docs/09 M1 acceptance item "drawing a room takes < 90 s for a first-timer
   (hallway-test 5 users)" is a moderated usability test and has **not** been
   run; it needs five human participants.
+- Storybook (docs/02 §8) is not yet set up; the component inventory is built and
+  used by the M1 screens, but has no isolated workshop yet.

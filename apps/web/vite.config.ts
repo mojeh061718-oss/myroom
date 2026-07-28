@@ -5,6 +5,9 @@ import { VitePWA } from "vite-plugin-pwa";
 // PWA per docs/03 §2: Workbox precache of the app shell; runtime caches for
 // catalog assets (CacheFirst, LRU), API GETs (SWR), scene bundles (CacheFirst).
 export default defineConfig({
+  // Staging deploys under a repository subpath (e.g. GitHub Pages) set
+  // PUBLIC_BASE_PATH; production serves from the domain root.
+  base: process.env.PUBLIC_BASE_PATH ?? "/",
   plugins: [
     react(),
     VitePWA({
@@ -14,7 +17,8 @@ export default defineConfig({
         name: "My Room Sandbox",
         short_name: "My Room",
         description: "Your room. Reimagined.",
-        start_url: "/",
+        start_url: ".",
+        scope: ".",
         display: "standalone",
         background_color: "#0E0F12",
         theme_color: "#0E0F12",
@@ -28,7 +32,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-        navigateFallback: "/index.html",
+        navigateFallback: `${process.env.PUBLIC_BASE_PATH ?? "/"}index.html`,
         runtimeCaching: [
           {
             urlPattern: /\/catalog\//,
