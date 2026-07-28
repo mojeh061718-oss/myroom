@@ -41,6 +41,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@myroom/catalog':
+        specifier: workspace:*
+        version: link:../../packages/catalog
       '@myroom/geometry':
         specifier: workspace:*
         version: link:../../packages/geometry

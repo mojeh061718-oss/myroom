@@ -6,3 +6,4 @@ export * from "./snap.js";
 export * from "./triangulate.js";
 export * from "./offset.js";
 export * from "./shell.js";
+export * from "./objectSnap.js";

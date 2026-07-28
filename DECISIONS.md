@@ -226,6 +226,59 @@ project card" budget for opening a room.
 
 ---
 
+## M3 — Furnish
+
+### 15. Parametric catalog before CC0 GLB assets
+
+**Unspecified in practice.** docs/09 M3 calls for a launch catalog of ~600 CC0
+GLB models through the asset pipeline. Those assets live on Poly Haven,
+ambientCG, Quaternius and Kenney and must be downloaded, retopologised and
+compressed — none of which is possible from this build environment, which has
+no access to those hosts.
+
+**Chosen.** Every catalog item renders as **parametric geometry** — the
+box/cylinder composition the blueprint already specifies as the pipeline's
+fallback (docs/05 §6: "a clean procedural stand-in… *Never omit a detected
+object silently*"). Fifteen archetypes (seating, table, storage, bed, lamp,
+pendant, fan, screen, flat, rug, appliance, plant, stand, chair, block) cover
+all 183 categories, each with real-world dimensions and paintable material
+slots.
+
+**Why.** It makes M3 fully functional and testable now: every object can be
+placed, moved, resized, recoloured, swapped and deleted, which is what the
+milestone is actually for. The GLB pipeline swaps in behind the same
+`PlacedObject.catalogId` field without touching edit mode — the data model
+already carries `catalogId | placeholder` as alternatives (docs/07 §4).
+
+**This is the one place M3 does not meet its acceptance criteria as written**,
+and it is recorded as such in CHANGELOG.md rather than quietly glossed.
+
+### 16. New objects land in clear floor space
+
+**Unspecified.** docs/06 §5 says placement "drops it at the tapped spot already
+snapped and wall-aligned", but the catalog can also be opened without a tapped
+spot.
+
+**Chosen.** `findFreeSpot` walks candidate positions flush along each wall and
+takes the first whose footprint is clear.
+
+**Why.** Dropping everything at the room centre stacked every new piece on the
+last one — visibly wrong the moment a second item is added.
+
+### 17. Version zero is captured on first entering Edit
+
+**Unspecified.** docs/06 §6 says "Version zero, *Original room*, is created
+automatically at first reconstruction" — but reconstruction is M4, and M3 rooms
+are furnished by hand.
+
+**Chosen.** The locked "Original room" snapshot is taken the first time the user
+taps Edit, capturing the room as it was before any edit.
+
+**Why.** It preserves the guarantee that matters — an untouched state you can
+always return to — a milestone before reconstruction exists to trigger it.
+
+---
+
 ## Deferred to their own milestones
 
 These are **not** decisions — they are blueprint items whose milestone has not

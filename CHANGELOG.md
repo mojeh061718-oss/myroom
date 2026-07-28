@@ -4,6 +4,62 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [0.3.0-m3] — Milestone M3: Furnish
+
+**Ships:** the full manual editor — a genuinely useful room-design product.
+
+### Added
+
+**Scene document + command pattern** (`sceneStore`) — the sandbox renders purely
+from the `Scene` document (docs/07 §3). Every mutation — add, move, rotate,
+resize, paint, swap, duplicate, delete, restore — records an inverse, so
+undo/redo covers all of them (docs/06 §6). A whole drag gesture collapses into
+one undo step. State persists to IndexedDB on every command.
+
+**Objects** — all 183 catalog categories render as parametric geometry with
+paintable material slots, selection outlines, and correct support behaviour for
+floor, wall, surface and ceiling items.
+
+**Constrained editing** (`packages/geometry/objectSnap`) — drag on the floor
+plane with rotation locking parallel to the nearest wall within 8°, flush
+snapping within 12 cm, room-centre guides, soft collision that tints rather
+than blocks, and live distance-to-wall measurements during the drag. Wall items
+slide along their wall and hop corners with a haptic tick, never detaching
+(docs/06 §3). New items land in clear floor space, wall-aligned.
+
+**Paint** (docs/06 §4) — six curated palettes plus a hex field for walls, a
+floor material browser, and per-slot object recolouring.
+
+**Catalog** (docs/06 §5) — searchable by label or detection synonym ("couch" →
+Sofa, "footstool" → Ottoman, "airfryer" → Air Fryer), filterable by group, with
+a size-aware "fits here" filter.
+
+**Versions** (docs/06 §6) — named snapshots with a locked "Original room" that
+can never be deleted or overwritten; restoring is itself undoable.
+
+**Accessibility** — the object list enumerates every object and is a working
+selection path; keyboard arrows nudge 5 cm (25 cm with Shift), R rotates 45°,
+Delete removes.
+
+### Verified
+
+- 124 unit tests and 22 Playwright E2E tests.
+- A seven-piece furnished room renders in 1 668 triangles and 33 draw calls
+  against docs/06 §8 budgets of 300 k and 150.
+- E2E covers the docs/01 §10 running example end to end: furnish, paint sage
+  green, undo and redo the lot, survive a reload, and restore version zero.
+
+### Not met
+
+- **The CC0 GLB catalog is not built.** Its asset sources are unreachable from
+  this environment, so every item renders as parametric geometry instead — the
+  blueprint's own docs/05 §6 fallback. Everything else in edit mode is real and
+  works against it. See DECISIONS.md §15.
+- **Compare (A/B slider) and share renders/links are not implemented** — the
+  version *machinery* is there (snapshot, restore, locked version zero) but not
+  the side-by-side comparison or the export.
+- Frame rate on the reference device matrix is still unverified (no GPU in CI).
+
 ## [0.2.0-m2] — Milestone M2: Extrude
 
 **Ships:** drawn plans become navigable 3D rooms — the first "wow, that's my

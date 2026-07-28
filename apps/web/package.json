@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@myroom/catalog": "workspace:*",
     "@myroom/geometry": "workspace:*",
     "@myroom/schema": "workspace:*",
     "@react-three/drei": "^9.122.0",

@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { RoomPlan } from "@myroom/schema";
+import type { RoomPlan, Scene } from "@myroom/schema";
 import type { DisplayUnit } from "@myroom/geometry";
 
 /**
@@ -13,6 +13,16 @@ export interface LocalProject {
   createdAt: string;
   updatedAt: string;
   plan: RoomPlan;
+  /** the editable Scene document (docs/07 §3); absent until the room is built */
+  scene?: Scene;
+  /** named snapshots, version zero locked as "Original room" (docs/06 §6) */
+  versions?: {
+    id: string;
+    name: string;
+    scene: Scene;
+    createdAt: string;
+    locked: boolean;
+  }[];
   /** poster SVG for the Projects Home card */
   thumbnailSvg: string | null;
 }
