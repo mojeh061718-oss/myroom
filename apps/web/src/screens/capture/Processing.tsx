@@ -10,6 +10,7 @@ import { getProject, listUploads, putProject, type LocalProject } from "../../li
 import { DEMO_NOTICE, reconstruct, refineFromScan } from "../../lib/reconstruct.js";
 import { PillButton } from "../../components/PillButton.js";
 import { haptic } from "../../theme/tokens.js";
+import { t } from "../../i18n/index.js";
 import { notifyRoomReady, requestNotificationPermission } from "../../lib/notify.js";
 import { MiniPlan } from "./MiniPlan.js";
 import "./capture.css";
@@ -141,7 +142,7 @@ export function Processing() {
 
   return (
     <main className="processing" data-testid="processing">
-      <h1 className="type-title">{finished ? "Your room is ready" : "Building your room…"}</h1>
+      <h1 className="type-title">{finished ? t("recon.ready") : t("recon.building")}</h1>
 
       <div className="processing-stage" aria-live="polite">
         {project && (
@@ -150,7 +151,7 @@ export function Processing() {
         <ul className="processing-found" data-testid="processing-found">
           {found.map((object, i) => (
             <li key={`${object.label}-${i}`} className="processing-found-item">
-              Found: {object.label} · {object.width.toFixed(1)} m
+              {t("recon.found", { label: object.label, size: object.width.toFixed(1) })}
             </li>
           ))}
         </ul>
@@ -192,7 +193,7 @@ export function Processing() {
         <div className="processing-error shake" data-testid="processing-error">
           <p>{error}</p>
           {/* Never a dead end: the shell is exact whatever the pipeline did. */}
-          <PillButton onClick={() => navigate(`/p/${id}`)}>Open the room anyway</PillButton>
+          <PillButton onClick={() => navigate(`/p/${id}`)}>{t("recon.openAnyway")}</PillButton>
         </div>
       )}
 
@@ -203,11 +204,11 @@ export function Processing() {
           data-testid="processing-open"
           onClick={() => navigate(`/p/${id}`)}
         >
-          {finished ? "See your room" : "Building…"}
+          {finished ? t("recon.open") : t("recon.building")}
         </PillButton>
         <p className="type-caption">
-          {shell ? `${shell.floorArea.toFixed(1)} m² · ${project?.plan.walls.length} walls` : ""} · You can leave this
-          screen; we'll keep going.
+          {shell ? `${shell.floorArea.toFixed(1)} m² · ${project?.plan.walls.length} walls · ` : ""}
+          {t("recon.leaveHint")}
         </p>
       </footer>
     </main>

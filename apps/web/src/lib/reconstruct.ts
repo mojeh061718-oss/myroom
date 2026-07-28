@@ -12,6 +12,7 @@ import {
   type ScanSeedObject,
 } from "@myroom/recon";
 import { getCategory } from "@myroom/catalog";
+import { t } from "../i18n/index.js";
 import { uuidv7 } from "./uuid.js";
 import type { LocalUpload } from "./db.js";
 
@@ -32,8 +33,7 @@ import type { LocalUpload } from "./db.js";
 export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 export const hasApi = API_BASE.length > 0;
 
-export const DEMO_NOTICE =
-  "Demo reconstruction: these pieces are examples laid out from your floor plan, not objects detected in your photos.";
+export const DEMO_NOTICE = t("recon.demoNotice");
 
 export interface ReconstructResult {
   scene: Scene;
@@ -197,10 +197,10 @@ async function locally({ plan, uploads, scanParsed, seeds, onEvent, signal }: Re
 
   const notices = [
     ...(fromScan
-      ? [`${measured.length} pieces came from your scan, at the sizes it measured.`]
+      ? [t("recon.fromScan", { count: measured.length })]
       : photos.length > 0
         ? [DEMO_NOTICE]
-        : ["No photos yet — add pieces yourself from the catalog whenever you like."]),
+        : [t("recon.noPhotos")]),
     ...warnings,
   ];
   // The demo notice already went out above; don't say it twice.

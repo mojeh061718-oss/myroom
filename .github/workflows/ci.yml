@@ -111,3 +111,26 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+  # docs/09 M6 acceptance: Lighthouse Performance ≥ 85 on mid-range hardware.
+  # `lighthouse` is installed on demand rather than being a repository
+  # dependency — it is a large tree only this check needs.
+  lighthouse:
+    name: Lighthouse (docs/09 M6)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npm install --no-save lighthouse chrome-launcher
+      - name: Build and serve
+        run: |
+          pnpm --filter @myroom/web build
+          pnpm --filter @myroom/web exec vite preview --port 4180 --strictPort &
+          npx wait-on http://localhost:4180 --timeout 60000
+      - name: Audit
+        run: node scripts/lighthouse.mjs http://localhost:4180

@@ -351,18 +351,64 @@ pipeline run takes 30–120 s and needs no help looking busy.
 
 ---
 
-## Deferred to their own milestones
+## M6 — Polish
 
-These are **not** decisions — they are blueprint items whose milestone has not
-started. Recorded so their absence is not mistaken for an omission.
+### 22. Two accent tokens, not one darker accent
 
-| Item | Lands in |
+**Unspecified.** docs/02 §3 gives one accent colour; docs/02 §9 requires 4.5:1
+for text and 3:1 for essential UI. The single accent satisfies the second and
+not the first.
+
+**Chosen.** `--accent` keeps its value for outlines, highlights and selection;
+`--accent-strong` is a darker variant used wherever white text sits on a filled
+surface. Same for `--danger`.
+
+**Why.** Darkening the one token would have dulled every highlight in the app to
+fix a bar that only applies to text. Two tokens keep the design language and the
+contrast requirement from trading against each other.
+
+### 23. Quality stepping is asymmetric
+
+**Unspecified.** docs/06 §8 says step down below threshold and "back up when
+headroom returns", without saying how fast.
+
+**Chosen.** Two consecutive bad seconds step down; six consecutive good ones
+step up. A frame rate between the floor and the headroom moves nothing.
+
+**Why.** Two seconds of stutter is already a bad experience, so falling should
+be quick. A level that just failed is likely to fail again, so climbing should
+be slow — and flapping between two levels is worse than sitting on the lower one.
+
+### 24. The demo path never runs on an empty upload set
+
+**Unspecified.** docs/03 §8 requires a mock reconstruct for CI but says nothing
+about a user with no photos.
+
+**Chosen.** With no photos, the CPU-only driver returns nothing and the room is
+built empty, with a nudge into manual furnishing.
+
+**Why.** Furnishing a room nobody photographed is a claim about someone's home
+made from nothing at all. The empty accurate room is already the docs/05 §8
+fallback, and it is honest.
+
+---
+
+## Not built, and why
+
+These are **not** decisions — they are blueprint items this repository does not
+contain. Recorded so their absence is not mistaken for an oversight. Each is
+described in full, with its acceptance criterion, in `CHANGELOG.md`.
+
+| Item | Why |
 |---|---|
-| 3D shell extrusion, opening CSG, sandbox viewer | M2 (docs/09) |
-| CC0 catalog assets, edit mode, versions/compare/share | M3 |
-| GPU inference (detect/segment, metric depth) and golden-room fixtures | M4 — blocked, see CHANGELOG |
-| Queue-driven worker dispatch (BullMQ over Valkey) | M4 — see CHANGELOG |
-| Tutorial T2–T5 final animations, splash room-loop video, a11y audit | M6 |
+| GPU inference: Grounding DINO, SAM 2, Depth Anything V2 | No GPU in this environment |
+| Golden-room accuracy fixtures (docs/05 §9) | Tape-measure measurements of five real rooms; cannot be synthesized without inventing the numbers they exist to check |
+| Queue-driven worker dispatch (BullMQ over Valkey) | The orchestrator calls its stage driver in-process; `StageWorkers` is the seam a consumer would implement |
+| The 60-second demo video (docs/09 M6's definition of done) | Films a photo reconstruction, which needs the GPU tier |
+| Tutorial T2–T5 final animations, splash room-loop video | Asset production |
+| Low-end device lab pass (2 GB Android, 30 fps floor) | No device lab |
+| Web Push proper (VAPID + server) | Needs the hosted API; the local notification works without it |
 
-The catalog asset pipeline and `workers/vision/` are built; what remains unbuilt
-in M4 is listed, with reasons, in `CHANGELOG.md`.
+Everything above is stated in the app itself where a user could otherwise be
+misled — the accuracy badge, the demo-reconstruction notice, and the golden-room
+suite's "certified nothing" output.

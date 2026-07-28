@@ -10,6 +10,8 @@
  * implemented; see CHANGELOG. Everything here works offline and without one.
  */
 
+import { t } from "../i18n/index.js";
+
 const ASKED_KEY = "myroom.notify.asked";
 
 export function notificationsSupported(): boolean {
@@ -37,8 +39,8 @@ export function notifyRoomReady(projectName: string): void {
   if (!notificationsSupported() || Notification.permission !== "granted") return;
   if (typeof document !== "undefined" && !document.hidden) return;
   try {
-    new Notification("Your room is ready", {
-      body: `${projectName} is built and waiting.`,
+    new Notification(t("notify.roomReadyTitle"), {
+      body: t("notify.roomReadyBody", { name: projectName }),
       tag: "room-ready",
     });
   } catch {

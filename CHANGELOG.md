@@ -4,6 +4,84 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [0.6.0-m6] — Milestone M6: Polish & Premium *(partial — see Not met)*
+
+**Ships:** the finish, and the checks that keep it finished.
+
+### Added
+
+**Accessibility, as tests** (docs/02 §9 — ship-blocking) — axe across home,
+tutorial, drawing board, capture, scan upload and the sandbox; a Dynamic Type
+run at 135% asserting no horizontal overflow and no control under 40 px; a
+keyboard-only path from launch to the drawing board; and a token-level contrast
+test covering both themes without rendering either.
+
+**Auto quality stepping** (docs/06 §8) — rolling FPS steps quality down through
+pixel ratio → shadow map → AO → environment resolution and back up when headroom
+returns, quick to fall and slow to climb so it cannot flap. Manual
+Auto / Best / Battery-saver override in settings.
+
+**Privacy, kept** (docs/01 §12, docs/03 §7) — a real storage-purge job with a
+completion audit and an overdue check against the 24-hour promise; deleting a
+project now also deletes its photos from the device; and a plain-language page
+of five promises, each of which is a behaviour implemented in this repository.
+
+**Motion & haptics** (docs/02 §5) — a light tick per completed pipeline stage
+and a success tick on the room reveal, the checkmark draw-on, and the error
+shake. All of it honours `prefers-reduced-motion`, and haptics are silently
+absent where the Vibration API is.
+
+**"Your room is ready"** — notification permission is requested at the first
+processing run and nowhere else; if the user leaves the screen, they're told when
+the room is done.
+
+**2× share renders** (docs/09 M6) — the export re-renders at twice the pixel
+ratio and restores the previous one, so a share image isn't limited to the
+phone's screen.
+
+**Localization scaffold** (docs/09 M6) — a typed string catalogue with named
+(not concatenated) parameters, primary-subtag locale matching, and a
+`missingKeys` check so a new catalogue can be diffed against English.
+
+### Verified
+
+- Lighthouse on the built PWA, mobile-throttled: **performance 87** (target 85),
+  **accessibility 100** (target 95), best practices 100, SEO 91. Wired into CI.
+- 48 web unit tests, 28 API tests, 24 pytest cases, and a Playwright suite
+  covering the golden path, the reconstruct path and the accessibility checklist.
+
+### Fixed
+
+Four real accessibility violations, found by the audit rather than by review:
+`user-scalable=no` disabled pinch zoom app-wide; the primary button was 3.2:1
+white-on-blue; the light theme's dim text, amber and success green were all under
+their bars; the tutorial dots claimed a 44 px hit area through an overlay that
+measured 10 px to anything reading element boxes; and no document had a `<main>`
+landmark.
+
+Also a pre-existing flaky property test, which asserted that the northernmost
+wall by "first index wins" gets label A while `labelWalls` breaks that tie
+west-most. A symmetric room genuinely has two northernmost walls.
+
+### Not met
+
+- **The 60-second demo video is the stated definition of done, and there is no
+  video.** docs/09 M6: "the doc-01 couple scenario filmed as a 60-second demo
+  with zero cuts and zero workarounds — this video is the definition of done."
+  That scenario ends in a room reconstructed from photographs, which needs the
+  GPU tier this environment does not have. By the blueprint's own criterion, M6
+  is not done.
+- **Tutorial T2–T5 final animations and the splash room-loop video** are not
+  produced; T1's animation and the current tutorial copy stand in.
+- **Web Push proper** (VAPID keys, a service-worker `push` handler, a server that
+  sends it) is not implemented — the notification is local to the device.
+- **The low-end device lab pass** (2 GB Android, the 30 fps floor) has not been
+  run; there is no device lab here. The quality policy is unit-tested, the
+  thresholds it uses are not measured against real hardware.
+- **Localization is scaffolded, not finished.** The privacy page, the accuracy
+  badge and the reconstruction copy read from the catalogue; splash, tutorial,
+  home, the drawing board and the sandbox still hold their strings inline.
+
 ## [0.5.0-m5] — Milestone M5: LiDAR *(partial — see Not met)*
 
 **Ships:** the optional scan upload that upgrades accuracy.
