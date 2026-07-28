@@ -175,3 +175,47 @@ test("an object can be selected, rotated, duplicated and deleted", async ({ page
   await page.waitForTimeout(500);
   expect(await objectCount(page)).toBe(1);
 });
+
+test("A/B compare renders two versions from the same camera (docs/06 §6)", async ({ page }) => {
+  await buildRoom(page);
+  await page.getByTestId("edit-button").click();
+
+  // Version zero was captured on entering Edit; furnish, then save a second.
+  await addItem(page, "sofa", "sofa");
+  await addItem(page, "bookshelf", "bookshelf");
+  await page.getByTestId("done-button").click();
+  await page.getByTestId("versions-button").click();
+
+  page.once("dialog", (d) => d.accept("Furnished"));
+  await page.getByTestId("save-version").click();
+  await page.waitForTimeout(600);
+
+  // Pick the two versions to compare.
+  await page.getByTestId("compare-Original-room").click();
+  await page.getByTestId("compare-Furnished").click();
+
+  const overlay = page.getByTestId("compare-overlay");
+  await expect(overlay).toBeVisible({ timeout: 20_000 });
+
+  // Both frames captured, and they differ — the empty room vs the furnished one.
+  const sources = await overlay.locator("img").evaluateAll((imgs) =>
+    imgs.map((i) => (i as HTMLImageElement).src),
+  );
+  expect(sources).toHaveLength(2);
+  const [before, after] = sources as [string, string];
+  expect(before.startsWith("data:image/png")).toBe(true);
+  expect(after.startsWith("data:image/png")).toBe(true);
+  expect(before).not.toBe(after);
+
+  await page.getByTestId("compare-range").fill("20");
+  await page.getByTestId("compare-close").click();
+  await expect(overlay).toBeHidden();
+});
+
+test("share exports a render of the current view (docs/06 §6)", async ({ page }) => {
+  await buildRoom(page);
+  const download = page.waitForEvent("download", { timeout: 20_000 });
+  await page.getByTestId("share-button").click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/\.png$/);
+});

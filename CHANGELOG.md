@@ -58,6 +58,11 @@ release and render at true scale; the Draco decoder is bundled locally rather
 than fetched from a CDN, so the offline guarantee (docs/03 §6) holds.
 Categories without a model yet still place their parametric stand-in.
 
+**Compare & share** (docs/06 §6) — A/B compare renders two versions from an
+identical camera and composites them under a draggable slider; share exports
+the current view as a PNG. Both read back the live canvas, so there is no
+second offscreen pipeline to keep in sync.
+
 ### Corrected
 
 An earlier draft of this changelog and of DECISIONS.md §15 stated that the CC0
@@ -71,9 +76,8 @@ corrected.
 - **The catalog holds 77 models, not the ~600 docs/09 M3 asks for.** Only
   Poly Haven is wired into the pipeline so far; ambientCG, Quaternius and
   Kenney are not.
-- **Compare (A/B slider) and share renders/links are not implemented** — the
-  version *machinery* is there (snapshot, restore, locked version zero) but not
-  the side-by-side comparison or the export.
+- **Share *links* are not implemented.** Render export and A/B compare are;
+  the read-only share URL needs the API's share-token endpoint (docs/03 §3).
 - Frame rate on the reference device matrix is still unverified (no GPU in CI).
 
 ## [0.2.0-m2] — Milestone M2: Extrude

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
-import { Check, ChevronLeft, Eye, History, Palette, Pencil, Plus, Redo2, Undo2 } from "lucide-react";
+import { Check, ChevronLeft, Eye, History, Palette, Pencil, Plus, Redo2, Share2, Undo2 } from "lucide-react";
 import { findFreeSpot, formatArea, formatLength, type ShellGeometry, type SnapWall } from "@myroom/geometry";
 import { getCatalogItem, getCategory } from "@myroom/catalog";
 import type { PlacedObject } from "@myroom/schema";
@@ -18,6 +18,7 @@ import { Lighting } from "./Lighting.js";
 import { CameraRig, type ViewMode } from "./CameraRig.js";
 import { PlacedObjects, type DragFeedback } from "./PlacedObjects.js";
 import { CatalogSheet, ColorSheet, FLOOR_MATERIALS, ObjectSheet } from "./EditSheets.js";
+import { CompareSlider } from "./Compare.js";
 import "./sandbox.css";
 
 function AccuracyBadge({ tier }: { tier: "sketch" | "photo" | "lidar" }) {
@@ -76,7 +77,7 @@ export function Sandbox() {
   const showToast = useToasts((s) => s.show);
   const scene = useScene((s) => s.scene);
   const shell = useScene((s) => s.shell);
-  const projectLoaded = useScene((s) => s.projectId !== null);
+  const projectName = useScene((s) => s.projectName);
   const editing = useScene((s) => s.editing);
   const selectedId = useScene((s) => s.selectedId);
   const versions = useScene((s) => s.versions);
@@ -95,6 +96,59 @@ export function Sandbox() {
   const [objectSheetOpen, setObjectSheetOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [compare, setCompare] = useState<{
+    before: string;
+    after: string;
+    beforeName: string;
+    afterName: string;
+  } | null>(null);
+  const [compareFrom, setCompareFrom] = useState<string | null>(null);
+
+  /**
+   * Grab the current frame. `preserveDrawingBuffer` keeps the buffer readable
+   * after the draw, which is what makes both share renders and A/B compare
+   * possible without a second offscreen pipeline.
+   */
+  const captureFrame = async (): Promise<string | null> => {
+    const gl = (window as unknown as { __myroomRenderer?: { domElement: HTMLCanvasElement } })
+      .__myroomRenderer;
+    if (!gl) return null;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return gl.domElement.toDataURL("image/png");
+  };
+
+  /** docs/06 §6 — export the current view as an image. */
+  const shareRender = async () => {
+    const data = await captureFrame();
+    if (!data) return;
+    const link = document.createElement("a");
+    link.href = data;
+    link.download = `${(projectName || "my-room").replace(/\s+/g, "-").toLowerCase()}.png`;
+    link.click();
+    showToast("Render saved");
+  };
+
+  /** docs/06 §6 — render two versions from an identical camera, then slide. */
+  const compareVersions = async (aId: string, bId: string) => {
+    const s = store();
+    const a = s.versions.find((v) => v.id === aId);
+    const b = s.versions.find((v) => v.id === bId);
+    if (!a || !b) return;
+    const current = s.scene;
+    setVersionsOpen(false);
+
+    // Swap the document, capture, swap again — the camera never moves, so the
+    // only difference between the two frames is the design itself.
+    useScene.setState({ scene: a.scene, selectedId: null });
+    const beforeImg = await captureFrame();
+    useScene.setState({ scene: b.scene, selectedId: null });
+    const afterImg = await captureFrame();
+    useScene.setState({ scene: current });
+
+    if (beforeImg && afterImg) {
+      setCompare({ before: beforeImg, after: afterImg, beforeName: a.name, afterName: b.name });
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -241,7 +295,12 @@ export function Sandbox() {
         <Canvas
           shadows
           dpr={[1, 2]}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
+          gl={{
+            antialias: true,
+            powerPreference: "high-performance",
+            // Required to read the canvas back for share renders and compare.
+            preserveDrawingBuffer: true,
+          }}
           onCreated={({ gl, scene: threeScene }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping; // docs/02 §7
             gl.toneMappingExposure = 1.05;
@@ -378,6 +437,10 @@ export function Sandbox() {
               <History size={20} />
               <span>Versions</span>
             </button>
+            <button className="icon-button" aria-label="Share a render" data-testid="share-button" onClick={() => void shareRender()}>
+              <Share2 size={20} />
+              <span>Share</span>
+            </button>
           </>
         ) : (
           <>
@@ -509,6 +572,22 @@ export function Sandbox() {
               >
                 {v.name} {v.locked && <span className="type-caption">· locked</span>}
               </button>
+              <button
+                className={`chip ${compareFrom === v.id ? "active" : ""}`}
+                data-testid={`compare-${v.name.replace(/\s+/g, "-")}`}
+                aria-label={compareFrom === v.id ? `Cancel comparing ${v.name}` : `Compare ${v.name} with…`}
+                onClick={() => {
+                  if (compareFrom === null) setCompareFrom(v.id);
+                  else if (compareFrom === v.id) setCompareFrom(null);
+                  else {
+                    const from = compareFrom;
+                    setCompareFrom(null);
+                    void compareVersions(from, v.id);
+                  }
+                }}
+              >
+                {compareFrom === null ? "Compare" : compareFrom === v.id ? "Cancel" : "vs. this"}
+              </button>
               {!v.locked && (
                 <button className="icon-button" aria-label={`Delete ${v.name}`} onClick={() => store().deleteVersion(v.id)}>
                   ✕
@@ -532,6 +611,16 @@ export function Sandbox() {
           Save this version
         </PillButton>
       </Sheet>
+
+      {compare && (
+        <CompareSlider
+          before={compare.before}
+          after={compare.after}
+          beforeName={compare.beforeName}
+          afterName={compare.afterName}
+          onClose={() => setCompare(null)}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDelete !== null}

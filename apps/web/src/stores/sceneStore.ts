@@ -77,6 +77,7 @@ export function makePlacedObject(
 
 interface SceneState {
   projectId: string | null;
+  projectName: string;
   plan: RoomPlan | null;
   shell: ShellGeometry | null;
   scene: Scene | null;
@@ -150,6 +151,7 @@ export const useScene = create<SceneState>((set, get) => {
 
   return {
     projectId: null,
+    projectName: "",
     plan: null,
     shell: null,
     scene: null,
@@ -169,6 +171,7 @@ export const useScene = create<SceneState>((set, get) => {
       const versions = project.versions ?? [];
       set({
         projectId,
+        projectName: project.name,
         plan: project.plan,
         shell,
         scene,
