@@ -49,12 +49,28 @@ Delete removes.
 - E2E covers the docs/01 §10 running example end to end: furnish, paint sage
   green, undo and redo the lot, survive a reload, and restore version zero.
 
+**CC0 catalog** — `packages/catalog/scripts/build-catalog.mjs` builds the real
+asset library from Poly Haven's CC0 collection: glTF + textures bundled into
+Draco-compressed GLBs, real-world size measured from the world-space bounding
+box, `license` and `source` recorded per item, and anything over the 15 k
+triangle budget rejected. **77 models across 36 categories** ship in this
+release and render at true scale; the Draco decoder is bundled locally rather
+than fetched from a CDN, so the offline guarantee (docs/03 §6) holds.
+Categories without a model yet still place their parametric stand-in.
+
+### Corrected
+
+An earlier draft of this changelog and of DECISIONS.md §15 stated that the CC0
+asset sources were unreachable from the build environment and that the catalog
+could not be built. **That was wrong** — the claim was made without testing.
+The sources are reachable, and the catalog is built. Both documents have been
+corrected.
+
 ### Not met
 
-- **The CC0 GLB catalog is not built.** Its asset sources are unreachable from
-  this environment, so every item renders as parametric geometry instead — the
-  blueprint's own docs/05 §6 fallback. Everything else in edit mode is real and
-  works against it. See DECISIONS.md §15.
+- **The catalog holds 77 models, not the ~600 docs/09 M3 asks for.** Only
+  Poly Haven is wired into the pipeline so far; ambientCG, Quaternius and
+  Kenney are not.
 - **Compare (A/B slider) and share renders/links are not implemented** — the
   version *machinery* is there (snapshot, restore, locked version zero) but not
   the side-by-side comparison or the export.

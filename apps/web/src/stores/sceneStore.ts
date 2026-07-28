@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { PlacedObject, RoomPlan, Scene } from "@myroom/schema";
-import { getCategory, OBJECT_CATEGORIES } from "@myroom/catalog";
+import { getCatalogItem, getCategory, OBJECT_CATEGORIES } from "@myroom/catalog";
 import { planToShell, type ShellGeometry } from "./sceneTypes.js";
 import { uuidv7 } from "../lib/uuid.js";
 import { getProject, putProject } from "../lib/db.js";
@@ -97,7 +97,7 @@ interface SceneState {
   updateObject: (id: string, patch: Partial<PlacedObject>, commit: boolean) => void;
   duplicateObject: (id: string) => void;
   deleteObject: (id: string) => void;
-  swapObject: (id: string, categoryId: string) => void;
+  swapObject: (id: string, categoryId: string, catalogId?: string) => void;
 
   paintWall: (wallId: string | "all", color: string) => void;
   paintFloor: (color: string) => void;
@@ -230,21 +230,22 @@ export const useScene = create<SceneState>((set, get) => {
       set({ selectedId: null });
     },
 
-    swapObject: (id, categoryId) => {
+    swapObject: (id, categoryId, catalogId) => {
       const { scene } = get();
       if (!scene) return;
       const source = scene.objects.find((o) => o.id === id);
       const category = getCategory(categoryId);
       if (!source || !category) return;
-      // Keep the footprint the user already placed; adopt the new silhouette.
+      const model = catalogId ? getCatalogItem(catalogId) : undefined;
+      // Keep the placement the user already chose; adopt the new silhouette.
       const swapped: PlacedObject = {
         ...source,
-        placeholder: { category: category.id, shape: `${category.id}Massing` },
-        catalogId: null,
-        label: category.label,
+        placeholder: model ? null : { category: category.id, shape: `${category.id}Massing` },
+        catalogId: model?.id ?? null,
+        label: model?.name ?? category.label,
         support: category.support,
         collisionExempt: category.collisionExempt,
-        size: { ...category.defaultSize },
+        size: { ...(model?.nativeSize ?? category.defaultSize) },
         materials: {},
         wallId: category.support === "wall" ? source.wallId : null,
         parentObjectId: category.support === "surface" ? source.parentObjectId : null,

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CATEGORY_GROUPS, OBJECT_CATEGORIES, getCategory } from "@myroom/catalog";
+import { CATEGORY_GROUPS, OBJECT_CATEGORIES, getCategory, modelsForCategory } from "@myroom/catalog";
 import { formatLength } from "@myroom/geometry";
 import type { PlacedObject } from "@myroom/schema";
 import { Sheet } from "../../components/Sheet.js";
@@ -101,7 +101,7 @@ export function ColorSheet({ open, title, swatches, onPick, onClose, extraAction
 interface CatalogSheetProps {
   open: boolean;
   onClose: () => void;
-  onPick: (categoryId: string) => void;
+  onPick: (categoryId: string, catalogId?: string) => void;
   /** clearance at the tapped spot, for the "fits here" filter (docs/06 §5) */
   fitsWithin?: { w: number; d: number } | null;
   title?: string;
@@ -164,14 +164,34 @@ export function CatalogSheet({ open, onClose, onPick, fitsWithin, title }: Catal
         )}
       </div>
       <div className="catalog-grid" data-testid="catalog-grid">
-        {results.slice(0, 120).map((c) => (
-          <button key={c.id} className="catalog-item" data-testid={`catalog-${c.id}`} onClick={() => onPick(c.id)}>
-            <span className="type-label">{c.label}</span>
-            <span className="type-caption">
-              {formatLength(c.defaultSize.w, "m")} × {formatLength(c.defaultSize.d, "m")}
-            </span>
-          </button>
-        ))}
+        {results.slice(0, 120).flatMap((c) => {
+          const models = modelsForCategory(c.id);
+          // A category with real CC0 models offers each one; categories still
+          // awaiting a model offer their parametric stand-in (docs/05 §6).
+          if (models.length === 0) {
+            return [
+              <button key={c.id} className="catalog-item" data-testid={`catalog-${c.id}`} onClick={() => onPick(c.id)}>
+                <span className="type-label">{c.label}</span>
+                <span className="type-caption">
+                  {formatLength(c.defaultSize.w, "m")} × {formatLength(c.defaultSize.d, "m")}
+                </span>
+              </button>,
+            ];
+          }
+          return models.map((m, i) => (
+            <button
+              key={m.id}
+              className="catalog-item"
+              data-testid={i === 0 ? `catalog-${c.id}` : `catalog-${c.id}-${i}`}
+              onClick={() => onPick(c.id, m.id)}
+            >
+              <span className="type-label">{m.name}</span>
+              <span className="type-caption">
+                {formatLength(m.nativeSize.w, "m")} × {formatLength(m.nativeSize.d, "m")} · CC0
+              </span>
+            </button>
+          ));
+        })}
         {results.length === 0 && <p className="type-caption">Nothing matches that search.</p>}
       </div>
     </Sheet>

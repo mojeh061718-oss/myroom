@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import type { PlacedObject } from "@myroom/schema";
@@ -10,7 +10,15 @@ import {
   type ShellGeometry,
   type SnapWall,
 } from "@myroom/geometry";
-import { getCategory, placeholderParts, type PlaceholderPart } from "@myroom/catalog";
+import { getCatalogItem, getCategory, placeholderParts, type PlaceholderPart } from "@myroom/catalog";
+import { Clone, useGLTF } from "@react-three/drei";
+
+/**
+ * Decode Draco meshes with the copy of the decoder we ship ourselves. drei
+ * defaults to a Google CDN, which breaks the offline guarantee in docs/03 §6
+ * and adds a third-party runtime fetch we don't control.
+ */
+useGLTF.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
 import { haptic } from "../../theme/tokens.js";
 
 /** Default colours per material slot, so a fresh object never renders grey mush. */
@@ -90,6 +98,25 @@ export interface DragFeedback {
   distances: { label: string; distance: number }[];
   colliding: boolean;
   snapped: string | null;
+}
+
+/**
+ * A real CC0 model, scaled from its measured native size to the instance size
+ * so it always occupies the footprint the document says it does (docs/07 §4).
+ */
+function CatalogModel({ object }: { object: PlacedObject }) {
+  const item = getCatalogItem(object.catalogId!)!;
+  const url = `${import.meta.env.BASE_URL}${item.asset.glb}`;
+  const { scene } = useGLTF(url);
+  const scale = useMemo<[number, number, number]>(
+    () => [
+      object.size.w / item.nativeSize.w,
+      object.size.h / item.nativeSize.h,
+      object.size.d / item.nativeSize.d,
+    ],
+    [object.size, item.nativeSize],
+  );
+  return <Clone object={scene} scale={scale} castShadow receiveShadow />;
 }
 
 interface Props {
@@ -282,7 +309,8 @@ export function PlacedObjects({
     <group name="objects">
       {objects.map((object) => {
         const categoryId = object.placeholder?.category ?? "block";
-        const parts = placeholderParts(categoryId);
+        const hasModel = object.catalogId !== null && getCatalogItem(object.catalogId) !== undefined;
+        const parts = hasModel ? [] : placeholderParts(categoryId);
         const selected = object.id === selectedId;
         return (
           <group
@@ -297,6 +325,12 @@ export function PlacedObjects({
               onSelect(object.id);
             }}
           >
+            {hasModel && (
+              <Suspense fallback={null}>
+                <CatalogModel object={object} />
+              </Suspense>
+            )}
+
             {parts.map((part, i) => (
               <mesh
                 key={i}

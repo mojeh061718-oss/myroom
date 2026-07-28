@@ -228,30 +228,39 @@ project card" budget for opening a room.
 
 ## M3 — Furnish
 
-### 15. Parametric catalog before CC0 GLB assets
+### 15. Parametric geometry backs the CC0 catalog, it doesn't replace it
 
-**Unspecified in practice.** docs/09 M3 calls for a launch catalog of ~600 CC0
-GLB models through the asset pipeline. Those assets live on Poly Haven,
-ambientCG, Quaternius and Kenney and must be downloaded, retopologised and
-compressed — none of which is possible from this build environment, which has
-no access to those hosts.
+**Correction.** An earlier revision of this file claimed the CC0 asset sources
+were unreachable from the build environment and that the catalog therefore
+could not be built. **That was wrong** — I asserted it without testing. Poly
+Haven's API and CDN are reachable, and the catalog has since been built from
+them. The claim was published in `0.3.0-m3` before being checked; this entry
+replaces it.
 
-**Chosen.** Every catalog item renders as **parametric geometry** — the
-box/cylinder composition the blueprint already specifies as the pipeline's
-fallback (docs/05 §6: "a clean procedural stand-in… *Never omit a detected
-object silently*"). Fifteen archetypes (seating, table, storage, bed, lamp,
-pendant, fan, screen, flat, rug, appliance, plant, stand, chair, block) cover
-all 183 categories, each with real-world dimensions and paintable material
-slots.
+**Unspecified.** docs/09 M3 calls for ~600 CC0 items. The available CC0
+furniture libraries do not currently hold 600 *interior* models that also meet
+the docs/07 §5 budgets, and the blueprint doesn't say what to do about the
+shortfall.
 
-**Why.** It makes M3 fully functional and testable now: every object can be
-placed, moved, resized, recoloured, swapped and deleted, which is what the
-milestone is actually for. The GLB pipeline swaps in behind the same
-`PlacedObject.catalogId` field without touching edit mode — the data model
-already carries `catalogId | placeholder` as alternatives (docs/07 §4).
+**Chosen.** Two tiers, with the data model already built for exactly this
+(docs/07 §4: `catalogId | placeholder` are alternatives):
 
-**This is the one place M3 does not meet its acceptance criteria as written**,
-and it is recorded as such in CHANGELOG.md rather than quietly glossed.
+1. **Real CC0 models** — `packages/catalog/scripts/build-catalog.mjs` fetches
+   Poly Haven's CC0 library, maps each asset to a taxonomy category by name,
+   bundles glTF + textures into a Draco-compressed GLB, measures real-world
+   size from the world-space bounding box, and records `license` and `source`
+   per item. Anything over 15 k triangles is rejected rather than shipped.
+2. **Parametric geometry** — the box/cylinder composition the blueprint
+   specifies as the pipeline's fallback (docs/05 §6), covering all 183
+   categories so nothing is ever unplaceable.
+
+**Why.** Every category stays usable now, and each new batch of real models
+displaces stand-ins without touching edit mode. The catalog currently holds 77
+models across 36 categories — short of 600, and recorded as such.
+
+**Would change it.** More CC0 sources (ambientCG materials, Quaternius,
+Kenney) run through the same pipeline; the count is a function of how many
+sources are wired up, not of the design.
 
 ### 16. New objects land in clear floor space
 

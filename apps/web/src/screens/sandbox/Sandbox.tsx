@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { Check, ChevronLeft, Eye, History, Palette, Pencil, Plus, Redo2, Undo2 } from "lucide-react";
 import { findFreeSpot, formatArea, formatLength, type ShellGeometry, type SnapWall } from "@myroom/geometry";
-import { getCategory } from "@myroom/catalog";
+import { getCatalogItem, getCategory } from "@myroom/catalog";
 import type { PlacedObject } from "@myroom/schema";
 import { useSettings } from "../../stores/settingsStore.js";
 import { useScene } from "../../stores/sceneStore.js";
@@ -162,12 +162,12 @@ export function Sandbox() {
       }
     : null;
 
-  const addFromCatalog = (categoryId: string) => {
+  const addFromCatalog = (categoryId: string, catalogId?: string) => {
     if (!shell) return;
     const category = getCategory(categoryId);
     const s = store();
     if (swapFor) {
-      s.swapObject(swapFor, categoryId);
+      s.swapObject(swapFor, categoryId, catalogId);
       setSwapFor(null);
       setCatalogOpen(false);
       return;
@@ -186,7 +186,9 @@ export function Sandbox() {
       inwardNormal: [w.inwardNormal[0], w.inwardNormal[2]],
       thickness: w.thickness,
     }));
-    const size = category?.defaultSize ?? { w: 0.5, d: 0.5, h: 0.5 };
+    // A real model's measured size beats the category's typical size.
+    const model = catalogId ? getCatalogItem(catalogId) : undefined;
+    const size = model?.nativeSize ?? category?.defaultSize ?? { w: 0.5, d: 0.5, h: 0.5 };
     const spot =
       category?.support === "floor"
         ? findFreeSpot(
@@ -202,7 +204,16 @@ export function Sandbox() {
           )
         : { x: shell.center[0], z: shell.center[2], rotationY: 0 };
 
-    const newId = s.addObject(categoryId, { x: spot.x, y, z: spot.z }, { rotationY: spot.rotationY });
+    const newId = s.addObject(
+      categoryId,
+      { x: spot.x, y, z: spot.z },
+      {
+        rotationY: spot.rotationY,
+        ...(model
+          ? { catalogId: model.id, placeholder: null, label: model.name, size: { ...model.nativeSize } }
+          : {}),
+      },
+    );
     // Wall and ceiling items must land on a real anchor, never float free.
     if (category?.support === "wall" && shell.walls[0]) {
       const wall = shell.walls[0];
