@@ -13,7 +13,12 @@ export default defineConfig({
     trace: "retain-on-failure",
     // Pre-provisioned Chromium (PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD environments);
     // empty string falls back to Playwright's own download elsewhere.
-    launchOptions: process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {},
+    launchOptions: {
+      ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
+      // The 3D sandbox needs a WebGL context; CI runners have no GPU, so fall
+      // back to SwiftShader's software renderer.
+      args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
+    },
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },

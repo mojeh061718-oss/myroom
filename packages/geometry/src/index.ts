@@ -3,3 +3,6 @@ export * from "./units.js";
 export * from "./polygon.js";
 export * from "./wall.js";
 export * from "./snap.js";
+export * from "./triangulate.js";
+export * from "./offset.js";
+export * from "./shell.js";

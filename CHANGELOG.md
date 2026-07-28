@@ -4,6 +4,56 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [0.2.0-m2] — Milestone M2: Extrude
+
+**Ships:** drawn plans become navigable 3D rooms — the first "wow, that's my
+room's shape" moment.
+
+### Added
+
+**Shell generation** (`packages/geometry`) — `buildShell()` turns a RoomPlan
+into walls, floor and ceiling: mitered interior/exterior offset polygons so
+walls meet cleanly at corners, per-wall prisms with doors and windows cut
+through both faces plus their reveals, ear-clipping triangulation for concave
+(L-shaped) floors, and real-world-scale UVs ready for painting in M3. Pure and
+deterministic — the same plan always yields byte-identical geometry.
+`pointInPolygon` added for interior tests.
+
+**3D sandbox** (`apps/web`, S7 per docs/01 §9) — react-three-fiber renderer with
+per-wall meshes (each individually materialed, so M3 can paint them), Dollhouse
+and Inside camera presets with animated transitions, a live orthographic 2D
+plan view, wall fade for walls standing between the camera and the room, the
+1.5 s establishing orbit on first reveal, and the accessible object-list path
+(docs/06 §7).
+
+**Lighting** — "warm realistic-lite" per docs/02 §7: procedural image-based
+lighting, a soft directional key aimed through the room's largest wall, contact
+shadows, ACES filmic tone mapping, and a gradient exterior backdrop so openings
+read as daylight rather than voids.
+
+### Verified
+
+- 57 unit tests (42 geometry, 7 camera-preset, 8 store) and 12 Playwright E2E
+  tests across desktop and mobile.
+- Performance (docs/06 §8): an empty shell renders in ~150 triangles and 8 draw
+  calls against budgets of 300 k and 150; the sandbox is interactive ~0.4 s
+  after navigation against a 2 s budget. Both asserted in E2E.
+- Shell geometry invariants are property-tested: normals agree with winding on
+  every triangle, inward normals land inside the room for concave plans and both
+  drawing directions, and openings leave no surface inside the hole.
+
+### Notes
+
+- Frame rate on the reference device matrix (docs/06 §8) has **not** been
+  measured — the CI runner has no GPU and renders through SwiftShader. Triangle
+  and draw-call budgets are enforced; the 60 fps target needs real hardware.
+- Golden-*image* tests (docs/06 §9) are not in place; determinism is covered by
+  golden *geometry* assertions instead, which are stable across platforms.
+  Pixel goldens need a fixed GPU baseline.
+- Five new M2 decisions are recorded in [`DECISIONS.md`](DECISIONS.md), notably
+  analytic opening cutouts in place of CSG (`three-bvh-csg` is not a dependency)
+  and a viewport-aware field of view.
+
 ## [0.1.0-m1] — Milestone M1: Draw
 
 **Ships:** an installable PWA where users draw, validate, and save accurate wall

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { isSimplePolygon, polygonArea, dist, labelWalls } from "@myroom/geometry";
+import { isSimplePolygon, polygonArea, dist, labelWalls, buildShell } from "@myroom/geometry";
+import type { ShellGeometry } from "@myroom/geometry";
 import type { Vec2 } from "@myroom/geometry";
 
 /** docs/07 §2 — RoomPlan, the output of the drawing board. Meters, radians, UUIDv7 ids. */
@@ -97,6 +98,33 @@ export function labelWallsForPlan(plan: RoomPlan): RoomPlan {
     floorArea: Math.round(polygonArea(loop) * 10000) / 10000,
     walls: plan.walls.map((w, i) => ({ ...w, label: labels[i] ?? w.label })),
   };
+}
+
+/**
+ * RoomPlan → 3D shell (docs/06 §1). Returns null for an open or invalid plan:
+ * the sandbox only ever renders a watertight room.
+ */
+export function planToShell(plan: RoomPlan): ShellGeometry | null {
+  if (!plan.closed) return null;
+  const loop = planLoop(plan);
+  if (!loop || !isSimplePolygon(loop)) return null;
+  return buildShell(
+    loop,
+    plan.walls.map((w) => ({
+      id: w.id,
+      label: w.label,
+      thickness: w.thickness,
+      height: w.height,
+      openings: w.openings.map((o) => ({
+        id: o.id,
+        kind: o.kind,
+        offset: o.offset,
+        width: o.width,
+        sillHeight: o.sillHeight,
+        headHeight: o.headHeight,
+      })),
+    })),
+  );
 }
 
 export function wallLength(plan: Pick<RoomPlan, "vertices">, wall: Pick<Wall, "start" | "end">): number {

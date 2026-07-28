@@ -1,0 +1,133 @@
+.sandbox {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+.sandbox canvas {
+  display: block;
+  touch-action: none;
+}
+
+.sandbox-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 20px;
+}
+/* Scrim: chrome sits over a 3D scene that can be any brightness, and the
+   Inside view fills the frame with a pale wall. Without this, white-on-white
+   drops below the 4.5:1 contrast floor (docs/02 §9). */
+.sandbox-topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  z-index: -1;
+}
+:root[data-theme="light"] .sandbox-topbar::before {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+}
+.sandbox-topbar > * { position: relative; }
+/* The scrim is dark in both themes, so this text is always light-on-dark. */
+.sandbox-topbar .project-name { color: #f2f3f5; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.sandbox-topbar .spacer { flex: 1; }
+
+/* Accuracy badge (docs/01 §7) — always visible, never colour-only. */
+.accuracy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.accuracy-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.accuracy-badge.sketch { color: var(--text-dim); }
+.accuracy-badge.photo { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.accuracy-badge.lidar { color: var(--accent-warm); border-color: color-mix(in srgb, var(--accent-warm) 45%, transparent); }
+
+.sandbox-bottombar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-elevated);
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+}
+
+.sandbox-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+.sandbox-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 32px;
+}
+
+/* Accessible parallel path (docs/02 §9, docs/06 §7): the scene as a list. */
+.scene-a11y-list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.scene-a11y-list:focus-within {
+  position: absolute;
+  top: calc(64px + env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  width: auto;
+  height: auto;
+  max-height: 50dvh;
+  overflow-y: auto;
+  clip: auto;
+  white-space: normal;
+  z-index: 30;
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  box-shadow: var(--shadow-elevated);
+}
+.scene-a11y-list li { margin: 6px 0; }

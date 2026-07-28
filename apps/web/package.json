@@ -14,17 +14,22 @@
   "dependencies": {
     "@myroom/geometry": "workspace:*",
     "@myroom/schema": "workspace:*",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "idb": "^8.0.0",
     "lucide-react": "^0.427.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0",
+    "three": "^0.169.0",
+    "three-mesh-bvh": "^0.7.8",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.46.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.169.0",
     "@vitejs/plugin-react": "^4.3.1",
     "fake-indexeddb": "^6.2.5",
     "sharp": "^0.33.5",

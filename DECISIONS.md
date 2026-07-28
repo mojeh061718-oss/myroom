@@ -142,6 +142,90 @@ reachable by touch.
 
 ---
 
+## M2 — Extrude
+
+### 9. Analytic opening cutouts instead of CSG
+
+**Unspecified.** docs/06 §1 says openings are "boolean-subtract[ed]" and
+docs/08 §1 lists `three-bvh-csg` for that job. Neither says the subtraction must
+be a general mesh boolean.
+
+**Chosen.** Wall faces are triangulated directly by grid decomposition: collect
+the opening edges along the wall and up its height, emit the cells that aren't
+inside an opening, then add the reveal surfaces. No CSG library; `three-bvh-csg`
+is not a dependency.
+
+**Why.** Every opening is an axis-aligned rectangle in the wall's own frame, so
+the general case never arises. The direct construction is deterministic (which
+is what makes the golden geometry tests meaningful), produces clean real-world
+UVs for painting in M3, and emits far fewer triangles than a boolean would —
+an empty room shell renders in ~150 triangles and 8 draw calls.
+
+**Would change it.** Curved walls or non-rectangular openings, both explicit
+v1 non-goals (docs/04 §1).
+
+### 10. Mitered wall offsets rather than overlapping boxes
+
+**Unspecified.** docs/06 §1 says the polygon extrudes into walls at thickness
+and height; it doesn't say how walls meet at corners.
+
+**Chosen.** The interior and exterior faces are computed as mitered offset
+polygons of the drawn centreline, so adjacent walls share exact corner points.
+
+**Why.** Extruding each wall as its own box leaves overlapping corners that
+z-fight and show seams from inside — visible in the very first "wow, that's my
+room" moment M2 exists to deliver. Mitering also supports per-wall thickness,
+which docs/04 §1 allows.
+
+### 11. Procedural IBL before the HDRI asset
+
+**Unspecified.** docs/02 §7 specifies a Poly Haven CC0 HDRI for image-based
+lighting. M2 has no asset pipeline yet (that's M3) and no network fetch is
+acceptable on a cold offline load (docs/03 §6).
+
+**Chosen.** The environment is generated at runtime from three's built-in
+`RoomEnvironment` (MIT, bundled). The curated HDRI lands in M6 with the rest of
+the visual polish; swapping it changes one component.
+
+### 12. Gradient exterior backdrop
+
+**Unspecified.** Nothing says what is visible *through* a door or window.
+
+**Chosen.** A large gradient backdrop sphere: dark ground, a luminous horizon
+band, soft daylight above.
+
+**Why.** Against the plain background an opening reads as a black hole punched
+in the wall rather than a way outside — clearly wrong in the Inside view, where
+a doorway can fill the frame. The gradient also keeps the dollhouse sitting on a
+dark, premium ground rather than a bright sky.
+
+### 13. Field of view is derived from the horizontal axis
+
+**Unspecified.** docs/02 §7 specifies a "35 mm-equivalent default FOV" without
+saying which axis, and three's `fov` is vertical.
+
+**Chosen.** The vertical FOV is computed from the 35 mm-equivalent *horizontal*
+FOV and the viewport aspect, clamped to 38°–60°.
+
+**Why.** A fixed 38° vertical FOV becomes roughly a 19° horizontal view on a
+portrait phone — a telephoto. In practice that made a doorway three metres away
+fill the entire screen. Deriving from the horizontal axis keeps the framing
+consistent with the intent on every aspect ratio.
+
+### 14. The 3D route is code-split
+
+**Unspecified.** The roadmap doesn't discuss bundling.
+
+**Chosen.** The sandbox is a lazy route; three.js lives in its own chunk,
+prefetched on idle.
+
+**Why.** three.js roughly quadrupled the bundle. Splitting keeps the splash,
+tutorial, home and drawing board at their M1 weight (docs/01 §2 cold-start
+budget) while the idle prefetch preserves the docs/06 §8 "< 2 s from tap on the
+project card" budget for opening a room.
+
+---
+
 ## Deferred to their own milestones
 
 These are **not** decisions — they are blueprint items whose milestone has not
