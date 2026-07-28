@@ -9,6 +9,7 @@ import { DrawingBoard } from "./screens/board/DrawingBoard.js";
 import { Capture } from "./screens/capture/Capture.js";
 import { ScanUpload } from "./screens/capture/ScanUpload.js";
 import { Processing } from "./screens/capture/Processing.js";
+import { Privacy } from "./screens/Privacy.js";
 import { ToastRegion } from "./components/Toast.js";
 
 /**
@@ -41,6 +42,7 @@ const router = createBrowserRouter(
   [
     { path: "/", element: <Home /> },
     { path: "/tutorial", element: <Tutorial /> },
+    { path: "/privacy", element: <Privacy /> },
     { path: "/p/:id/draw", element: <DrawingBoard /> },
     { path: "/p/:id/capture", element: <Capture /> },
     { path: "/p/:id/scan", element: <ScanUpload /> },

@@ -99,7 +99,7 @@ export function ScanUpload() {
   if (!project) return <div className="capture" />;
 
   return (
-    <div className="capture" data-testid="scan-upload">
+    <main className="capture" data-testid="scan-upload">
       <header className="capture-head">
         <button className="back" onClick={() => navigate(`/p/${id}/capture`)} aria-label="Back to photos">
           ‹
@@ -188,7 +188,7 @@ export function ScanUpload() {
           </button>
         )}
       </footer>
-    </div>
+    </main>
   );
 }
 

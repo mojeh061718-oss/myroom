@@ -107,8 +107,12 @@ test("input discipline: short walls and crossings are rejected", async ({ page }
   await planClick(page, w + 0.1, 0);
   await expect(page.getByText("at least 0.3 m")).toBeVisible();
   await expect(page.getByTestId("validation-badge")).toContainText("1 wall");
-  // crossing wall → rejected
+  // crossing wall → rejected. Wait for the chain to actually grow first: the
+  // crossing check runs against committed state, so a click that lands before
+  // the previous one has been recorded is checked against the wrong chain.
   await planClick(page, w, h);
+  await expect(page.getByTestId("validation-badge")).toContainText("2 walls");
+  await page.waitForTimeout(400);
   await planClick(page, w / 2, -1.5);
   await expect(page.getByText("can't cross")).toBeVisible();
   await expect(page.getByTestId("validation-badge")).toContainText("2 walls");

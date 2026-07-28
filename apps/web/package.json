@@ -14,6 +14,7 @@
   "dependencies": {
     "@myroom/catalog": "workspace:*",
     "@myroom/geometry": "workspace:*",
+    "@myroom/recon": "workspace:*",
     "@myroom/schema": "workspace:*",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
@@ -24,10 +25,10 @@
     "react-router-dom": "^6.26.0",
     "three": "^0.169.0",
     "three-mesh-bvh": "^0.7.8",
-    "zustand": "^4.5.4",
-    "@myroom/recon": "workspace:*"
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.46.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

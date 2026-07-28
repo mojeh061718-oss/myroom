@@ -58,22 +58,28 @@
   justify-content: center;
   padding: 20px 0;
 }
+/* The button *is* the 44 px target and the dot is drawn inside it. An overlay
+   pseudo-element gave the same hit area but measured 10 px to any tool that
+   reads element boxes — including the WCAG 2.2 target-size audit. */
 .tutorial-dots button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: none;
+  border: none;
+  display: grid;
+  place-items: center;
+}
+.tutorial-dots button::before {
+  content: "";
   width: 10px;
   height: 10px;
-  min-width: 10px;
   border-radius: 50%;
   background: var(--text-dim);
   opacity: 0.4;
-  padding: 0;
-  position: relative;
 }
-.tutorial-dots button::after {
-  content: "";
-  position: absolute;
-  inset: -14px; /* invisible 44px hit area */
-}
-.tutorial-dots button[aria-current="true"] { background: var(--accent); opacity: 1; }
+.tutorial-dots button[aria-current="step"]::before { background: var(--accent); opacity: 1; }
 
 /* T1 demo animation: finger draws a rectangle, dimensions appear live */
 .t1-pen { animation: t1-draw 6s linear infinite; }
@@ -176,4 +182,52 @@
   gap: 10px;
   color: var(--text-dim);
   background: var(--bg);
+}
+
+/* Plain-language privacy surface (docs/09 M6, docs/01 §12). */
+.policy {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: calc(14px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));
+  max-width: 62ch;
+  margin: 0 auto;
+}
+.policy-list {
+  list-style: none;
+  counter-reset: promise;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.policy-list li {
+  counter-increment: promise;
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.policy-list h2 {
+  margin: 0 0 6px;
+}
+.policy-list h2::before {
+  content: counter(promise) ". ";
+  color: var(--text-dim);
+}
+.policy-list p {
+  margin: 0;
+  color: var(--text-dim);
+}
+.settings-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  text-align: left;
+  padding: 10px 0;
+  min-height: 44px;
+  text-decoration: underline;
 }

@@ -19,6 +19,7 @@ import { CameraRig, type ViewMode } from "./CameraRig.js";
 import { PlacedObjects, type DragFeedback } from "./PlacedObjects.js";
 import { CatalogSheet, ColorSheet, FLOOR_MATERIALS, ObjectSheet } from "./EditSheets.js";
 import { CompareSlider } from "./Compare.js";
+import { QualityGovernor } from "./QualityGovernor.js";
 import { AccuracyBadge } from "../../components/AccuracyBadge.js";
 import "./sandbox.css";
 
@@ -65,6 +66,7 @@ export function Sandbox() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const unit = useSettings((s) => s.displayUnit);
+  const quality = useSettings((s) => s.quality);
   const showToast = useToasts((s) => s.show);
   const scene = useScene((s) => s.scene);
   const shell = useScene((s) => s.shell);
@@ -100,17 +102,41 @@ export function Sandbox() {
    * after the draw, which is what makes both share renders and A/B compare
    * possible without a second offscreen pipeline.
    */
-  const captureFrame = async (): Promise<string | null> => {
-    const gl = (window as unknown as { __myroomRenderer?: { domElement: HTMLCanvasElement } })
-      .__myroomRenderer;
+  const captureFrame = async (scale = 1): Promise<string | null> => {
+    const gl = (
+      window as unknown as {
+        __myroomRenderer?: {
+          domElement: HTMLCanvasElement;
+          getPixelRatio: () => number;
+          setPixelRatio: (v: number) => void;
+          setSize: (w: number, h: number, updateStyle?: boolean) => void;
+        };
+      }
+    ).__myroomRenderer;
     if (!gl) return null;
+
+    // A 2× export (docs/09 M6) re-renders at twice the pixel ratio and puts it
+    // back afterwards — the share image shouldn't be limited to whatever the
+    // phone's screen happens to be.
+    const original = gl.getPixelRatio();
+    if (scale !== 1) {
+      gl.setPixelRatio(Math.min(4, original * scale));
+      const { clientWidth, clientHeight } = gl.domElement;
+      gl.setSize(clientWidth, clientHeight, false);
+    }
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    return gl.domElement.toDataURL("image/png");
+    const data = gl.domElement.toDataURL("image/png");
+    if (scale !== 1) {
+      gl.setPixelRatio(original);
+      const { clientWidth, clientHeight } = gl.domElement;
+      gl.setSize(clientWidth, clientHeight, false);
+    }
+    return data;
   };
 
-  /** docs/06 §6 — export the current view as an image. */
+  /** docs/06 §6, docs/09 M6 — export the current view as a 2× image. */
   const shareRender = async () => {
-    const data = await captureFrame();
+    const data = await captureFrame(2);
     if (!data) return;
     const link = document.createElement("a");
     link.href = data;
@@ -281,7 +307,7 @@ export function Sandbox() {
   };
 
   return (
-    <div className="sandbox" data-testid="sandbox">
+    <main className="sandbox" data-testid="sandbox">
       {shell && scene && (
         <Canvas
           shadows
@@ -303,6 +329,9 @@ export function Sandbox() {
           onPointerMissed={() => store().select(null)}
         >
           <CameraRig shell={shell} view={view} />
+          {/* Steps quality down when the frame rate falls, and back up when
+              headroom returns (docs/06 §8). */}
+          <QualityGovernor preference={quality} />
           <Lighting shell={shell} />
           <Shell
             shell={shell}
@@ -631,6 +660,6 @@ export function Sandbox() {
         }}
         onCancel={() => setConfirmDelete(null)}
       />
-    </div>
+    </main>
   );
 }

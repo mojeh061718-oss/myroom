@@ -107,7 +107,7 @@ export function Capture() {
   const photographed = project.plan.walls.length - missing.length;
 
   return (
-    <div className="capture" data-testid="capture">
+    <main className="capture" data-testid="capture">
       <header className="capture-head">
         <button className="back" onClick={() => navigate(`/p/${id}/draw`)} aria-label="Back to the floor plan">
           ‹
@@ -206,7 +206,7 @@ export function Capture() {
           Your photos stay on this device until you build the room, and are used only to build <em>your</em> room.
         </p>
       </footer>
-    </div>
+    </main>
   );
 }
 

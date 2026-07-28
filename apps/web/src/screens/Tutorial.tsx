@@ -56,7 +56,7 @@ export function Tutorial() {
 
   const current = STEPS[step]!;
   return (
-    <div className="tutorial" data-testid="tutorial">
+    <main className="tutorial" data-testid="tutorial">
       <PillButton variant="ghost" className="tutorial-skip" onClick={finish} data-testid="tutorial-skip">
         Skip
       </PillButton>
@@ -65,9 +65,17 @@ export function Tutorial() {
         {current.title}
       </h2>
       <p style={{ margin: 0, textAlign: "center", color: "var(--text-dim)" }}>{current.sentence}</p>
-      <div className="tutorial-dots" role="tablist" aria-label="Tutorial steps">
+      {/* A group of buttons, not a tablist: the panels aren't tabpanels, and
+          claiming a role whose required children aren't there breaks the
+          reading order it promises. */}
+      <div className="tutorial-dots" role="group" aria-label="Tutorial steps">
         {STEPS.map((s, i) => (
-          <button key={s.title} aria-current={i === step} aria-label={`Step ${i + 1}: ${s.title}`} onClick={() => setStep(i)} />
+          <button
+            key={s.title}
+            aria-current={i === step ? "step" : undefined}
+            aria-label={`Step ${i + 1} of ${STEPS.length}: ${s.title}`}
+            onClick={() => setStep(i)}
+          />
         ))}
       </div>
       <PillButton
@@ -77,6 +85,6 @@ export function Tutorial() {
       >
         {step === STEPS.length - 1 ? "Start drawing" : "Next"}
       </PillButton>
-    </div>
+    </main>
   );
 }

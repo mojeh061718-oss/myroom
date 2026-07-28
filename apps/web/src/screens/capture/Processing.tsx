@@ -9,6 +9,8 @@ import {
 import { getProject, listUploads, putProject, type LocalProject } from "../../lib/db.js";
 import { DEMO_NOTICE, reconstruct, refineFromScan } from "../../lib/reconstruct.js";
 import { PillButton } from "../../components/PillButton.js";
+import { haptic } from "../../theme/tokens.js";
+import { notifyRoomReady, requestNotificationPermission } from "../../lib/notify.js";
 import { MiniPlan } from "./MiniPlan.js";
 import "./capture.css";
 
@@ -53,6 +55,9 @@ export function Processing() {
         return;
       }
       setProject(found);
+      // Asked here and nowhere else: the reason is on screen, and the user is
+      // about to have a reason to leave (docs/03 §5).
+      void requestNotificationPermission();
       const uploads = await listUploads(id);
 
       // Stage 0 first (docs/05 §2): a scan corrects the plan the rest of the
@@ -74,7 +79,14 @@ export function Processing() {
       }
 
       const onEvent = (event: JobEvent) => {
-        if (event.type === "stage") setStage(event.stage);
+        if (event.type === "stage") {
+          // docs/02 §5: a light tick as each stage completes, success on the
+          // room reveal. Silently absent where the Vibration API isn't.
+          setStage((current) => {
+            if (current !== event.stage) haptic(event.stage === "done" ? "success" : "light");
+            return event.stage;
+          });
+        }
         if (event.type === "object") {
           setFound((current) => [
             ...current,
@@ -96,6 +108,7 @@ export function Processing() {
           signal: controller.signal,
         });
         setDemo(result.demo);
+        notifyRoomReady(found.name);
         await putProject({
           ...found,
           plan,
@@ -127,7 +140,7 @@ export function Processing() {
   const reachedIndex = VISIBLE_STAGES.indexOf(stage);
 
   return (
-    <div className="processing" data-testid="processing">
+    <main className="processing" data-testid="processing">
       <h1 className="type-title">{finished ? "Your room is ready" : "Building your room…"}</h1>
 
       <div className="processing-stage" aria-live="polite">
@@ -176,7 +189,7 @@ export function Processing() {
       )}
 
       {error && (
-        <div className="processing-error" data-testid="processing-error">
+        <div className="processing-error shake" data-testid="processing-error">
           <p>{error}</p>
           {/* Never a dead end: the shell is exact whatever the pipeline did. */}
           <PillButton onClick={() => navigate(`/p/${id}`)}>Open the room anyway</PillButton>
@@ -197,6 +210,6 @@ export function Processing() {
           screen; we'll keep going.
         </p>
       </footer>
-    </div>
+    </main>
   );
 }

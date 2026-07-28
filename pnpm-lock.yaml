@@ -90,6 +90,9 @@ importers:
         specifier: ^4.5.4
         version: 4.5.7(@types/react@18.3.31)(react@18.3.1)
     devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.12.1
+        version: 4.12.1(playwright-core@1.62.0)
       '@playwright/test':
         specifier: ^1.46.0
         version: 1.62.0
@@ -224,6 +227,11 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       ajv: '>=8'
+
+  '@axe-core/playwright@4.12.1':
+    resolution: {integrity: sha512-rMd7xriptqKpP+w5265i4Hdkv2X5kbu6uiBi/B2I7uf3hieRBM3qDCfaKPtxfiYb2mKXfF+yLODJwIx+Jv1GDw==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -1801,6 +1809,10 @@ packages:
   avvio@8.4.0:
     resolution: {integrity: sha512-CDSwaxINFy59iNwhYnkvALBwZiTydGkOecZyPkqBpABYR1KqGEsET0VOOYDwtleZSUIdeY36DC2bSZ24CO1igA==}
 
+  axe-core@4.12.1:
+    resolution: {integrity: sha512-s7iGf5GaVMxEG0ENN9x+xTr7GFZCb1ZP/1uATUpCEK2X78nDB3RwbtFCo9pGAf9ru+VwoQ464DkaLEeRM08wJA==}
+    engines: {node: '>=4'}
+
   babel-plugin-polyfill-corejs2@0.4.17:
     resolution: {integrity: sha512-aTyf30K/rqAsNwN76zYrdtx8obu0E4KoUME29B1xj+B3WxgvWkp943vYQ+z8Mv3lw9xHXMHpvSPOBxzAkIa94w==}
     peerDependencies:
@@ -3280,6 +3292,11 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
+  '@axe-core/playwright@4.12.1(playwright-core@1.62.0)':
+    dependencies:
+      axe-core: 4.12.1
+      playwright-core: 1.62.0
+
   '@babel/code-frame@7.29.7':
     dependencies:
       '@babel/helper-validator-identifier': 7.29.7
@@ -4756,6 +4773,8 @@ snapshots:
     dependencies:
       '@fastify/error': 3.4.1
       fastq: 1.20.1
+
+  axe-core@4.12.1: {}
 
   babel-plugin-polyfill-corejs2@0.4.17(@babel/core@7.29.7):
     dependencies:

@@ -31,9 +31,16 @@ export interface Settings {
   tutorialSeen: boolean;
   displayUnit: DisplayUnit;
   theme: "dark" | "light";
+  /** manual override for auto quality stepping (docs/06 §8) */
+  quality: "auto" | "best" | "saver";
 }
 
-export const DEFAULT_SETTINGS: Settings = { tutorialSeen: false, displayUnit: "m", theme: "dark" };
+export const DEFAULT_SETTINGS: Settings = {
+  tutorialSeen: false,
+  displayUnit: "m",
+  theme: "dark",
+  quality: "auto",
+};
 
 /**
  * A photo (or scan) the user captured for this project. The bytes stay on the

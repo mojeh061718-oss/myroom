@@ -8,12 +8,13 @@ interface SettingsState extends Settings {
   setDisplayUnit: (unit: DisplayUnit) => void;
   setTutorialSeen: (seen: boolean) => void;
   setTheme: (theme: "dark" | "light") => void;
+  setQuality: (quality: Settings["quality"]) => void;
 }
 
 export const useSettings = create<SettingsState>((set, get) => {
   const persist = () => {
-    const { tutorialSeen, displayUnit, theme } = get();
-    void putSettings({ tutorialSeen, displayUnit, theme });
+    const { tutorialSeen, displayUnit, theme, quality } = get();
+    void putSettings({ tutorialSeen, displayUnit, theme, quality });
   };
   return {
     ...DEFAULT_SETTINGS,
@@ -29,6 +30,10 @@ export const useSettings = create<SettingsState>((set, get) => {
     },
     setTutorialSeen: (tutorialSeen) => {
       set({ tutorialSeen });
+      persist();
+    },
+    setQuality: (quality) => {
+      set({ quality });
       persist();
     },
     setTheme: (theme) => {

@@ -183,7 +183,7 @@
   white-space: nowrap;
   font-size: 0.875rem;
 }
-.chip.active { background: var(--accent); color: #fff; border-color: transparent; }
+.chip.active { background: var(--accent-strong); color: #fff; border-color: transparent; }
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

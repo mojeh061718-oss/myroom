@@ -54,7 +54,7 @@ export function Home() {
   };
 
   return (
-    <div className="home" data-testid="home">
+    <main className="home" data-testid="home">
       <header className="home-masthead">
         <div>
           <h1 className="type-display-l" style={{ margin: 0 }}>
@@ -189,6 +189,29 @@ export function Home() {
             />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>Graphics</span>
+            <SegmentedControl
+              ariaLabel="Graphics quality"
+              options={[
+                { value: "auto", label: "Auto" },
+                { value: "best", label: "Best" },
+                { value: "saver", label: "Saver" },
+              ]}
+              value={settings.quality}
+              onChange={settings.setQuality}
+            />
+          </div>
+          <button
+            className="settings-link"
+            data-testid="privacy-link"
+            onClick={() => {
+              setSettingsOpen(false);
+              navigate("/privacy");
+            }}
+          >
+            Your photos, your room — what we do with them
+          </button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Theme</span>
             <SegmentedControl
               ariaLabel="Theme"
@@ -210,6 +233,6 @@ export function Home() {
           </PillButton>
         </div>
       </Sheet>
-    </div>
+    </main>
   );
 }
