@@ -76,7 +76,12 @@
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-elevated);
   max-width: calc(100vw - 24px);
-  overflow-x: auto;
+  /* Wrap rather than scroll: a horizontally scrolling toolbar hides its last
+     control behind a gesture nobody knows is there — on a 390 px phone the
+     wall-fade toggle was clipped off the edge. */
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 6px;
 }
 
 .sandbox-loading {
@@ -305,3 +310,12 @@
 .compare-label.left { left: 10px; }
 .compare-label.right { right: 10px; }
 .compare-range { width: 100%; max-width: 720px; min-height: 44px; }
+
+/* Provenance card in the object sheet (docs/01 §9, docs/05 §6). */
+.recon-card {
+  background: rgba(127, 127, 127, 0.08);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}

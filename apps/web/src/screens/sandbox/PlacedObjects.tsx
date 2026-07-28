@@ -353,6 +353,18 @@ export function PlacedObjects({
               </mesh>
             ))}
 
+            {/* Low-confidence outline (docs/05 §8): an object the pipeline
+                placed from its wall tag rather than a solved camera pose is
+                marked amber, so "roughly here" never reads as "measured". */}
+            {!selected && object.recon?.lowConfidence && (
+              <lineSegments position={[0, 0.004, 0]} renderOrder={2}>
+                <edgesGeometry
+                  args={[new THREE.BoxGeometry(object.size.w * 1.04, 0.008, object.size.d * 1.04)]}
+                />
+                <lineBasicMaterial color="#FFB35C" depthTest={false} transparent opacity={0.9} />
+              </lineSegments>
+            )}
+
             {/* Selection footprint — the accent outline of docs/06 §2. */}
             {selected && (
               <lineSegments position={[0, 0.004, 0]} renderOrder={2}>

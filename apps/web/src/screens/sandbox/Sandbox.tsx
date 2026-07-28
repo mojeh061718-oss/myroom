@@ -19,17 +19,8 @@ import { CameraRig, type ViewMode } from "./CameraRig.js";
 import { PlacedObjects, type DragFeedback } from "./PlacedObjects.js";
 import { CatalogSheet, ColorSheet, FLOOR_MATERIALS, ObjectSheet } from "./EditSheets.js";
 import { CompareSlider } from "./Compare.js";
+import { AccuracyBadge } from "../../components/AccuracyBadge.js";
 import "./sandbox.css";
-
-function AccuracyBadge({ tier }: { tier: "sketch" | "photo" | "lidar" }) {
-  const label = tier === "lidar" ? "LiDAR-verified" : tier === "photo" ? "Photo-calibrated" : "Sketch";
-  return (
-    <span className={`accuracy-badge ${tier}`} data-testid="accuracy-badge" title="How precise this room is">
-      <span className="dot" aria-hidden />
-      {label}
-    </span>
-  );
-}
 
 /** docs/06 §7 — the scene as a list, for non-pointer navigation. */
 function SceneObjectList({
@@ -530,6 +521,13 @@ export function Sandbox() {
           if (selected) setSwapFor(selected.id);
           setObjectSheetOpen(false);
           setCatalogOpen(true);
+        }}
+        onPickRunnerUp={(catalogId) => {
+          // The runners-up were computed during matching, so this swap needs no
+          // search and no round trip (docs/05 §6).
+          const item = getCatalogItem(catalogId);
+          if (selected && item) store().swapObject(selected.id, item.category, item.id);
+          setObjectSheetOpen(false);
         }}
         onResize={(scale) => {
           if (!selected) return;

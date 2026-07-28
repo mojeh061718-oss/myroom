@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { RoomPlan, Scene } from "@myroom/schema";
+import type { PhotoQuality, RoomPlan, Scene } from "@myroom/schema";
 import type { DisplayUnit } from "@myroom/geometry";
 
 /**
@@ -35,18 +35,45 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = { tutorialSeen: false, displayUnit: "m", theme: "dark" };
 
+/**
+ * A photo (or scan) the user captured for this project. The bytes stay on the
+ * device until a reconstruction actually needs them (docs/01 §12), and are
+ * deleted with the project.
+ */
+export interface LocalUpload {
+  id: string;
+  projectId: string;
+  kind: "photo" | "lidar";
+  filename: string;
+  /** the wall this shot is tagged to — a hint for the pipeline, not a constraint */
+  wallLabel: string | null;
+  shotId: string | null;
+  blob: Blob;
+  quality: PhotoQuality | null;
+  createdAt: string;
+  /** set once the API has confirmed the bytes; null while device-only */
+  remoteId: string | null;
+}
+
 interface MyRoomDB extends DBSchema {
   projects: { key: string; value: LocalProject };
   settings: { key: string; value: Settings };
+  uploads: { key: string; value: LocalUpload; indexes: { byProject: string } };
 }
 
 let dbPromise: Promise<IDBPDatabase<MyRoomDB>> | null = null;
 
 function db(): Promise<IDBPDatabase<MyRoomDB>> {
-  dbPromise ??= openDB<MyRoomDB>("myroom", 1, {
-    upgrade(database) {
-      database.createObjectStore("projects", { keyPath: "id" });
-      database.createObjectStore("settings");
+  dbPromise ??= openDB<MyRoomDB>("myroom", 2, {
+    upgrade(database, oldVersion) {
+      if (oldVersion < 1) {
+        database.createObjectStore("projects", { keyPath: "id" });
+        database.createObjectStore("settings");
+      }
+      if (oldVersion < 2) {
+        const uploads = database.createObjectStore("uploads", { keyPath: "id" });
+        uploads.createIndex("byProject", "projectId");
+      }
     },
   });
   return dbPromise;
@@ -66,7 +93,26 @@ export async function putProject(project: LocalProject): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  await (await db()).delete("projects", id);
+  const database = await db();
+  await database.delete("projects", id);
+  // Deleting a project deletes its photos with it — on the device as well as in
+  // the cloud (docs/03 §7, docs/01 §12). Leaving them behind would keep images
+  // of someone's home after they asked for them to be gone.
+  const orphans = await database.getAllKeysFromIndex("uploads", "byProject", id);
+  await Promise.all(orphans.map((key) => database.delete("uploads", key)));
+}
+
+export async function putUpload(upload: LocalUpload): Promise<void> {
+  await (await db()).put("uploads", upload);
+}
+
+export async function listUploads(projectId: string): Promise<LocalUpload[]> {
+  const all = await (await db()).getAllFromIndex("uploads", "byProject", projectId);
+  return all.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function deleteUpload(id: string): Promise<void> {
+  await (await db()).delete("uploads", id);
 }
 
 export async function getSettings(): Promise<Settings> {

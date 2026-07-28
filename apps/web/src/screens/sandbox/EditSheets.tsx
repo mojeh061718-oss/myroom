@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CATEGORY_GROUPS, OBJECT_CATEGORIES, getCategory, modelsForCategory } from "@myroom/catalog";
+import { CATEGORY_GROUPS, OBJECT_CATEGORIES, getCatalogItem, getCategory, modelsForCategory } from "@myroom/catalog";
 import { formatLength } from "@myroom/geometry";
 import type { PlacedObject } from "@myroom/schema";
 import { Sheet } from "../../components/Sheet.js";
@@ -205,6 +205,8 @@ interface ObjectSheetProps {
   onDuplicate: () => void;
   onDelete: () => void;
   onSwap: () => void;
+  /** pick one of the stored runners-up (docs/05 §6) */
+  onPickRunnerUp: (catalogId: string) => void;
   onResize: (scale: number) => void;
   onRotate: () => void;
   unit: "m" | "ft";
@@ -218,6 +220,7 @@ export function ObjectSheet({
   onDuplicate,
   onDelete,
   onSwap,
+  onPickRunnerUp,
   onResize,
   onRotate,
   unit,
@@ -234,10 +237,44 @@ export function ObjectSheet({
             <h2 id="object-title" className="type-title" style={{ margin: 0 }}>
               {object.label}
             </h2>
-            <p className="type-metric" style={{ margin: "4px 0 12px", color: "var(--text-dim)" }}>
+            <p className="type-metric" style={{ margin: "4px 0 8px", color: "var(--text-dim)" }}>
               {formatLength(object.size.w, unit)} × {formatLength(object.size.d, unit)} ×{" "}
               {formatLength(object.size.h, unit)}
             </p>
+
+            {/* Objects the pipeline placed carry their own provenance: how sure
+                it was, and what it nearly chose instead (docs/01 §9, docs/05 §6). */}
+            {object.recon && (
+              <div className="recon-card" data-testid="recon-card">
+                <p className="type-caption" style={{ margin: 0 }}>
+                  {object.recon.lowConfidence
+                    ? "Placed from its wall tag — the camera angle couldn't be solved for this photo."
+                    : `Matched from your photos · ${Math.round(object.recon.confidence * 100)}% confident`}
+                </p>
+                {object.recon.runnerUpCatalogIds.length > 0 && (
+                  <>
+                    <p className="type-caption" style={{ margin: "8px 0 4px" }}>
+                      Wrong item?
+                    </p>
+                    <div className="chip-row">
+                      {object.recon.runnerUpCatalogIds.map((catalogId) => {
+                        const item = getCatalogItem(catalogId);
+                        return (
+                          <button
+                            key={catalogId}
+                            className="chip"
+                            data-testid={`runner-up-${catalogId}`}
+                            onClick={() => onPickRunnerUp(catalogId)}
+                          >
+                            {item?.name ?? catalogId}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <div className="chip-row">
               {slots.map((s) => (
                 <button key={s} className="chip" data-testid={`slot-${s}`} onClick={() => setSlot(s)}>

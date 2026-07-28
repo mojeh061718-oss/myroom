@@ -288,6 +288,69 @@ always return to — a milestone before reconstruction exists to trigger it.
 
 ---
 
+## M4 — Reconstruct
+
+### 18. Where the pipeline's non-pixel stages run
+
+**Unspecified.** docs/03 §4 puts every pipeline stage in a Python worker;
+docs/05 §6 requires stage 4 to rank against "the CC0 catalog … build spec in
+`packages/catalog`", which is a TypeScript package.
+
+**Chosen.** Stages 0, 1, 2, 3 and 5 — scan parsing, detection, pose/depth,
+measurement, appearance — stay in `workers/vision`. Stages 4 (catalog match) and
+6 (assembly) run in TypeScript, in `packages/recon`, called by the orchestrator.
+
+**Why.** Both are pure operations over the catalog manifest and the room
+geometry, and both of those are TypeScript packages. Running them in Python
+would mean a second copy of the catalog and a second copy of the snapping rules
+in `packages/geometry` — two more things that can drift apart from what the app
+actually does. Nothing that touches a pixel or a point cloud moved.
+
+### 19. Demo reconstruction is labelled, and never invents from nothing
+
+**Unspecified.** docs/03 §8 requires the CI golden path to run
+"draw → mock-reconstruct → edit" on a laptop with no GPU, but does not say what
+a *user* of a build without a worker tier should see.
+
+**Chosen.** The CPU-only stage driver lays a typical room out from the floor
+plan. Every surface that shows its output — the processing screen and the
+room's own warning list — states plainly that the pieces are examples, not
+objects detected in the photos. With no photos uploaded it produces nothing at
+all rather than furnishing a room nobody photographed.
+
+**Why.** The static staging build has no API, so this is the path a visitor
+actually walks. Furniture presented as "what we found in your room" when nothing
+looked at the room would be a lie about the user's own home — and the accuracy
+badge exists precisely to keep that from happening (docs/05 §9).
+
+### 20. Two RoomPlan parsers, for two different jobs
+
+**Unspecified.** docs/01 §7 requires a parsed preview *before* upload; docs/05
+§2 requires the authoritative parse in the worker.
+
+**Chosen.** `workers/vision/roomplan.py` is authoritative and feeds the
+pipeline. `packages/recon/scan.ts` parses the same format on the device, only to
+draw the preview overlay.
+
+**Why.** The preview has to answer "is this the right room?" in front of the
+user, offline, before any bytes leave the phone. Round-tripping to a worker to
+answer that would defeat the point of asking. The two are tested against the
+same fixture shape, and only the worker's output enters the pipeline.
+
+### 21. The demo path's object reveal is paced
+
+**Unspecified.** docs/01 §8 describes silhouettes popping in "one by one" as the
+pipeline reports them.
+
+**Chosen.** The demo driver emits its object events with a short delay between
+them. The stage events are not padded.
+
+**Why.** The objects genuinely exist by then; the spacing is the reveal
+animation the blueprint asks for, not a progress bar pretending to work. A real
+pipeline run takes 30–120 s and needs no help looking busy.
+
+---
+
 ## Deferred to their own milestones
 
 These are **not** decisions — they are blueprint items whose milestone has not
@@ -297,9 +360,9 @@ started. Recorded so their absence is not mistaken for an omission.
 |---|---|
 | 3D shell extrusion, opening CSG, sandbox viewer | M2 (docs/09) |
 | CC0 catalog assets, edit mode, versions/compare/share | M3 |
-| Photo capture, upload pipeline, vision workers, golden-room fixtures | M4 |
-| LiDAR ingestion and accuracy-tier wiring | M5 |
+| GPU inference (detect/segment, metric depth) and golden-room fixtures | M4 — blocked, see CHANGELOG |
+| Queue-driven worker dispatch (BullMQ over Valkey) | M4 — see CHANGELOG |
 | Tutorial T2–T5 final animations, splash room-loop video, a11y audit | M6 |
 
-`workers/vision/` and the catalog *asset* pipeline are scaffolded but empty for
-this reason; the taxonomy above is the part M4 and M3 will build against.
+The catalog asset pipeline and `workers/vision/` are built; what remains unbuilt
+in M4 is listed, with reasons, in `CHANGELOG.md`.

@@ -6,7 +6,9 @@ import { Splash } from "./screens/Splash.js";
 import { Tutorial } from "./screens/Tutorial.js";
 import { Home } from "./screens/Home.js";
 import { DrawingBoard } from "./screens/board/DrawingBoard.js";
-import { StubScreen } from "./screens/StubScreen.js";
+import { Capture } from "./screens/capture/Capture.js";
+import { ScanUpload } from "./screens/capture/ScanUpload.js";
+import { Processing } from "./screens/capture/Processing.js";
 import { ToastRegion } from "./components/Toast.js";
 
 /**
@@ -40,15 +42,9 @@ const router = createBrowserRouter(
     { path: "/", element: <Home /> },
     { path: "/tutorial", element: <Tutorial /> },
     { path: "/p/:id/draw", element: <DrawingBoard /> },
-    {
-      path: "/p/:id/capture",
-      element: (
-        <StubScreen
-          title="Guided photo capture"
-          body="Photo capture and reconstruction arrive in Milestone M4. Your plan is saved — this room is ready for photos the moment the pipeline ships."
-        />
-      ),
-    },
+    { path: "/p/:id/capture", element: <Capture /> },
+    { path: "/p/:id/scan", element: <ScanUpload /> },
+    { path: "/p/:id/processing", element: <Processing /> },
     { path: "/p/:id", element: <SandboxRoute /> },
   ],
   { basename: import.meta.env.BASE_URL },

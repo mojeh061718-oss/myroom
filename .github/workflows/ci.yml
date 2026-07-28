@@ -49,6 +49,11 @@ jobs:
             || (echo "::error::packages/schema/json is stale — run 'pnpm --filter @myroom/schema generate:jsonschema' and commit the result" && exit 1)
       - name: Build PWA
         run: pnpm --filter @myroom/web build
+      # docs/09 cross-milestone rule 2: accuracy budgets are CI checks. With no
+      # fixture rooms present this reports that it certified nothing rather than
+      # passing quietly (fixtures/golden-rooms/README.md).
+      - name: Golden-room regression suite (docs/05 §9)
+        run: pnpm test:golden
 
   workers:
     name: Vision workers (Python)

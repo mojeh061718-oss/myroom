@@ -118,6 +118,7 @@ export function assembleScene(input: AssembleInput): AssembleResult {
   const walls = snapWallsOf(shell);
 
   const objects: PlacedObject[] = [];
+  const placeholders: string[] = [];
   const placed: { position: { x: number; z: number }; size: { w: number; d: number }; rotationY: number; collisionExempt: boolean }[] = [];
 
   for (const m of dedupeMeasured(input.measured)) {
@@ -125,8 +126,10 @@ export function assembleScene(input: AssembleInput): AssembleResult {
     const match = matchById.get(m.id);
     const model = match?.catalogId ? getCatalogItem(match.catalogId) : undefined;
     if (match && !match.catalogId) {
-      // Explicit, not silent: the object is here, just as a stand-in.
-      warnings.push(`No close catalog match for the ${category?.label ?? m.category} — using a placeholder shape.`);
+      // Explicit, not silent: the object is here, just as a stand-in. Collected
+      // and reported once at the end — eight near-identical lines is noise, and
+      // each object carries its own "wrong item?" prompt anyway.
+      placeholders.push(category?.label ?? m.category);
     }
 
     let position = { ...m.position };
@@ -224,6 +227,15 @@ export function assembleScene(input: AssembleInput): AssembleResult {
         lowConfidence: m.lowConfidence,
       },
     });
+  }
+
+  if (placeholders.length === 1) {
+    warnings.push(`We don't have a close model for the ${placeholders[0]} yet — it's a placeholder shape you can swap.`);
+  } else if (placeholders.length > 1) {
+    warnings.push(
+      `${placeholders.length} pieces are placeholder shapes for now (${placeholders.slice(0, 3).join(", ")}` +
+        `${placeholders.length > 3 ? ", …" : ""}) — tap any of them to choose a better match.`,
+    );
   }
 
   // Small items measured above the floor sit on whatever is under them
