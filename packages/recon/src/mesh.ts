@@ -341,6 +341,250 @@ export function measureFootprint(
 }
 
 /**
+ * Vertical-surface coverage per occupancy cell: how many metres of the
+ * wall band (floor+0.35 … ceiling−0.25) have vertical geometry in this cell.
+ * A painted wall covers most of the band; open floor covers none; a sofa
+ * back covers half a metre. This is the evidence "a wall stands here",
+ * independent of what the floor fill believes.
+ */
+export function verticalCoverage(
+  facets: readonly Triangle[],
+  planes: HorizontalPlanes,
+  angle: number,
+  cellMetres = 0.15,
+): Map<string, number> {
+  const low = planes.floorY + 0.35;
+  const high = (planes.ceilingY ?? planes.floorY + 2.6) - 0.25;
+  const cos = Math.cos(-angle);
+  const sin = Math.sin(-angle);
+  const slabs = new Map<string, Set<number>>();
+  for (const t of facets) {
+    if (Math.abs(t.ny) > 0.35) continue;
+    if (t.cy < low || t.cy > high) continue;
+    const u = t.cx * cos - t.cz * sin;
+    const v = t.cx * sin + t.cz * cos;
+    const key = `${Math.round(u / cellMetres)},${Math.round(v / cellMetres)}`;
+    let set = slabs.get(key);
+    if (!set) slabs.set(key, (set = new Set()));
+    set.add(Math.round(t.cy / 0.05));
+  }
+  const out = new Map<string, number>();
+  for (const [key, set] of slabs) out.set(key, set.size * 0.05);
+  return out;
+}
+
+/**
+ * Cut corners that a real barrier visibly cuts.
+ *
+ * The reference scan's owner drew the correction themselves: the outline's
+ * top corner is not square — a wall-height line runs diagonally across it,
+ * plain as day in the wall-band render, with a strip of scanned clutter
+ * beyond it that the occupancy fill dutifully included. Occupancy cannot see
+ * this (there is geometry on both sides); the wall band can.
+ *
+ * For every convex corner, search chords from one adjacent wall to the other
+ * for a line with continuous wall-height support — and require the corner
+ * being cut off to have essentially NO real floor behind the line. That last
+ * test is the owner's own rule ("you can see where the space stops") and it
+ * is what tells a boundary from tall furniture standing in the room: beyond
+ * a true boundary there is no floor; behind a wardrobe or a curtain there is
+ * a floor's worth of floor, and the corner must stay.
+ */
+type Pt2 = { x: number; y: number };
+
+export function chamferCorners(
+  ring: Pt2[],
+  coverage: Map<string, number>,
+  floorCells: ReadonlySet<string>,
+  cellMetres = 0.15,
+): Pt2[] {
+  if (ring.length < 4) return ring;
+  let area = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i]!;
+    const b = ring[(i + 1) % ring.length]!;
+    area += a.x * b.y - b.x * a.y;
+  }
+  const orientation = Math.sign(area) || 1;
+
+  /** Fraction of the cut triangle {E1, V, E2} that is real, visible floor. */
+  const floorFraction = (e1: Pt2, corner: Pt2, e2: Pt2): number => {
+    const minU = Math.min(e1.x, corner.x, e2.x);
+    const maxU = Math.max(e1.x, corner.x, e2.x);
+    const minV = Math.min(e1.y, corner.y, e2.y);
+    const maxV = Math.max(e1.y, corner.y, e2.y);
+    const side = (p: Pt2, a: Pt2, b: Pt2) => (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+    let total = 0;
+    let floor = 0;
+    for (let cu = Math.round(minU / cellMetres); cu <= Math.round(maxU / cellMetres); cu++) {
+      for (let cv = Math.round(minV / cellMetres); cv <= Math.round(maxV / cellMetres); cv++) {
+        const p = { x: cu * cellMetres, y: cv * cellMetres };
+        const d1 = side(p, e1, corner);
+        const d2 = side(p, corner, e2);
+        const d3 = side(p, e2, e1);
+        const inside = !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+        if (!inside) continue;
+        total++;
+        if (floorCells.has(`${cu},${cv}`)) floor++;
+      }
+    }
+    return total === 0 ? 1 : floor / total;
+  };
+
+  const out = ring.map((p) => ({ ...p }));
+  for (let i = 0; i < out.length; i++) {
+    const n = out.length;
+    const P = out[(i - 1 + n) % n]!;
+    const V = out[i]!;
+    const Q = out[(i + 1) % n]!;
+    const inLen = Math.hypot(V.x - P.x, V.y - P.y);
+    const outLen = Math.hypot(Q.x - V.x, Q.y - V.y);
+    if (inLen < 1e-9 || outLen < 1e-9) continue;
+    const inDir = { x: (V.x - P.x) / inLen, y: (V.y - P.y) / inLen };
+    const outDir = { x: (Q.x - V.x) / outLen, y: (Q.y - V.y) / outLen };
+    // Convex, axis-aligned corners only — a chamfer at a reflex corner would
+    // grow the room, and this must only ever cut.
+    if (Math.abs(inDir.x) > 1e-9 && Math.abs(inDir.y) > 1e-9) continue;
+    if (Math.abs(outDir.x) > 1e-9 && Math.abs(outDir.y) > 1e-9) continue;
+    const cross = inDir.x * outDir.y - inDir.y * outDir.x;
+    if (cross * orientation <= 0) continue;
+
+    const maxA = Math.min(2.7, inLen - 0.45);
+    const maxB = Math.min(2.7, outLen - 0.45);
+    if (maxA < 0.45 || maxB < 0.45) continue;
+
+    /*
+     * Fit the barrier, then place the chamfer where the fit says — rather
+     * than searching chord endpoints and scoring them, which kept finding
+     * chords certified by the walls' own coverage smeared sideways, or
+     * qualifying cuts far longer than the barrier. Candidate cells are the
+     * tall ones inside this corner's pocket, clear of both wall lines so the
+     * walls themselves can't vote.
+     */
+    const A0 = { x: V.x - inDir.x * maxA, y: V.y - inDir.y * maxA };
+    const B0 = { x: V.x + outDir.x * maxB, y: V.y + outDir.y * maxB };
+    const lowU = Math.min(A0.x, V.x, B0.x);
+    const highU = Math.max(A0.x, V.x, B0.x);
+    const lowV = Math.min(A0.y, V.y, B0.y);
+    const highV = Math.max(A0.y, V.y, B0.y);
+    const pts: Pt2[] = [];
+    for (const [key, tall] of coverage) {
+      if (tall < 0.25) continue;
+      const [cu, cv] = key.split(",").map(Number) as [number, number];
+      const x = cu * cellMetres;
+      const y = cv * cellMetres;
+      if (x < lowU || x > highU || y < lowV || y > highV) continue;
+      const dIn = Math.abs(inDir.x !== 0 ? y - V.y : x - V.x);
+      const dOut = Math.abs(outDir.x !== 0 ? y - V.y : x - V.x);
+      if (Math.min(dIn, dOut) < 0.3) continue;
+      pts.push({ x, y });
+    }
+    if (pts.length < 5) continue;
+
+    // Deterministic pairwise line search (a pocket holds at most a few
+    // hundred cells). Axis-parallel hypotheses are wall fringe, not a
+    // barrier crossing the corner, so only genuinely diagonal pairs count.
+    // Every hypothesis is kept, ranked by support: the single best-supported
+    // line is not always a valid cut — on the reference scan it merges a
+    // knee-high play fence with the real wall behind it into one long line
+    // that would consume the whole top wall — so the gates below pick the
+    // strongest hypothesis that IS a valid corner cut.
+    const stride = pts.length > 140 ? Math.ceil(pts.length / 140) : 1;
+    const hypotheses = new Map<string, { nx: number; ny: number; d: number; count: number }>();
+    for (let p1 = 0; p1 < pts.length; p1 += stride) {
+      for (let p2 = p1 + 1; p2 < pts.length; p2++) {
+        const dx = pts[p2]!.x - pts[p1]!.x;
+        const dy = pts[p2]!.y - pts[p1]!.y;
+        const span = Math.hypot(dx, dy);
+        if (span < 0.6 || Math.abs(dx) < 0.3 || Math.abs(dy) < 0.3) continue;
+        let nx = -dy / span;
+        let ny = dx / span;
+        let d = nx * pts[p1]!.x + ny * pts[p1]!.y;
+        if (d < 0) {
+          nx = -nx;
+          ny = -ny;
+          d = -d;
+        }
+        let count = 0;
+        for (const p of pts) if (Math.abs(nx * p.x + ny * p.y - d) <= 0.18) count++;
+        if (count < 5) continue;
+        const key = `${Math.round(nx * 8)},${Math.round(ny * 8)},${Math.round(d * 3)}`;
+        const seen = hypotheses.get(key);
+        if (!seen || count > seen.count) hypotheses.set(key, { nx, ny, d, count });
+      }
+    }
+
+    const ranked = [...hypotheses.values()].sort((a, b) => b.count - a.count).slice(0, 40);
+    for (const hypothesis of ranked) {
+      // Refit on the inliers (principal direction), then the chamfer
+      // endpoints are where the fitted line meets the two walls.
+      const inliers = pts.filter((p) => Math.abs(hypothesis.nx * p.x + hypothesis.ny * p.y - hypothesis.d) <= 0.18);
+      let mx = 0;
+      let my = 0;
+      for (const p of inliers) {
+        mx += p.x;
+        my += p.y;
+      }
+      mx /= inliers.length;
+      my /= inliers.length;
+      let sxx = 0;
+      let sxy = 0;
+      let syy = 0;
+      for (const p of inliers) {
+        sxx += (p.x - mx) * (p.x - mx);
+        sxy += (p.x - mx) * (p.y - my);
+        syy += (p.y - my) * (p.y - my);
+      }
+      const theta = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+      const dir = { x: Math.cos(theta), y: Math.sin(theta) };
+      const normal = { x: -dir.y, y: dir.x };
+      const dist = normal.x * mx + normal.y * my;
+
+      const nDotIn = normal.x * inDir.x + normal.y * inDir.y;
+      const nDotOut = normal.x * outDir.x + normal.y * outDir.y;
+      // Nearly parallel to a wall means fringe again, and an intersection
+      // shooting far away — the exact failure the old finisher had.
+      if (Math.abs(nDotIn) < 0.25 || Math.abs(nDotOut) < 0.25) continue;
+      // Clamp, don't reject, when the barrier runs past the pocket: the
+      // reference scan's boundary complex crosses its whole corner region, so
+      // its line meets the walls beyond what a corner cut can consume. The
+      // clamped chord approximates the barrier and the floor veto below still
+      // protects any real room the flatter cut would swallow.
+      const a = Math.min(maxA, (normal.x * V.x + normal.y * V.y - dist) / nDotIn);
+      const b = Math.min(maxB, -(normal.x * V.x + normal.y * V.y - dist) / nDotOut);
+      if (a < 0.45 || b < 0.45) continue;
+      const E1 = { x: V.x - inDir.x * a, y: V.y - inDir.y * a };
+      const E2 = { x: V.x + outDir.x * b, y: V.y + outDir.y * b };
+
+      // The barrier must support most of the chamfer it implies — an inlier
+      // run much shorter than the cut means the line was extrapolated. The
+      // candidate cells were kept 0.3 m clear of both walls, so the visible
+      // run can never reach the chord's ends; compare against the part of
+      // the chord that cells were allowed to occupy.
+      let tLo = Infinity;
+      let tHi = -Infinity;
+      for (const p of inliers) {
+        const t = dir.x * p.x + dir.y * p.y;
+        tLo = Math.min(tLo, t);
+        tHi = Math.max(tHi, t);
+      }
+      const chordLen = Math.hypot(E2.x - E1.x, E2.y - E1.y);
+      if (tHi - tLo < 0.6 * Math.max(0.5, chordLen - 0.9)) continue;
+
+      // The owner's rule: beyond a real boundary there is no floor. A tall
+      // wardrobe or curtain face has wall-height coverage; the floor behind
+      // it is what proves the room continues and the corner must stay.
+      if (floorFraction(E1, V, E2) > 0.25) continue;
+
+      out.splice(i, 1, E1, E2);
+      i++; // skip past the pair we just inserted
+      break;
+    }
+  }
+  return out;
+}
+
+/**
  * Parse a mesh scan into the Stage 0 artifact.
  *
  * `positions` is interleaved xyz in metres, Y-up (the glTF convention every
@@ -417,14 +661,47 @@ export function parseMeshScan(
   // not floor. `footprint.cells` are already in the room's own frame, so the
   // trace runs at angle 0 and the corners are rotated back with everything else.
   const traced = traceFloorOutline(footprint.cells, 0);
-  const corners =
+  const toPlan = (p: { x: number; y: number }) => {
+    const x = p.x * cos - p.y * sin;
+    const z = p.x * sin + p.y * cos;
+    return { x, y: -z };
+  };
+  const provisional =
     traced && traced.length >= 4
-      ? traced.map((p) => {
-          const x = p.x * cos - p.y * sin;
-          const z = p.x * sin + p.y * cos;
-          return { x, y: -z };
-        })
+      ? traced.map(toPlan)
       : [corner(-1, 1), corner(1, 1), corner(1, -1), corner(-1, -1)];
+  const provisionalWalls = provisional.map((start, i) => ({
+    start,
+    end: provisional[(i + 1) % provisional.length]!,
+    height: ceilingHeight,
+  }));
+
+  // The furniture, clustered out of what is left once the floor, ceiling and
+  // walls are accounted for — needed BEFORE the corners are final, because the
+  // chamfer pass below must know which wall-height surfaces are furniture.
+  const clusters = extractObjectClusters(facets, {
+    floorY: planes.floorY,
+    ceilingY: planes.ceilingY,
+    walls: provisionalWalls,
+    angle,
+  });
+
+  // Where a boundary visibly cuts a corner, follow it (the room-frame ring is
+  // chamfered, then everything maps to plan coordinates together).
+  let corners = provisional;
+  if (traced && traced.length >= 4) {
+    const { cellMetres, horizontalMin } = { ...DEFAULTS, ...options };
+    // Real, visible floor per room-frame cell — the "does the room continue
+    // past this line?" evidence the chamfer's floor test reads.
+    const floorCells = new Set<string>();
+    for (const t of facets) {
+      if (Math.abs(t.ny) < horizontalMin || t.cy >= planes.floorY + 0.3) continue;
+      const u = t.cx * cos + t.cz * sin;
+      const v = -t.cx * sin + t.cz * cos;
+      floorCells.add(`${Math.round(u / cellMetres)},${Math.round(v / cellMetres)}`);
+    }
+    corners = chamferCorners(traced, verticalCoverage(facets, planes, angle, cellMetres), floorCells, cellMetres).map(toPlan);
+  }
   const walls = corners.map((start, i) => ({
     start,
     end: corners[(i + 1) % corners.length]!,
@@ -437,22 +714,12 @@ export function parseMeshScan(
     failure: null,
     walls,
     ceilingHeight: ceilingHeight !== null && ceilingHeight > 1.5 ? ceilingHeight : null,
-    // The furniture, clustered out of what is left once the floor, ceiling and
-    // walls are accounted for. This used to return [] on the reasoning that an
-    // unlabelled mesh cannot say *what* occupies a volume — but that means
-    // someone scans their room and gets an empty one, which is the outcome
-    // they scanned to avoid. Names are a separate, weak, clearly-declined-when-
-    // unsure guess; the box is the useful part.
-    seedBoxes: clustersToSeedBoxes(
-      extractObjectClusters(facets, {
-        floorY: planes.floorY,
-        ceilingY: planes.ceilingY,
-        walls,
-        angle,
-      }),
-      options.categories ?? [],
-      planes.floorY,
-    ),
+    // Seed boxes used to be [] on the reasoning that an unlabelled mesh cannot
+    // say *what* occupies a volume — but that means someone scans their room
+    // and gets an empty one, which is the outcome they scanned to avoid. Names
+    // are a separate, weak, clearly-declined-when-unsure guess; the box is the
+    // useful part.
+    seedBoxes: clustersToSeedBoxes(clusters, options.categories ?? [], planes.floorY),
     disagreements: [],
     silhouette: footprint.cells.map(([u, v]) => {
       const x = u * cos - v * sin;

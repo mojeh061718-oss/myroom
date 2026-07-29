@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  chamferCorners,
   findHorizontalPlanes,
   findPrincipalAngle,
   measureFootprint,
@@ -198,6 +199,67 @@ describe("mesh scans are read on the device", () => {
   });
 });
 
+describe("chamferCorners cuts where a barrier visibly cuts", () => {
+  // A 4×4 m room ring with a diagonal run of tall cells across one corner.
+  const ring = () => [
+    { x: 0, y: 0 },
+    { x: 4, y: 0 },
+    { x: 4, y: 4 },
+    { x: 0, y: 4 },
+  ];
+  const CELL = 0.15;
+  const key = (x: number, y: number) => `${Math.round(x / CELL)},${Math.round(y / CELL)}`;
+
+  /** Tall cells along the corner-cutting line from (2.6, 4) to (4, 2.6). */
+  function barrier(): Map<string, number> {
+    const coverage = new Map<string, number>();
+    for (let t = 0; t <= 1.001; t += 0.05) {
+      coverage.set(key(2.6 + t * 1.4, 4 - t * 1.4), 1.2);
+    }
+    return coverage;
+  }
+  /** Floor everywhere the room continues; optionally beyond the barrier too. */
+  function floor(beyondBarrier: boolean): Set<string> {
+    const cells = new Set<string>();
+    for (let x = 0.1; x < 4; x += CELL) {
+      for (let y = 0.1; y < 4; y += CELL) {
+        if (!beyondBarrier && x + y > 6.75) continue;
+        cells.add(key(x, y));
+      }
+    }
+    return cells;
+  }
+
+  it("chamfers a corner with a tall straight barrier and no floor beyond", () => {
+    const cut = chamferCorners(ring(), barrier(), floor(false), CELL);
+    expect(cut.length).toBe(5);
+    // The new edge is genuinely diagonal and sits near the barrier line.
+    const diagonal = cut.filter((p, i) => {
+      const q = cut[(i + 1) % cut.length]!;
+      return Math.abs(q.x - p.x) > 0.3 && Math.abs(q.y - p.y) > 0.3;
+    });
+    expect(diagonal.length).toBe(1);
+  });
+
+  it("keeps the corner when floor proves the room continues behind the barrier", () => {
+    // Same tall line — a wardrobe face, say — but the floor behind it was
+    // scanned. The owner's rule: where there is floor, the room continues.
+    const cut = chamferCorners(ring(), barrier(), floor(true), CELL);
+    expect(cut.length).toBe(4);
+  });
+
+  it("never cuts on scattered tall clutter", () => {
+    const scattered = new Map<string, number>();
+    // Tall cells with no straight diagonal run: a lamp, a plant, a person.
+    scattered.set(key(3.1, 3.2), 1.4);
+    scattered.set(key(2.2, 3.6), 1.3);
+    scattered.set(key(3.6, 2.1), 1.2);
+    scattered.set(key(1.5, 1.5), 1.4);
+    const cut = chamferCorners(ring(), scattered, floor(false), CELL);
+    expect(cut.length).toBe(4);
+  });
+});
+
 /**
  * A Scaniverse export of a real open-plan play area and kitchen: 140,885
  * vertices, 175,542 triangles. Skipped when the fixture is absent so CI stays
@@ -228,6 +290,25 @@ describe.skipIf(!HAVE_SCAN)("a real Scaniverse scan", () => {
     expect(angle).not.toBeNull();
     expect((angle! * 180) / Math.PI).toBeGreaterThan(25);
     expect((angle! * 180) / Math.PI).toBeLessThan(35);
+  });
+
+  it("follows the diagonal boundary the owner drew, not a squared corner", () => {
+    // The owner annotated the diagnostic render: a wall visibly runs
+    // diagonally across the top of the plan, with a strip of scanned clutter
+    // beyond it. The outline must carry at least one genuinely diagonal wall
+    // in the room's own frame.
+    const scan = parseMeshScan(positions, indices, "glb");
+    const angle = findPrincipalAngle(triangleFacets(positions, indices))!;
+    const cos = Math.cos(-angle);
+    const sin = Math.sin(-angle);
+    const diagonals = scan.walls.filter((w) => {
+      const dx = w.end.x - w.start.x;
+      const dz = -(w.end.y - w.start.y);
+      const du = dx * cos - dz * sin;
+      const dv = dx * sin + dz * cos;
+      return Math.abs(du) > 0.3 && Math.abs(dv) > 0.3;
+    });
+    expect(diagonals.length).toBeGreaterThanOrEqual(1);
   });
 
   it("measures the footprint the walls enclose", () => {
