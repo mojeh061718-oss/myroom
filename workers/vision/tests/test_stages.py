@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from myroom_vision import appearance, detect, measure, solve
+from myroom_vision import appearance, detect, device, measure, solve
 
 
 # --- stage 2: camera & scale -------------------------------------------------
@@ -167,13 +167,61 @@ def test_the_detection_vocabulary_comes_from_the_shared_taxonomy():
         assert expected in vocabulary
 
 
-def test_a_worker_without_weights_says_so_instead_of_returning_nothing():
+def test_a_worker_without_the_ml_runtime_says_so_instead_of_returning_nothing():
     ready, reason = detect.runtime_available()
+    assert reason, "ready or not, the worker must be able to describe its own state"
     if ready:
-        pytest.skip("this worker has a GPU and the ML runtime installed")
-    assert reason
+        pytest.skip("this worker has the ML runtime installed")
+    # The message has to be actionable: what's missing and how to install it.
     with pytest.raises(detect.ModelsUnavailable) as error:
         detect.detect_and_segment(["photo.jpg"])
-    # The message has to be actionable: what's missing and what to deploy.
     assert "stage 1" in str(error.value)
-    assert detect.DETECTOR_MODEL in str(error.value)
+
+
+def test_the_absence_of_a_gpu_does_not_stop_stage_1():
+    """The regression test for the CUDA gate this module used to have.
+
+    Stage 1 refused to run without ``torch.cuda.is_available()``, which made an
+    NVIDIA card a hard requirement for the app's headline feature. It is not
+    one, and docs/03 §8 requires the opposite. On a machine with the runtime
+    installed and no GPU, stage 1 must report itself ready.
+    """
+    try:
+        import torch
+    except ImportError:
+        pytest.skip("no ML runtime on this worker; the gate cannot be exercised")
+
+    ready, reason = detect.runtime_available()
+    assert ready, f"stage 1 reported itself unavailable with the runtime present: {reason}"
+    if not torch.cuda.is_available():
+        assert device.select_device().kind != "cuda"
+        assert "CUDA" not in reason, "a CPU worker must not be described as needing CUDA"
+
+
+def test_the_compact_profile_is_chosen_when_there_is_no_accelerator():
+    try:
+        import torch  # noqa: F401
+    except ImportError:
+        pytest.skip("no ML runtime on this worker")
+    chosen = detect.profile_for_device()
+    assert chosen in ("full", "compact")
+    assert chosen == ("full" if device.select_device().is_accelerated else "compact")
+    detector, segmenter = detect.models_for(chosen)
+    # Whatever profile we land on, both checkpoints stay on the docs/08 allowlist.
+    assert detect.MODEL_LICENSES[detector] == "Apache-2.0"
+    assert detect.MODEL_LICENSES[segmenter] == "Apache-2.0"
+
+
+def test_every_device_backend_reports_without_raising():
+    try:
+        import torch  # noqa: F401
+    except ImportError:
+        pytest.skip("no ML runtime on this worker")
+    described = device.describe()
+    assert described["ready"] is True
+    assert described["device"] in ("cuda", "mps", "xpu", "cpu")
+    assert described["dtype"] in ("float16", "float32")
+    # CPU is the floor: it must never be reported as accelerated.
+    if described["device"] == "cpu":
+        assert described["accelerated"] is False
+        assert described["dtype"] == "float32"
