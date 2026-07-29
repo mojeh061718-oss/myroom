@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "0190a000-0000-7000-8000-000000000003",
+  "units": "m",
+  "vertices": [
+    { "id": "p1", "x": 1, "y": 6 },
+    { "id": "p2", "x": 5, "y": 6 },
+    { "id": "p3", "x": 6, "y": 3.5 },
+    { "id": "p4", "x": 4.5, "y": 0 },
+    { "id": "p5", "x": 1.5, "y": 0.8 },
+    { "id": "p6", "x": 0, "y": 3 }
+  ],
+  "walls": [
+    { "id": "wa", "label": "A", "start": "p1", "end": "p2", "thickness": 0.115, "height": 2.44, "openings": [] },
+    { "id": "wb", "label": "B", "start": "p2", "end": "p3", "thickness": 0.115, "height": 2.44, "openings": [] },
+    { "id": "wc", "label": "C", "start": "p3", "end": "p4", "thickness": 0.2, "height": 2.44, "openings": [] },
+    {
+      "id": "wd",
+      "label": "D",
+      "start": "p4",
+      "end": "p5",
+      "thickness": 0.115,
+      "height": 2.44,
+      "openings": [
+        { "id": "od", "kind": "door", "offset": 0.9, "width": 0.82, "sillHeight": 0, "headHeight": 2.03, "swing": "left" }
+      ]
+    },
+    { "id": "we", "label": "E", "start": "p5", "end": "p6", "thickness": 0.115, "height": 2.44, "openings": [] },
+    { "id": "wf", "label": "F", "start": "p6", "end": "p1", "thickness": 0.115, "height": 2.44, "openings": [] }
+  ],
+  "closed": true,
+  "floorArea": 26.575,
+  "source": "drawn",
+  "curvedWalls": null,
+  "roomGroups": null
+}

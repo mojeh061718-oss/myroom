@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="115" fill="#0E0F12"/>
+  <!-- room outline -->
+  <path d="M136 176 L256 116 L376 176 L376 336 L256 396 L136 336 Z" fill="none" stroke="#4C8DFF" stroke-width="22" stroke-linejoin="round"/>
+  <!-- floor seam -->
+  <path d="M136 176 L256 236 L376 176 M256 236 L256 396" fill="none" stroke="#4C8DFF" stroke-width="14" stroke-linejoin="round" opacity="0.55"/>
+  <!-- the movable object: a warm accent block (the "editable sofa") -->
+  <rect x="216" y="268" width="80" height="52" rx="12" fill="#FFB35C"/>
+</svg>

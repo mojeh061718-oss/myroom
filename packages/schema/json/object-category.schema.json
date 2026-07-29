@@ -1,0 +1,103 @@
+{
+  "$ref": "#/definitions/object-category",
+  "definitions": {
+    "object-category": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "group": {
+          "type": "string",
+          "minLength": 1
+        },
+        "support": {
+          "type": "string",
+          "enum": [
+            "floor",
+            "wall",
+            "surface",
+            "ceiling"
+          ]
+        },
+        "defaultSize": {
+          "type": "object",
+          "properties": {
+            "w": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "d": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "h": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "w",
+            "d",
+            "h"
+          ],
+          "additionalProperties": false
+        },
+        "mountHeight": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "materialSlots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "faceSlot": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "collisionExempt": {
+          "type": "boolean"
+        },
+        "detectionPrompts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "group",
+        "support",
+        "defaultSize",
+        "mountHeight",
+        "materialSlots",
+        "faceSlot",
+        "collisionExempt",
+        "detectionPrompts"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

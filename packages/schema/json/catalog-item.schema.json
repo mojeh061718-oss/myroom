@@ -1,0 +1,136 @@
+{
+  "$ref": "#/definitions/catalog-item",
+  "definitions": {
+    "catalog-item": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "asset": {
+          "type": "object",
+          "properties": {
+            "glb": {
+              "type": "string"
+            },
+            "tris": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 15000
+            }
+          },
+          "required": [
+            "glb",
+            "tris"
+          ],
+          "additionalProperties": false
+        },
+        "nativeSize": {
+          "type": "object",
+          "properties": {
+            "w": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "d": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "h": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "w",
+            "d",
+            "h"
+          ],
+          "additionalProperties": false
+        },
+        "scaleBounds": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "max": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "nonUniform": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "min",
+            "max",
+            "nonUniform"
+          ],
+          "additionalProperties": false
+        },
+        "materialSlots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "faceSlot": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "support": {
+          "type": "string",
+          "enum": [
+            "floor",
+            "wall",
+            "surface",
+            "ceiling"
+          ]
+        },
+        "embedding": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "license": {
+          "type": "string",
+          "const": "CC0"
+        },
+        "source": {
+          "type": "string",
+          "format": "uri"
+        },
+        "attribution": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "name",
+        "asset",
+        "nativeSize",
+        "scaleBounds",
+        "materialSlots",
+        "faceSlot",
+        "support",
+        "embedding",
+        "license",
+        "source"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

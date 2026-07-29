@@ -1,0 +1,231 @@
+{
+  "$ref": "#/definitions/scan-parse",
+  "definitions": {
+    "scan-parse": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": [
+            "roomplan-json",
+            "usdz",
+            "ply",
+            "glb",
+            "e57",
+            "las"
+          ]
+        },
+        "parsed": {
+          "type": "boolean"
+        },
+        "failure": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "walls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "end": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "start",
+              "end",
+              "height"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ceilingHeight": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "seedBoxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "position": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "z"
+                ],
+                "additionalProperties": false
+              },
+              "rotationY": {
+                "type": "number"
+              },
+              "size": {
+                "type": "object",
+                "properties": {
+                  "w": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "d": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "h": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "w",
+                  "d",
+                  "h"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "category",
+              "position",
+              "rotationY",
+              "size"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "disagreements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "wallId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "wallLabel": {
+                "type": "string"
+              },
+              "drawnLength": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "scannedLength": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "delta": {
+                "type": "number"
+              },
+              "needsReview": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "wallId",
+              "wallLabel",
+              "drawnLength",
+              "scannedLength",
+              "delta",
+              "needsReview"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "silhouette": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "format",
+        "parsed",
+        "failure",
+        "walls",
+        "ceilingHeight",
+        "seedBoxes",
+        "disagreements"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

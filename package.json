@@ -1,0 +1,27 @@
+{
+  "name": "myroom",
+  "private": true,
+  "version": "0.1.0",
+  "description": "My Room Sandbox — a PWA that turns a wall sketch + photos (+ optional LiDAR) into an editable 3D room",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @myroom/web test:e2e",
+    "lint:licenses": "node scripts/check-licenses.mjs",
+    "dev:web": "pnpm --filter @myroom/web dev",
+    "dev:api": "pnpm --filter @myroom/api dev",
+    "test:golden": "pnpm --filter @myroom/recon golden"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "$ref": "#/definitions/measured-object",
+  "definitions": {
+    "measured-object": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
+          "additionalProperties": false
+        },
+        "rotationY": {
+          "type": "number"
+        },
+        "size": {
+          "type": "object",
+          "properties": {
+            "w": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "d": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "h": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "w",
+            "d",
+            "h"
+          ],
+          "additionalProperties": false
+        },
+        "support": {
+          "type": "string",
+          "enum": [
+            "floor",
+            "wall",
+            "surface",
+            "ceiling"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sourcePhotoIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "lowConfidence": {
+          "type": "boolean"
+        },
+        "palette": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          },
+          "default": []
+        },
+        "faceTextureRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "position",
+        "rotationY",
+        "size",
+        "support",
+        "confidence",
+        "sourcePhotoIds",
+        "lowConfidence"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

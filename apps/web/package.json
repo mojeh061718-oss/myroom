@@ -1,0 +1,46 @@
+{
+  "name": "@myroom/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@myroom/catalog": "workspace:*",
+    "@myroom/geometry": "workspace:*",
+    "@myroom/recon": "workspace:*",
+    "@myroom/schema": "workspace:*",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "idb": "^8.0.0",
+    "lucide-react": "^0.427.0",
+    "onnxruntime-web": "^1.27.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "three": "^0.169.0",
+    "three-mesh-bvh": "^0.7.8",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.46.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.169.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "fake-indexeddb": "^6.2.5",
+    "sharp": "^0.33.5",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.1",
+    "vitest": "^2.0.5",
+    "workbox-window": "^7.1.0"
+  }
+}

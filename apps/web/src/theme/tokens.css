@@ -1,0 +1,120 @@
+/* Design tokens (docs/02). Dark is the default theme (docs/02 §3). */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable", Roboto,
+    "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+
+  --bg: #0e0f12;
+  --surface: rgba(26, 28, 33, 0.8);
+  --surface-solid: #1a1c21;
+  --text: #f2f3f5;
+  --text-dim: #9ba0aa;
+  --accent: #4c8dff;
+  /* Filled surfaces that carry white text need 4.5:1 (docs/02 §9); --accent is
+     tuned for outlines and highlights, where the 3:1 essential-UI bar applies.
+     Keeping two tokens beats darkening every highlight in the app. */
+  --accent-strong: #2f6fe0;
+  --accent-warm: #ffb35c;
+  --success: #5ecc8f;
+  --danger: #ff6b6b;
+  --danger-strong: #c53434;
+  --canvas-grid: #26282e;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 28px;
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f7f7f9;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-solid: #ffffff;
+  --text: #17181c;
+  /* 4.9:1 on the light background — the previous #6e7480 was 4.4:1, and dim
+     text still carries wall lengths and areas. */
+  --text-dim: #666c77;
+  --accent: #2f6fe4;
+  --accent-strong: #2f6fe4;
+  /* Amber on a light background is the hardest hue to keep legible; this is
+     3.4:1, over the 3:1 essential-UI bar. */
+  --accent-warm: #bf7413;
+  /* 3.7:1; the previous #2fa36b was 3.0:1 against a light background, right on
+     the line and below it once anti-aliasing thins the stroke. */
+  --success: #28925f;
+  --danger: #d64545;
+  --danger-strong: #c53434;
+  --canvas-grid: #e4e6ea;
+  --surface-border: rgba(255, 255, 255, 0.6);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.12);
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Type scale (docs/02 §2) — rem so iOS Dynamic Type / browser text-size scales. */
+.type-display-xl { font-size: 2.75rem; font-weight: 700; letter-spacing: -0.02em; }
+.type-display-l { font-size: 2.125rem; font-weight: 700; letter-spacing: -0.015em; }
+.type-title { font-size: 1.375rem; font-weight: 600; }
+.type-label { font-size: 0.9375rem; font-weight: 500; }
+.type-caption { font-size: 0.8125rem; font-weight: 400; color: var(--text-dim); }
+.type-metric { font-size: 0.9375rem; font-weight: 500; font-family: var(--font-mono); }
+
+/* Glass recipe (docs/02 §4) with backdrop-filter feature detection. */
+.glass {
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+}
+@supports (backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px)) {
+  .glass {
+    background: var(--surface);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
+  }
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

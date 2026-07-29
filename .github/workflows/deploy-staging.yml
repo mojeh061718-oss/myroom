@@ -1,0 +1,59 @@
+name: Deploy staging
+
+# Publishes the PWA to GitHub Pages so each milestone has a staging URL
+# (docs/03 §8 environments: dev → staging → prod).
+#
+# One-time setup by a repository admin: Settings → Pages → Build and deployment
+# → Source: "GitHub Actions". The staging URL is then
+# https://<owner>.github.io/<repo>/ and appears in this workflow's summary.
+#
+# Note: this deploys the client only. Reconstruction (M4+) needs the API and
+# worker tier; M1–M3 are fully usable client-side, since IndexedDB is the
+# write-primary store (docs/03 §6).
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build PWA for the Pages subpath
+        env:
+          PUBLIC_BASE_PATH: /${{ github.event.repository.name }}/
+        run: pnpm --filter @myroom/web build
+      - name: SPA fallback for deep links
+        run: cp apps/web/dist/index.html apps/web/dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
