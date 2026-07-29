@@ -114,10 +114,26 @@ export function proposeRefinements(
  * Apply the corrections that preserve the drawn shape. Returns the plan
  * unchanged when there is nothing safe to apply.
  */
+/**
+ * Whether the scan's uniform scale may be applied without asking.
+ *
+ * docs/05 §2: the scan corrects the drawing, it does not replace it, and
+ * "large disagreements > 0.4 m flag a review prompt rather than silently
+ * overriding". A uniform scale big enough to move a wall past
+ * `REVIEW_THRESHOLD_M` is exactly such a disagreement — it is consistent, but
+ * consistency is not permission. Applying it anyway also made
+ * `describeRefinements` contradict itself: it reported the scale as "applied"
+ * and, for the same over-threshold wall, that "we left your drawing alone".
+ */
+export function scaleIsSafeToApply(proposal: RefinementProposal): boolean {
+  if (!proposal.uniformScale || proposal.uniformScale <= 0) return false;
+  return !proposal.disagreements.some((d) => d.needsReview);
+}
+
 export function applyRefinements(plan: RoomPlan, proposal: RefinementProposal): RoomPlan {
   let next = plan;
 
-  if (proposal.uniformScale && proposal.uniformScale > 0) {
+  if (scaleIsSafeToApply(proposal)) {
     const k = proposal.uniformScale;
     const loop = planLoop(plan);
     if (loop) {
@@ -160,7 +176,13 @@ export function describeRefinements(proposal: RefinementProposal, applied: RoomP
   const out: string[] = [];
   if (proposal.uniformScale) {
     const percent = ((proposal.uniformScale - 1) * 100).toFixed(1);
-    out.push(`Your scan says the room is ${percent}% ${proposal.uniformScale > 1 ? "larger" : "smaller"} — applied.`);
+    const direction = proposal.uniformScale > 1 ? "larger" : "smaller";
+    out.push(
+      scaleIsSafeToApply(proposal)
+        ? `Your scan says the room is ${percent}% ${direction} — applied.`
+        : `Your scan says the room is ${percent}% ${direction}. That's a big enough difference ` +
+          `that we left your drawing as you made it — check the walls below and decide.`,
+    );
   }
   const beforeHeight = before.walls[0]?.height;
   const afterHeight = applied.walls[0]?.height;
