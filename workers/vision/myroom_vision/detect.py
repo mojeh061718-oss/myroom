@@ -89,6 +89,51 @@ def detection_vocabulary() -> list[str]:
     return [p for p in prompts if not (p in seen or seen.add(p))]
 
 
+@lru_cache(maxsize=1)
+def _prompt_to_category() -> dict[str, str]:
+    """Detection prompt → taxonomy id.
+
+    The vocabulary and the catalog are deliberately not the same list: the
+    taxonomy has 187 ids but 368 prompts, because "couch" and "settee" should
+    both find a ``sofa``. Only 69 prompts happen to be spelled like their id, so
+    emitting the raw prompt as the category would leave four detections in five
+    unresolvable by ``getCategory`` and unmatched by stage 4 — the object would
+    fall through to a parametric placeholder despite having been recognised
+    correctly.
+    """
+    if not TAXONOMY_JSON.exists():
+        raise ModelsUnavailable(
+            f"{TAXONOMY_JSON} is missing — run `pnpm --filter @myroom/catalog build:taxonomy`"
+        )
+    mapping: dict[str, str] = {}
+    for category in json.loads(TAXONOMY_JSON.read_text()):
+        identifier = category["id"]
+        mapping[identifier.lower()] = identifier
+        for prompt in category.get("detectionPrompts", []):
+            mapping.setdefault(prompt.strip().lower(), identifier)
+    return mapping
+
+
+def category_for_label(label: str) -> str | None:
+    """Resolve one detector label to a taxonomy id, or ``None`` if it is not ours.
+
+    Grounding DINO returns the matched span of the prompt string, which is
+    usually one vocabulary entry but can be a fragment or a run of two when
+    spans abut. Exact match first; then the longest vocabulary entry contained
+    in the span, so "leather couch" resolves to ``sofa`` rather than failing.
+    """
+    mapping = _prompt_to_category()
+    cleaned = label.strip().lower().strip(".,")
+    if not cleaned:
+        return None
+    if cleaned in mapping:
+        return mapping[cleaned]
+    contained = [p for p in mapping if p in cleaned]
+    if not contained:
+        return None
+    return mapping[max(contained, key=len)]
+
+
 def profile_for_device() -> str:
     """``full`` on an accelerator, ``compact`` on a CPU."""
     return "full" if select_device().is_accelerated else "compact"
@@ -181,10 +226,16 @@ def detect_and_segment(
             target_sizes=[image.size[::-1]],
         )[0]
         for label, score, box in zip(results["labels"], results["scores"], results["boxes"]):
+            category = category_for_label(str(label))
+            if category is None:
+                # The detector matched a span that is not in our vocabulary.
+                # Emitting it anyway would produce an object no catalog entry
+                # and no placeholder can be chosen for.
+                continue
             x0, y0, x1, y1 = (float(v) for v in box)
             out.append(
                 Detection(
-                    category=str(label),
+                    category=category,
                     confidence=float(score),
                     box=(x0, y0, x1 - x0, y1 - y0),
                     wall_tag=(wall_tags or {}).get(path),

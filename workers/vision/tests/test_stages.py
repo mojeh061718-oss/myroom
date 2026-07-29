@@ -225,3 +225,38 @@ def test_every_device_backend_reports_without_raising():
     if described["device"] == "cpu":
         assert described["accelerated"] is False
         assert described["dtype"] == "float32"
+
+
+def test_every_detection_prompt_resolves_to_a_taxonomy_id():
+    """Regression: stage 1 emitted the raw prompt as the category, but stage 4
+    and `getCategory` key on taxonomy ids. Only 69 of 368 prompts are spelled
+    like their id, so four detections in five became unresolvable."""
+    import json
+    from pathlib import Path
+
+    taxonomy = json.loads(detect.TAXONOMY_JSON.read_text())
+    ids = {c["id"] for c in taxonomy}
+
+    unresolved = []
+    for prompt in detect.detection_vocabulary():
+        resolved = detect.category_for_label(prompt)
+        if resolved is None or resolved not in ids:
+            unresolved.append((prompt, resolved))
+    assert not unresolved, f"prompts with no taxonomy id: {unresolved[:10]}"
+
+
+def test_synonyms_land_on_the_canonical_category():
+    assert detect.category_for_label("couch") == "sofa"
+    assert detect.category_for_label("sofa") == "sofa"
+    # Case and trailing punctuation come off the detector's matched span.
+    assert detect.category_for_label("  Couch. ") == "sofa"
+
+
+def test_a_span_that_wraps_a_known_prompt_still_resolves():
+    # Grounding DINO returns the matched span, which can carry a modifier.
+    assert detect.category_for_label("leather couch") == "sofa"
+
+
+def test_a_label_outside_the_vocabulary_resolves_to_nothing():
+    assert detect.category_for_label("aardvark") is None
+    assert detect.category_for_label("") is None
