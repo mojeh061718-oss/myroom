@@ -30,7 +30,13 @@ import { OBJECT_CATEGORIES } from "../src/taxonomy.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
-const limit = Number(args[args.indexOf("--limit") + 1]) || 40;
+// No cap by default. This defaulted to 40, which is why the shipped catalog
+// held 77 models covering 36 of 187 categories while Poly Haven offers 521
+// CC0 models, 189 of which map to a category here (57 distinct). Models that
+// match no category are skipped before any download, so an uncapped run costs
+// only what it actually ingests.
+const limitArg = args.indexOf("--limit");
+const limit = limitArg >= 0 ? Number(args[limitArg + 1]) || Infinity : Infinity;
 // Models are written straight into the web app's served static dir; only the
 // manifest lives in this package, so the GLBs aren't stored twice in the repo.
 const outDir = args.includes("--out")
