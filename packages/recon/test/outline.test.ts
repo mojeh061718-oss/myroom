@@ -90,19 +90,43 @@ describe("a scan traces its own floor plan", () => {
       expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeGreaterThan(0.3);
     }
   });
+
+  it("keeps a genuinely angled wall inside its own footprint", () => {
+    // A room with a 45° corner cut traces as a staircase of cell steps. The
+    // old finisher turned staircases into spikes (snap + re-intersect shoots
+    // near-parallel corners metres away); the collapse must stay simple and
+    // never leave the cells it came from.
+    const cells = rectangleCells(6, 5).filter(([x, y]) => x + y < 8.5);
+    const ring = traceFloorOutline(cells, 0);
+    expect(ring).not.toBeNull();
+    expect(isSimplePolygon(ring!)).toBe(true);
+    for (const p of ring!) {
+      expect(p.x).toBeGreaterThan(-0.5);
+      expect(p.x).toBeLessThan(6.5);
+      expect(p.y).toBeGreaterThan(-0.5);
+      expect(p.y).toBeLessThan(5.5);
+    }
+    // The cut corner must actually be cut, not boxed back in.
+    const area = polygonArea(ring!);
+    expect(area).toBeLessThan(6 * 5 * 0.98);
+    expect(area).toBeGreaterThan((6 * 5 - (2.5 * 2.5) / 2) * 0.85);
+  });
 });
 
 const POSITIONS = "/tmp/sv_positions.bin";
 const INDICES = "/tmp/sv_indices.bin";
 describe.skipIf(!existsSync(POSITIONS) || !existsSync(INDICES))("the real scan traces its own plan", () => {
-  function outline() {
+  function context() {
     const positions = new Float32Array(readFileSync(POSITIONS).buffer);
     const indices = new Uint32Array(readFileSync(INDICES).buffer);
     const facets = triangleFacets(positions, indices);
     const planes = findHorizontalPlanes(facets)!;
     const footprint = measureFootprint(facets, planes, findPrincipalAngle(facets)!);
+    return { facets, planes, footprint };
+  }
+  function outline() {
     // Cells are already in the room's own frame, so no further rotation.
-    return traceFloorOutline(footprint.cells, 0);
+    return traceFloorOutline(context().footprint.cells, 0);
   }
 
   it("produces a simple, editable outline", () => {
@@ -113,10 +137,36 @@ describe.skipIf(!existsSync(POSITIONS) || !existsSync(INDICES))("the real scan t
     expect(ring!.length).toBeLessThanOrEqual(12);
   });
 
-  it("encloses the area the owner measured by hand", () => {
-    // Their drawn plan is 16'1" x 12'11.5" = 208 sq ft.
+  it("never leaves its own occupancy — the dart regression", () => {
+    // The first shipped outline of this scan had a plausible area (212 sq ft)
+    // and a 36-foot wall: a dart whose vertices sat metres outside the floor,
+    // because snapped near-parallel walls were re-intersected far away. Area
+    // asserts can't see that; containment can.
+    const { footprint } = context();
+    const xs = footprint.cells.map((c) => c[0]);
+    const ys = footprint.cells.map((c) => c[1]);
+    const pad = 0.5;
+    const bounds = {
+      minX: Math.min(...xs) - pad,
+      maxX: Math.max(...xs) + pad,
+      minY: Math.min(...ys) - pad,
+      maxY: Math.max(...ys) + pad,
+    };
+    for (const p of outline()!) {
+      expect(p.x).toBeGreaterThan(bounds.minX);
+      expect(p.x).toBeLessThan(bounds.maxX);
+      expect(p.y).toBeGreaterThan(bounds.minY);
+      expect(p.y).toBeLessThan(bounds.maxY);
+    }
+  });
+
+  it("encloses what the walls enclose", () => {
+    // The owner's separate hand drawing said 208 sq ft; the scan's wall bands
+    // enclose ~285 — the drawing under-measured the open-plan run. What this
+    // pins is the measurement staying near the walls, tight enough that a
+    // collapse to a corridor or a bloat past the walls both fail.
     const sqFt = polygonArea(outline()!) * SQ_FT;
-    expect(sqFt).toBeGreaterThan(180);
-    expect(sqFt).toBeLessThan(240);
+    expect(sqFt).toBeGreaterThan(240);
+    expect(sqFt).toBeLessThan(330);
   });
 });

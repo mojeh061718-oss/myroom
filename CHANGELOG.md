@@ -4,6 +4,35 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.2.1] — The walls land where the walls are
+
+**Ships:** the fix for the owner's real Scaniverse scan coming back as a
+212 ft² dart with a 36-foot wall, validated against that exact file.
+
+### Fixed — scan wall extraction
+
+- **The outline finisher could shoot corners metres outside the room.**
+  Douglas–Peucker → snap-to-axes → re-intersect-neighbours re-corners two
+  near-parallel walls at their far-away intersection; the reference scan's
+  L-shaped room came back as a dart whose area looked plausible and whose
+  shape was garbage. Replaced with rectilinear simplification on the traced
+  grid boundary itself: merge collinear runs, then collapse each too-short
+  wall by sliding the shorter neighbour onto the longer one's line. Vertices
+  only ever adopt coordinates other vertices already have, so the outline
+  can never leave its own occupancy — asserted now, on the real scan.
+- **Furniture below 2'7" was invisible to the room's footprint.** Occupancy
+  counted visible floor plus a wall band above 0.8 m, so a sofa against a
+  wall bit a bay out of the outline. Everything below the ceiling now counts
+  as interior evidence — furniture proves the volume it stands in.
+- **A symmetric room registered flipped or not by floating-point luck.**
+  A rectangle fits its own scan at θ and θ+180° with identical wall
+  residual. Near-ties now break toward the smaller rotation — deterministic,
+  and exactly right for scan-first plans, where identity is the truth.
+- **One upload, not two**: importing a scan on the drawing board now keeps
+  the file as the project's scan, so the build step finds the furniture in
+  it without asking again. The processing screen's review step is covered by
+  the RoomPlan e2e (it previously raced past the review and hung CI).
+
 ## [2.2.0] — The scan lands where the room is
 
 **Ships:** the fix for "nothing was placed right": scanned furniture is

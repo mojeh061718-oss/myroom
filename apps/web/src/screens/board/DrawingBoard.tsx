@@ -17,6 +17,8 @@ import { formatArea, formatLength, parseDisplayLength, type DisplayUnit } from "
 import { parseMeshScan, parsePointCloudScan, SCAN_EXTENSIONS } from "@myroom/recon";
 import { OBJECT_CATEGORIES } from "@myroom/catalog";
 import { decodeScanFile } from "../../lib/scanDecode.js";
+import { listUploads, putUpload, deleteUpload, type LocalUpload } from "../../lib/db.js";
+import { uuidv7 } from "../../lib/uuid.js";
 import { usableFloorArea, wallLength } from "@myroom/schema";
 import { useDrawing, type Tool } from "../../stores/drawingStore.js";
 import { useSettings } from "../../stores/settingsStore.js";
@@ -456,6 +458,29 @@ export function DrawingBoard() {
           setImportNote("That scan traced a shape we couldn't turn into a room. Try drawing it instead.");
           return;
         }
+
+        // Keep the file as this project's scan, so the build step reads the
+        // furniture out of it without asking for the same upload twice.
+        if (id) {
+          const existing = await listUploads(id);
+          for (const upload of existing) {
+            if (upload.kind === "lidar") await deleteUpload(upload.id);
+          }
+          const upload: LocalUpload = {
+            id: uuidv7(),
+            projectId: id,
+            kind: "lidar",
+            filename: file.name,
+            wallLabel: null,
+            shotId: null,
+            blob: file,
+            quality: null,
+            createdAt: new Date().toISOString(),
+            remoteId: null,
+          };
+          await putUpload(upload);
+        }
+
         const pieces = parsed.seedBoxes.length;
         const ceiling =
           parsed.ceilingHeight !== null
@@ -463,7 +488,7 @@ export function DrawingBoard() {
             : "";
         const found =
           pieces > 0
-            ? ` It also found ${pieces} thing${pieces === 1 ? "" : "s"} in the room — add photos next and we'll place them.`
+            ? ` It also found ${pieces} thing${pieces === 1 ? "" : "s"} in the room — you'll pick which ones to keep before we build.`
             : "";
         setImportNote(
           `Measured from your scan: ${parsed.walls.length} walls${ceiling}. Drag any corner to adjust.${found}`,
@@ -474,7 +499,7 @@ export function DrawingBoard() {
         setImporting(false);
       }
     },
-    [settings.displayUnit],
+    [settings.displayUnit, id],
   );
 
   const measureTopbar = useCallback((element: HTMLDivElement | null) => {
