@@ -133,8 +133,8 @@ export function scaleIsSafeToApply(proposal: RefinementProposal): boolean {
 export function applyRefinements(plan: RoomPlan, proposal: RefinementProposal): RoomPlan {
   let next = plan;
 
-  if (scaleIsSafeToApply(proposal)) {
-    const k = proposal.uniformScale;
+  const k = proposal.uniformScale;
+  if (k !== null && scaleIsSafeToApply(proposal)) {
     const loop = planLoop(plan);
     if (loop) {
       // Scale about the room's centroid so the plan doesn't wander off its own
