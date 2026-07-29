@@ -4,6 +4,31 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.2.3] — The items are the items
+
+**Ships:** the fix for "those items are not accurate": the reference scan
+went from six unrecognisable blobs to thirteen objects that read like the
+room's actual inventory.
+
+### Fixed — scanned-object detection
+
+- **Against-wall furniture existed only as its distance from a wall.** A
+  blanket 28 cm exclusion zone erased the fridge, the console, the shelf
+  runs and the kitchen nook — most of a lived-in room stands against its
+  walls. The zone now drops only wall-height vertical surface (the wall
+  itself); furniture standing in it survives.
+- **Adjacent objects merged into review-proof blobs** (the reference scan
+  listed a 6'×5'×6'4" "object"). Merged clusters are now split at the
+  density valleys of their own footprint, recursively; a continuous run
+  with no valley — 17 feet of shelving — is bisected into sections a person
+  can actually tick or untick.
+- **Geometry beyond the walls is no longer furniture.** Clusters are
+  clipped to the room polygon, which the chamfered boundaries made matter:
+  scanned clutter past a diagonal wall used to pull boxes across it.
+- Smaller minimums so basket- and bin-sized things survive; objects sitting
+  on counters keep their measured base height (a microwave is a box 2'2"
+  up, not a floor cabinet).
+
 ## [2.2.2] — The boundary the owner could see, followed
 
 **Ships:** the owner's annotated correction — "I see clearly the real
