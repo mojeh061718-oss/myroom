@@ -259,10 +259,35 @@ export function Processing() {
             apiKey,
             scanSeeds: result.scanSeeds,
             scanMesh: result.scanMesh,
+            // Room photos see what normal-shaded crops can't — and what the
+            // scan's clustering missed entirely.
+            photos: uploads.filter((u) => u.kind === "photo").slice(0, 2).map((u) => u.blob),
           });
           seeds = seeds.map((seed, i) =>
             seed.category === null && named.categories[i] ? { ...seed, category: named.categories[i] } : seed,
           );
+          if (named.missing.length > 0) {
+            // Photo-spotted items have no measured position — line them up
+            // mid-room, clearly announced, for the user to drag into place.
+            const centre = planToShell(plan)?.center ?? [0, 0, 0];
+            seeds = [
+              ...seeds,
+              ...named.missing.map((m, i) => ({
+                category: m.category,
+                position: {
+                  x: centre[0] + ((i % 3) - 1) * 0.9,
+                  y: 0,
+                  z: centre[2] + (Math.floor(i / 3) - 0.5) * 0.9,
+                },
+                rotationY: 0,
+                size: m.size,
+              })),
+            ];
+            setWarnings((current) => [
+              ...current,
+              `${named.missing.length} more item${named.missing.length === 1 ? "" : "s"} spotted in your photos — lined up mid-room, drag them where they go.`,
+            ]);
+          }
           const note = named.note;
           if (note) setWarnings((current) => [...current, note]);
           setNaming(false);
@@ -295,6 +320,37 @@ export function Processing() {
     void runReconstruction(state.project, state.plan, state.uploads, state.refined, kept);
   };
 
+  /**
+   * The scan missed something the user can see from where they stand — a
+   * fan, a lamp, the trash can. A generic box mid-room beats re-scanning:
+   * name it with Swap and drag it home once the room is built.
+   */
+  const addReviewItem = () => {
+    const state = pending.current;
+    const centre: readonly [number, number, number] = (state && planToShell(state.plan)?.center) || [0, 0, 0];
+    haptic("light");
+    setReview((r) => {
+      if (!r) return r;
+      const added = r.seeds.length;
+      return {
+        seeds: [
+          ...r.seeds,
+          {
+            category: null,
+            position: {
+              x: centre[0] + ((added % 3) - 1) * 0.5,
+              y: 0,
+              z: centre[2] + ((Math.floor(added / 3) % 3) - 1) * 0.5,
+            },
+            rotationY: 0,
+            size: { w: 0.6, d: 0.6, h: 0.9 },
+          },
+        ],
+        keep: [...r.keep, true],
+      };
+    });
+  };
+
   const shell = useMemo(() => (project ? planToShell(project.plan) : null), [project]);
   const finished = stage === "done";
   const reachedIndex = VISIBLE_STAGES.indexOf(stage);
@@ -321,6 +377,24 @@ export function Processing() {
               setReview((r) => r && { ...r, keep: r.keep.map((k, i) => (i === index ? !k : k)) })
             }
           />
+          {/* The layout question first — no point reviewing furniture inside
+              the wrong walls. Corner-fixing is the drawing board's whole job,
+              and the scan stays attached, so coming back re-checks everything
+              against the corrected walls. */}
+          <div className="seed-review-walls">
+            <p className="type-caption" style={{ margin: 0 }}>
+              Does your layout look correct? These are your walls as the scan measured them
+              {project.plan.walls.length > 0 ? ` (${project.plan.walls.length} walls)` : ""}. If a corner is off,
+              adjust it — your corrections stick, and the furniture is re-checked against your walls.
+            </p>
+            <PillButton
+              variant="secondary"
+              data-testid="review-adjust-walls"
+              onClick={() => navigate(`/p/${id}/draw`)}
+            >
+              Adjust walls
+            </PillButton>
+          </div>
           <p className="type-caption" style={{ margin: 0 }}>
             {review.seeds.length} object{review.seeds.length === 1 ? "" : "s"} measured from your scan, drawn where
             they were found. Untick anything you don't want in the room — everything stays movable afterwards.
@@ -347,10 +421,13 @@ export function Processing() {
               </li>
             ))}
           </ul>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <PillButton variant="primary" data-testid="review-build" onClick={confirmReview}>
               Build my room ({review.keep.filter(Boolean).length} item
               {review.keep.filter(Boolean).length === 1 ? "" : "s"})
+            </PillButton>
+            <PillButton variant="ghost" data-testid="review-add-item" onClick={addReviewItem}>
+              + Add an item
             </PillButton>
             <PillButton
               variant="ghost"

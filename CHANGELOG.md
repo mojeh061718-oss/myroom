@@ -4,6 +4,30 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.3.0] — Ask, don't guess
+
+**Ships:** the owner's proposal verbatim: "what if we eliminate this
+guessing game by making the app ask — does your layout look correct?"
+
+### Added — confirm and correct
+
+- **The review now asks the layout question first**: your walls, as the
+  scan measured them, with an Adjust walls button straight into the drawing
+  board where every corner is draggable. Corrections stick — the scan stays
+  attached, and on build the furniture is re-registered against the walls
+  you fixed (scan refinement only ever applies uniform scale and ceiling
+  height, so it cannot fight a dragged corner).
+- **"+ Add an item"** in the review, for the things the scan missed — a
+  generic box joins the list ticked, lands mid-room, and gets named with
+  Swap and dragged home like anything else.
+- **With an API key, your room photos join the AI pass.** Photos are far
+  better evidence than normal-shaded scan crops, so they now (1) improve
+  the naming of detected boxes and (2) come back with a "missing" list —
+  significant furniture visible in the photo that detection never boxed —
+  which is appended mid-room, announced, and draggable. Photos are
+  downscaled and re-encoded on device; an undecodable photo is skipped,
+  and every failure path still returns the measured boxes.
+
 ## [2.2.3] — The items are the items
 
 **Ships:** the fix for "those items are not accurate": the reference scan
