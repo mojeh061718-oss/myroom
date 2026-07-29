@@ -131,7 +131,16 @@ def parse_roomplan(doc: dict[str, Any]) -> ParsedScan:
         if matrix is None or dims is None:
             continue
         centre = matrix[:3, 3]
-        forward = matrix[:3, 0]
+        # Column 2 (the object's local +Z), not column 0. For a rotation of θ
+        # about Y, column 0 is (cos θ, 0, −sin θ) and column 2 is
+        # (sin θ, 0, cos θ), so reading column 0 returns
+        # atan2(cos θ, −sin θ) = θ + π/2 — every scanned object a quarter-turn
+        # out, and `merge_with_seed` then hands that yaw to boxes whose own
+        # rotation `measure.py` computed correctly.
+        #
+        # Walls above read column 0 deliberately: a wall's length runs along
+        # its own local +X. Same fix as packages/recon/src/scan.ts.
+        forward = matrix[:3, 2]
         rotation_y = float(np.arctan2(forward[0], forward[2]))
         raw_category = obj.get("category")
         if isinstance(raw_category, dict):

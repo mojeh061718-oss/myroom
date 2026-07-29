@@ -440,13 +440,38 @@ export function buildShell(
   }
 
   // --- floor & ceiling from the interior polygon ---
+  //
+  // `inner` comes out of `offsetPolygon`, and nothing upstream guarantees it is
+  // still simple: on a room with a narrow alcove, a thick wall's two corner
+  // recessions can consume the notch and invert that part of the ring. Ear
+  // clipping then finds no ear, gives up, and returns a truncated index list —
+  // so the floor was drawn from whatever survived while `floorArea` reported
+  // the shoelace of the whole self-intersecting ring. A 5 × 4 m room with a
+  // 0.35 m alcove and 0.4 m walls rendered 8.28 m² of floor under a printed
+  // "16.54 m²".
+  //
+  // Every guard in the codebase checks `isSimplePolygon` on the *centreline*
+  // loop, which stays simple in exactly this case, so none of them fire.
+  //
+  // Rather than trust the offset, tile it and check: a complete tiling of an
+  // n-gon is n − 2 triangles. If the offset ring cannot produce one, fall back
+  // to the centreline loop, which is simple by construction (it is what the
+  // plan validators already enforce). The floor is then a half-thickness too
+  // generous around the perimeter — visible only as slightly-overlapped wall
+  // bases — which is a far smaller lie than half a missing floor, and the
+  // reported area is recomputed from whichever ring was actually drawn.
+  const floorRing = ((): readonly Vec2[] => {
+    if (triangulate(inner).length / 3 === inner.length - 2) return inner;
+    return ring;
+  })();
+
   const floor = emptyMesh();
   const ceiling = emptyMesh();
-  const tris = triangulate(inner);
+  const tris = triangulate(floorRing);
   for (let i = 0; i < tris.length; i += 3) {
-    const pa = inner[tris[i]!]!;
-    const pb = inner[tris[i + 1]!]!;
-    const pc = inner[tris[i + 2]!]!;
+    const pa = floorRing[tris[i]!]!;
+    const pb = floorRing[tris[i + 1]!]!;
+    const pc = floorRing[tris[i + 2]!]!;
     // Winding is derived from the desired normal rather than assumed, so the
     // plan→world y/−z mirror can't silently invert a face.
     pushTriangle(floor, p3(pa, 0), p3(pb, 0), p3(pc, 0), [0, 1, 0], [
@@ -483,7 +508,9 @@ export function buildShell(
     floor,
     ceiling,
     height,
-    floorArea: polygonArea(inner),
+    // The ring that was actually tiled, so the number the user reads is
+    // always the floor that was drawn.
+    floorArea: polygonArea(floorRing),
     center: [(minX + maxX) / 2, height / 2, (minZ + maxZ) / 2],
     bounds: { min: [minX, 0, minZ], max: [maxX, height, maxZ] },
     triangleCount,

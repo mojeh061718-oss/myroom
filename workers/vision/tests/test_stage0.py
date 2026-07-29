@@ -279,3 +279,44 @@ def test_every_format_stage0_emits_is_in_the_schema_enum():
     for sniffed in ("json", "roomplan-json", "ply", "glb", "e57", "las", "usdz"):
         assert canonical_format(sniffed) in allowed, sniffed
         validate("scan-parse", _failed(sniffed, "unreadable"))
+
+
+def test_roomplan_object_yaw_is_not_a_quarter_turn_out():
+    """Regression: the worker read yaw off column 0 of the transform.
+
+    For a rotation of θ about Y, column 0 is (cos θ, 0, −sin θ) and column 2 is
+    (sin θ, 0, cos θ), so atan2 over column 0 returns θ + π/2. The TypeScript
+    parser was fixed first; this is the same bug on the worker side, which is
+    the authoritative Stage 0 input.
+
+    `test_stages.py` could not catch it: its yaw assertion is modulo 90°, which
+    is exactly blind to this offset.
+    """
+    import math
+
+    import numpy as np
+
+    from myroom_vision.roomplan import parse_roomplan
+
+    def doc_with_yaw(theta: float) -> dict:
+        c, s = math.cos(theta), math.sin(theta)
+        # Column-major 4x4, flattened the way RoomPlan exports it.
+        transform = [c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0.5, 0.4, -1.2, 1]
+        wall = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.2, -2, 1]
+        return {
+            "walls": [{"transform": wall, "dimensions": [4.0, 2.44, 0.1]}],
+            "objects": [
+                {"category": "sofa", "transform": transform, "dimensions": [2.1, 0.8, 0.9]}
+            ],
+        }
+
+    for theta in (0.0, math.pi / 6, math.pi / 2, math.pi, -2.443):
+        parsed = parse_roomplan(doc_with_yaw(theta))
+        assert parsed.objects, f"no object parsed at theta={theta}"
+        got = parsed.objects[0].rotation_y
+        delta = (got - theta + math.pi) % (2 * math.pi) - math.pi
+        assert abs(delta) < 1e-6, (
+            f"theta={math.degrees(theta):.1f}° -> {math.degrees(got):.1f}° "
+            f"(off by {math.degrees(delta):.1f}°)"
+        )
+        np.testing.assert_allclose(parsed.objects[0].size, (2.1, 0.8, 0.9), atol=1e-9)
