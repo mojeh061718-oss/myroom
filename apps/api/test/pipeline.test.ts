@@ -155,7 +155,11 @@ describe("reconstruction (docs/03 §4, docs/05 §8)", () => {
     const job = (await app.inject({ method: "GET", url: `/v1/jobs/${started.json().jobId}`, headers: { cookie } })).json();
     expect(job.stage).toBe("done");
     expect(["succeeded", "partial"]).toContain(job.status);
-    expect(job.tier).toBe("photo");
+    // The demo driver lays furniture out from the floor plan and never opens a
+    // photo, and says so in its own warning. The badge has to agree with that
+    // warning: a tier is earned by what was measured, not by what was
+    // uploaded (docs/05 §9).
+    expect(job.tier).toBe("sketch");
 
     const scene = await app.inject({ method: "GET", url: `/v1/projects/${projectId}/scene`, headers: { cookie } });
     expect(scene.statusCode).toBe(200);

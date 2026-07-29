@@ -190,10 +190,22 @@ async function locally({ plan, uploads, scanParsed, seeds, onEvent, signal }: Re
   // room from the floor plan and never opens a photo. A user who took four
   // photos got a confident accuracy claim over furniture that was invented.
   //
-  // `fromScan` is the only way this path produces measured objects, so it is
-  // the only thing that can lift the tier above "sketch" here. When the vision
-  // tier lands, this becomes a real test of whether stage 1 actually ran.
-  const tier: Scene["provenance"]["tier"] = scanned ? "lidar" : "sketch";
+  // The test is `fromScan`, not `scanned`. `scanned` only says the file
+  // parsed; `fromScan` says objects in this room were actually measured.
+  //
+  // Getting that wrong is not hypothetical — the first version of this fix
+  // used `scanned` and moved the bug rather than removing it. A mesh scan
+  // (.glb/.ply) parses successfully and deliberately returns no seed boxes,
+  // because an unlabelled mesh cannot say *what* occupies a volume. So it
+  // parsed, fell through to demoMeasuredObjects, and was badged
+  // "LiDAR-verified" over furniture the app invented — the same lie as before
+  // with a different word on it.
+  //
+  // A parsed scan does improve the shell, and that improvement is real: the
+  // walls and ceiling height it corrects are measurements. But the badge
+  // describes the whole room, and a room whose contents were invented cannot
+  // carry a badge promising measured contents.
+  const tier: Scene["provenance"]["tier"] = fromScan ? "lidar" : "sketch";
   const { scene, warnings } = assembleScene({
     sceneId: uuidv7(),
     planId: plan.id,

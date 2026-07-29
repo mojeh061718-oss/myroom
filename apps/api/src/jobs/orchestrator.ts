@@ -29,6 +29,16 @@ export interface MeasureResult {
   warnings: string[];
   /** per-photo notes: which photos were skipped and why (docs/05 §8) */
   unusablePhotoIds: string[];
+  /**
+   * Whether these objects were measured from the user's own inputs, or laid
+   * out as an example.
+   *
+   * The accuracy badge is the honesty contract (docs/05 §9), and a driver is
+   * the only thing that knows which it did. Inferring it from "were photos
+   * attached" is what let the app promise "positions within about 6 inches"
+   * over furniture `createDemoWorkers` invented from the floor plan.
+   */
+  measuredFromInputs: boolean;
 }
 
 /**
@@ -127,6 +137,9 @@ export async function runReconstruction(opts: RunOptions): Promise<Reconstructio
   }
 
   let measured: MeasuredObject[] = [];
+  // Until a driver says otherwise, nothing here was measured from the user's
+  // own photos or scan — the safe default, because the badge depends on it.
+  let measuredFromInputs = false;
   await setStage("detect-segment", 0);
   try {
     const result = await withTimeout(
@@ -140,6 +153,7 @@ export async function runReconstruction(opts: RunOptions): Promise<Reconstructio
       "Finding objects",
     );
     measured = result.measured;
+    measuredFromInputs = result.measuredFromInputs;
     warnings.push(...result.warnings);
     for (const warning of result.warnings) {
       bus.publish(job.jobId, { type: "warning", message: warning, wallLabel: null });
@@ -157,6 +171,8 @@ export async function runReconstruction(opts: RunOptions): Promise<Reconstructio
   if (scan && scan.seedBoxes.length > 0) {
     const fused = fuseSeedBoxes(measured, scan.seedBoxes, { newId });
     measured = fused.measured;
+    // Boxes the scan named are measurements of this room.
+    if (scan.seedBoxes.some((box) => box.category !== null)) measuredFromInputs = true;
     if (fused.corrected > 0) {
       warnings.push(`Your scan corrected the size and position of ${fused.corrected} piece(s).`);
     }
@@ -188,7 +204,22 @@ export async function runReconstruction(opts: RunOptions): Promise<Reconstructio
   }
 
   await setStage("scene-assemble", 0);
-  const tier: Scene["provenance"]["tier"] = scan ? "lidar" : photos.length > 0 ? "photo" : "sketch";
+  // A tier is earned by what was measured, not by what was uploaded — the same
+  // contract the client enforces (docs/05 §9, apps/web/src/lib/reconstruct.ts).
+  //
+  // This copy was missed when the client's was fixed, so the API kept awarding
+  // "Photo-calibrated" for any room that had photos attached, whatever the
+  // stage workers actually did with them, and "LiDAR-verified" for any scan
+  // that parsed even when it named nothing. `createDemoWorkers` invents its
+  // furniture from the floor plan and says so in its own warning; the badge
+  // has to agree with that warning.
+  //
+  // `measuredFromInputs` is what the driver reports having genuinely measured.
+  const tier: Scene["provenance"]["tier"] = !measuredFromInputs
+    ? "sketch"
+    : scan
+      ? "lidar"
+      : "photo";
   const { scene, warnings: assemblyWarnings } = assembleScene({
     sceneId: newId(),
     planId: plan.id,
@@ -244,13 +275,18 @@ export function createDemoWorkers(newId: () => string): StageWorkers {
       onProgress("depth-scale", 1);
       // No photos, nothing to find. Inventing furniture for an empty upload set
       // would be a claim about a room nobody photographed.
-      if (photos.length === 0) return { measured: [], warnings: [], unusablePhotoIds: [] };
+      if (photos.length === 0) {
+        return { measured: [], warnings: [], unusablePhotoIds: [], measuredFromInputs: false };
+      }
       return {
         measured: demoMeasuredObjects(shell, { newId, photoIds: photos.map((p) => p.id) }),
         warnings: [
           "Demo reconstruction: these pieces are examples laid out from your floor plan, not objects detected in your photos.",
         ],
         unusablePhotoIds: [],
+        // This driver does not look at the photos. Saying so here is what keeps
+        // the badge honest downstream.
+        measuredFromInputs: false,
       };
     },
   };

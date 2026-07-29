@@ -96,7 +96,25 @@ describe("the accuracy badge never claims more than was measured", () => {
     expect(result.tier).toBe("sketch");
   });
 
-  it("awards the LiDAR tier only when a scan was actually read", async () => {
+  it('does not award "LiDAR-verified" for a scan that named nothing', async () => {
+    // A mesh scan (.glb/.ply) parses successfully and returns no seed boxes on
+    // purpose: an unlabelled mesh cannot say *what* occupies a volume. The
+    // first version of this fix keyed the tier off "did the scan parse", so
+    // exactly this case got badged "LiDAR-verified" over invented furniture —
+    // the same lie as before with a different word on it.
+    const result = await reconstruct({
+      projectId: "p",
+      plan: closedRectangle(),
+      uploads: [photo("a")],
+      scanParsed: true,
+      seeds: [],
+      onEvent: () => {},
+    });
+    expect(result.tier).toBe("sketch");
+    expect(result.scene.provenance.tier).toBe("sketch");
+  });
+
+  it("awards the LiDAR tier only when a scan actually named furniture", async () => {
     const seeds = [
       {
         id: uuidv7(),
