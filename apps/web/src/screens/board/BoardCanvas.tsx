@@ -705,7 +705,7 @@ export function BoardCanvas() {
                       transform={`scale(1,-1) translate(0, ${-(y0 + y1)})`}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      fill="var(--text-secondary)"
+                      fill="var(--text-dim)"
                       stroke="var(--bg)"
                       strokeWidth={px(4)}
                       paintOrder="stroke"

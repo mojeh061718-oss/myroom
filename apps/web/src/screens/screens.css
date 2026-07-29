@@ -103,6 +103,72 @@
   .t1-pen, .t1-outline, .t1-dim { animation: none; opacity: 1; stroke-dashoffset: 0; }
 }
 
+/* T2 — the capture frame breathes onto the wall; the shutter blinks. */
+.t2-frame { animation: t2-frame 3.2s ease-in-out infinite; transform-origin: 160px 120px; }
+@keyframes t2-frame {
+  0%, 100% { transform: scale(1.12); opacity: 0.55; }
+  40%, 70% { transform: scale(1); opacity: 1; }
+}
+.t2-shutter { animation: t2-shutter 3.2s linear infinite; }
+@keyframes t2-shutter {
+  0%, 52%, 62%, 100% { opacity: 0.4; }
+  56% { opacity: 1; r: 11; }
+}
+
+/* T3 — scan points appear, then the traced outline draws through them. */
+.t3-dots circle { opacity: 0; animation: t3-dot 5s linear infinite; }
+@keyframes t3-dot {
+  0%, 6% { opacity: 0; }
+  14%, 88% { opacity: 0.9; }
+  96%, 100% { opacity: 0; }
+}
+.t3-outline { stroke-dasharray: 1; stroke-dashoffset: 1; animation: t3-outline 5s linear infinite; }
+@keyframes t3-outline {
+  0%, 34% { stroke-dashoffset: 1; }
+  72%, 92% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 1; }
+}
+
+/* T4 — walls rise out of the floor plate, then the sofa drops in. */
+.t4-walls { transform-origin: 160px 158px; animation: t4-rise 4.2s ease-in-out infinite; }
+@keyframes t4-rise {
+  0%, 8% { transform: scaleY(0.02); opacity: 0; }
+  36%, 100% { transform: scaleY(1); opacity: 1; }
+}
+.t4-sofa { animation: t4-sofa 4.2s ease-in-out infinite; }
+@keyframes t4-sofa {
+  0%, 40% { transform: translateY(-30px); opacity: 0; }
+  58%, 100% { transform: translateY(0); opacity: 1; }
+}
+
+/* T5 — the sofa glides to the far wall while the wall takes a new colour. */
+.t5-sofa { animation: t5-slide 4.4s ease-in-out infinite; }
+@keyframes t5-slide {
+  0%, 18% { transform: translate(58px, 150px); }
+  55%, 100% { transform: translate(192px, 74px); }
+}
+.t5-wall { fill: var(--text-dim); animation: t5-paint 4.4s linear infinite; }
+@keyframes t5-paint {
+  0%, 45% { fill: var(--text-dim); }
+  60%, 100% { fill: #9CAF88; }
+}
+.t5-palette circle { animation: t5-pop 4.4s ease-in-out infinite; }
+@keyframes t5-pop {
+  0%, 40% { opacity: 0.4; }
+  55%, 100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t2-frame, .t2-shutter, .t3-dots circle, .t3-outline, .t4-walls, .t4-sofa, .t5-sofa, .t5-wall, .t5-palette circle {
+    animation: none;
+  }
+  /* Freeze each vignette on its legible final frame. */
+  .t3-dots circle { opacity: 0.9; }
+  .t3-outline { stroke-dashoffset: 0; }
+  .t5-sofa { transform: translate(192px, 74px); }
+  .t5-wall { fill: #9CAF88; }
+}
+
 /* S2 — Projects Home (docs/01 §4) */
 .home {
   min-height: 100dvh;

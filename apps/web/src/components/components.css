@@ -163,17 +163,6 @@
   width: 100%;
 }
 
-/* Error shake (docs/02 §5: 3× 60 ms horizontal) */
-.shake { animation: shake 180ms linear; }
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  17% { transform: translateX(-6px); }
-  33% { transform: translateX(6px); }
-  50% { transform: translateX(-6px); }
-  67% { transform: translateX(6px); }
-  83% { transform: translateX(-6px); }
-}
-
 /* Snap pulse (docs/02 §5: 120 ms scale-pulse) */
 @keyframes snap-pulse {
   0% { transform: scale(1); }

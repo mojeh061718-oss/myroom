@@ -91,7 +91,7 @@
   color: var(--text);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-sm);
-  min-height: 40px;
+  min-height: 44px; /* docs/02 §9: ≥44 px touch targets */
   padding: 0 10px;
   width: 110px;
   text-align: center;
