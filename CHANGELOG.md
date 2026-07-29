@@ -4,6 +4,30 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.2.2] — The boundary the owner could see, followed
+
+**Ships:** the owner's annotated correction — "I see clearly the real
+outline… it doesn't seem like you are noticing it" — turned into geometry.
+
+### Added — corner chamfers from wall evidence
+
+- **The outline now follows a boundary that visibly cuts a corner.** The
+  reference scan has a wall-height line running diagonally across the top
+  of the plan with a strip of scanned clutter beyond it; occupancy filling
+  can't see it (there is geometry on both sides), so the outline squared
+  over it. Each convex corner now fits a line to the tall cells in its
+  pocket (vertical-surface coverage of the wall band, deterministic pairwise
+  search + PCA refit) and cuts along the strongest hypothesis that lands as
+  a valid chamfer.
+- **The owner's own rule tells walls from wardrobes**: a cut only happens
+  when there is essentially no real floor beyond the line — beyond a
+  boundary the space stops; behind tall furniture the floor proves the room
+  continues. A knee-high play fence doesn't cut (not wall-height), scattered
+  tall clutter doesn't cut (no straight run), and the alcove stays room.
+- On the reference scan the plan now carries the drawn diagonal into the
+  notch and an evidence-backed chamfer at the far corner: 8 walls, ~256 ft²
+  enclosed, every wall on a visible band.
+
 ## [2.2.1] — The walls land where the walls are
 
 **Ships:** the fix for the owner's real Scaniverse scan coming back as a
