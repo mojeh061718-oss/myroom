@@ -72,6 +72,19 @@ export function archetypeFor(category: ObjectCategory): Archetype {
   return "block";
 }
 
+/**
+ * How far a front panel is set back from the body it sits on, in unit space.
+ *
+ * Placeholder parts are authored in a unit cube and scaled by the object's real
+ * size, so a proportional inset stays visible whether it is a 5 cm picture
+ * frame or a 60 cm cabinet. Coplanar surfaces z-fight, and on the reference
+ * device that rendered as a black-and-white checkerboard over a framed picture
+ * and the inside of a shelf — the single most visible defect in the app.
+ */
+const FACE_INSET = 0.04;
+/** Depth of a recessed face panel, ending FACE_INSET short of the front. */
+const FACE_DEPTH = 0.5 - FACE_INSET;
+
 const box = (
   slot: string,
   position: [number, number, number],
@@ -152,25 +165,40 @@ function build(category: ObjectCategory): PlaceholderPart[] {
     case "flat":
       return [
         box(main, [0, 0.5, 0], [1, 1, 1], 0.01),
-        ...(category.faceSlot ? [box(category.faceSlot, [0, 0.5, 0.25], [0.86, 0.86, 0.5])] : []),
+        // Recessed into the frame, not flush with it. Flush meant the face and
+        // the body shared the plane z = +0.5 exactly, and two coplanar
+        // surfaces z-fight: on a phone that renders as a black-and-white
+        // checkerboard, which is what a framed picture looked like in the
+        // shipped build. Sitting the picture *inside* its frame is also what a
+        // frame is.
+        ...(category.faceSlot ? [box(category.faceSlot, [0, 0.5, 0.21], [0.86, 0.86, FACE_DEPTH])] : []),
       ];
     case "screen":
       return [
         box(main, [0, 0.5, 0], [1, 1, 0.5], 0.01),
-        ...(category.faceSlot ? [box(category.faceSlot, [0, 0.5, 0.25], [0.96, 0.94, 0.5])] : []),
+        // A thin panel STRADDLING the bezel's front plane (z = +0.25), so
+        // neither of its faces is coplanar with the body — see the `flat` case
+        // for what coplanar looks like on a phone. Straddling rather than
+        // sitting proud matters: a panel resting exactly on the front would
+        // put its back face in that same plane and z-fight just as badly.
+        ...(category.faceSlot
+          ? [box(category.faceSlot, [0, 0.5, 0.25], [0.96, 0.94, 2 * FACE_INSET])]
+          : []),
       ];
     case "rug":
       return [box(main, [0, 0.5, 0], [1, 1, 1], 0.02)];
     case "appliance":
       return [
         box(main, [0, 0.5, 0], [1, 1, 1], 0.03),
-        box(accent, [0, 0.5, 0.45], [0.86, 0.7, 0.1], 0.02), // door / front panel
+        // Set back from z = +0.5 so the panel and the body are not coplanar.
+        box(accent, [0, 0.5, 0.45 - FACE_INSET], [0.86, 0.7, 0.1], 0.02), // door / front panel
       ];
     case "storage":
       return [
         box(main, [0, 0.52, 0], [1, 0.96, 1], 0.02),
-        box(accent, [-0.25, 0.55, 0.45], [0.44, 0.8, 0.1], 0.01), // fronts
-        box(accent, [0.25, 0.55, 0.45], [0.44, 0.8, 0.1], 0.01),
+        // Set back from the carcass front for the same reason as `flat`.
+        box(accent, [-0.25, 0.55, 0.45 - FACE_INSET], [0.44, 0.8, 0.1], 0.01), // fronts
+        box(accent, [0.25, 0.55, 0.45 - FACE_INSET], [0.44, 0.8, 0.1], 0.01),
         ...(category.defaultSize.h > 0.9 ? [] : legs(accent, 0.06, 0.1, 0.06)),
       ];
     case "plant":

@@ -191,7 +191,7 @@ export function PlacedObjects({
       // Wall items slide along their wall and hop corners; ceiling items keep
       // their height and only move in plan (docs/06 §3).
       if (object.support === "wall") {
-        const run = snapToWallRun({ x: point.x, z: point.z }, snapWalls, object.size.w);
+        const run = snapToWallRun({ x: point.x, z: point.z }, snapWalls, object.size.w, object.size.d);
         if (run) {
           if (lastSnap.current !== run.wallId) {
             haptic("light"); // corner hop

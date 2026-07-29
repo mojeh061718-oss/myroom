@@ -61,3 +61,37 @@ describe("parametric object geometry (docs/05 §6)", () => {
     expect(max).toBeLessThanOrEqual(8);
   });
 });
+
+describe("no two placeholder faces share a plane", () => {
+  /**
+   * Coplanar surfaces z-fight, and on a phone that renders as a black-and-white
+   * checkerboard. In the shipped build a framed picture on the wall and the
+   * inside of a shelf both showed it — the single most visible defect in the
+   * app — because the front panel's face landed on exactly the same plane as
+   * the body it sat on.
+   */
+  it.each(OBJECT_CATEGORIES.map((c) => [c.id, c] as const))(
+    "%s: front faces are separated",
+    (_id, category) => {
+      const parts = placeholderParts(category);
+      // Front-facing plane of each part, in unit space.
+      const fronts = parts.map((p) => p.position[2] + p.size[2] / 2);
+      for (let i = 0; i < fronts.length; i++) {
+        for (let j = i + 1; j < fronts.length; j++) {
+          const gap = Math.abs(fronts[i]! - fronts[j]!);
+          // Either clearly separated, or exactly the same part geometry
+          // repeated side by side (two cabinet doors, four fan blades), which
+          // do not overlap in x/y and so cannot fight.
+          const a = parts[i]!;
+          const b = parts[j]!;
+          const overlapsXY =
+            Math.abs(a.position[0] - b.position[0]) < (a.size[0] + b.size[0]) / 2 - 1e-6 &&
+            Math.abs(a.position[1] - b.position[1]) < (a.size[1] + b.size[1]) / 2 - 1e-6;
+          if (overlapsXY) {
+            expect(gap, `${_id}: parts ${i} and ${j} share a front plane`).toBeGreaterThan(0.01);
+          }
+        }
+      }
+    },
+  );
+})

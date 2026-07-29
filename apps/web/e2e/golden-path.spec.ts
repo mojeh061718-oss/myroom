@@ -23,7 +23,17 @@ async function roomSize(page: Page): Promise<{ w: number; h: number }> {
 }
 
 /** The app is feet-and-inches throughout (docs/04 §4), so the badge is ft². */
-const area = (m2: number) => `${Math.round(m2 / (0.3048 * 0.3048))} ft²`;
+/**
+ * The badge shows the floor INSIDE the walls (the area you could carpet), not
+ * the centreline polygon — one definition, shared with the sandbox, so the same
+ * room cannot report two sizes on two screens.
+ *
+ * So a room drawn w x d along its centrelines encloses (w - t)(d - t) at the
+ * default wall thickness.
+ */
+const THICKNESS = 0.115;
+const area = (w: number, d: number) =>
+  `${Math.round(((w - THICKNESS) * (d - THICKNESS)) / (0.3048 * 0.3048))} ft²`;
 
 async function toBoard(page: Page) {
   await page.goto("/");
@@ -55,7 +65,7 @@ test("draw → close → typed dimension → openings → undo/redo → persist"
   await page.getByTestId("height-8ft").click();
 
   await expect(page.getByTestId("validation-badge")).toContainText("Closed ✓");
-  await expect(page.getByTestId("validation-badge")).toContainText(area(w * h));
+  await expect(page.getByTestId("validation-badge")).toContainText(area(w, h));
   await expect(page.getByTestId("next-button")).toBeEnabled();
 
   // Typed dimensions beat drawn ones: stretch wall A (north) by 2.2 m.
@@ -64,8 +74,17 @@ test("draw → close → typed dimension → openings → undo/redo → persist"
   const input = page.getByTestId("dimension-input");
   await input.fill(String(typed));
   await input.press("Enter");
-  // North wall re-solved from its fixed corner → trapezoid area (w + typed) · h / 2.
-  await expect(page.getByTestId("validation-badge")).toContainText(area(((w + typed) * h) / 2));
+  // The room is a trapezoid now, and the badge shows the floor inside the
+  // walls — whose offset is not the naive inset of the averaged width, so
+  // asserting an exact figure here would mean reimplementing offsetPolygon in
+  // a test. What this step is actually about is that a typed dimension beats
+  // the drawn one, so assert the room grew, and by roughly the right amount.
+  const grown = await page.getByTestId("validation-badge").textContent();
+  const grownFt = Number(/(\d+) ft²/.exec(grown ?? "")?.[1]);
+  const drawnFt = Number(/(\d+) ft²/.exec(area(w, h))?.[1]);
+  expect(grownFt).toBeGreaterThan(drawnFt);
+  const expected = Number(/(\d+) ft²/.exec(area((w + typed) / 2, h))?.[1]);
+  expect(Math.abs(grownFt - expected)).toBeLessThanOrEqual(2);
 
   // Add a door on the south wall and a window on the east wall.
   await page.getByTestId("tool-door").click();

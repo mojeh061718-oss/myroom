@@ -144,10 +144,14 @@ export function assembleScene(input: AssembleInput): AssembleResult {
       const wall = nearest ? shell.walls.find((w) => w.wallId === nearest.wallId) : undefined;
       if (wall && nearest) {
         wallId = wall.wallId;
+        // Half the object's own depth as well as half the wall's: `position`
+        // is the object's CENTRE, so `thickness / 2` alone buries half of it
+        // in the plaster. The floor branch below already gets this right.
+        const standoff = wall.thickness / 2 + size.d / 2;
         position = {
-          x: nearest.point.x + wall.inwardNormal[0] * (wall.thickness / 2),
+          x: nearest.point.x + wall.inwardNormal[0] * standoff,
           y: Math.min(position.y, shell.height - size.h),
-          z: nearest.point.z + wall.inwardNormal[2] * (wall.thickness / 2),
+          z: nearest.point.z + wall.inwardNormal[2] * standoff,
         };
         rotationY = Math.atan2(wall.inwardNormal[0], wall.inwardNormal[2]);
       } else {

@@ -198,3 +198,50 @@ describe("findFreeSpot (docs/06 §5)", () => {
     expect(Number.isFinite(spot.x)).toBe(true);
   });
 });
+
+describe("a wall-mounted object sits against the wall, not inside it", () => {
+  /**
+   * `snapToWallRun` returns the object's CENTRE, so clearing the wall needs
+   * half the wall's thickness *and* half the object's depth. Only the former
+   * was applied, so a wall cabinet's centre landed on the plaster and half of
+   * it was buried. At the shipped 0.115 m wall thickness a 0.35 m cabinet's
+   * back face ended up 11.8 cm outside the building, and a 0.5 m range hood
+   * 19 cm — visible from the dollhouse view.
+   */
+  it.each([
+    [0.05, "picture frame"],
+    [0.35, "wall cabinet"],
+    [0.5, "range hood"],
+  ])("clears the wall face by half its depth (%s m, %s)", (depth) => {
+    const thickness = 0.115;
+    const walls = [
+      {
+        wallId: "n",
+        start: [0, -2] as [number, number],
+        end: [4, -2] as [number, number],
+        inwardNormal: [0, 1] as [number, number],
+        thickness,
+      },
+    ];
+    const snapped = snapToWallRun({ x: 2, z: -1.9 }, walls, 0.6, depth)!;
+    expect(snapped).not.toBeNull();
+    // Centre stands off the centreline by half the wall plus half the object.
+    expect(snapped.position.z - -2).toBeCloseTo(thickness / 2 + depth / 2, 9);
+    // And therefore the back face touches the inner face exactly.
+    const backFace = snapped.position.z - depth / 2;
+    expect(backFace).toBeCloseTo(-2 + thickness / 2, 9);
+  });
+
+  it("leaves a zero-depth object on the wall face, as before", () => {
+    const walls = [
+      {
+        wallId: "n",
+        start: [0, -2] as [number, number],
+        end: [4, -2] as [number, number],
+        inwardNormal: [0, 1] as [number, number],
+        thickness: 0.1,
+      },
+    ];
+    expect(snapToWallRun({ x: 2, z: -1.9 }, walls, 0.6)!.position.z).toBeCloseTo(-1.95, 9);
+  });
+});

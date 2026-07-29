@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { usableFloorArea } from "@myroom/schema";
 import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Plus, Settings as SettingsIcon } from "lucide-react";
 import { formatArea, formatLength } from "@myroom/geometry";
@@ -26,7 +27,8 @@ function projectDims(p: LocalProject, unit: "m" | "ft"): string | null {
   const h = Math.max(...pts.map((v) => v.y)) - Math.min(...pts.map((v) => v.y));
   if (w < 0.01 || h < 0.01) return null;
   const dims = `${formatLength(w, unit)} × ${formatLength(h, unit)}`;
-  return p.plan.closed && p.plan.floorArea ? `${dims} · ${formatArea(p.plan.floorArea, unit)}` : dims;
+  const area = p.plan.closed ? usableFloorArea(p.plan) : null;
+  return area !== null ? `${dims} · ${formatArea(area, unit)}` : dims;
 }
 
 /** S2 — Projects Home (docs/01 §4). */

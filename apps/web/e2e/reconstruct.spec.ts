@@ -76,7 +76,13 @@ test("draw → photograph → build → edit", async ({ page }) => {
   await page.getByTestId("processing-open").click();
 
   await page.getByTestId("sandbox").waitFor({ timeout: 25_000 });
-  await expect(page.getByTestId("accuracy-badge")).toContainText("Photo-calibrated");
+  // Six lines above, this same test asserts the room says its contents are
+  // "not objects detected in your photos". The badge has to agree with that:
+  // a tier is earned by what was measured, not by what was uploaded
+  // (docs/05 §9). It asserted "Photo-calibrated" until the contradiction was
+  // noticed, so assert the absence too — that is the half that regresses.
+  await expect(page.getByTestId("accuracy-badge")).toContainText("Sketch");
+  await expect(page.getByTestId("accuracy-badge")).not.toContainText("Photo-calibrated");
 
   // Every placed object is a real, editable object (BLUEPRINT §2). The
   // accessible room list is the document's own account of what is in the room,

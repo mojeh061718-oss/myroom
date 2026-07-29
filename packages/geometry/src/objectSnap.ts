@@ -116,6 +116,8 @@ export function snapObject(input: ObjectSnapInput): ObjectSnapResult {
   const facing = Math.abs(angleDelta(rotationY, base)) < Math.PI / 4 ||
     Math.abs(angleDelta(rotationY, base + Math.PI)) < Math.PI / 4;
   const halfDepth = (facing ? size.d : size.w) / 2;
+  // Depth is handled separately here, via `halfDepth` on the line below — do
+  // not fold it into faceOffset as well, or it is counted twice.
   const faceOffset = wall.thickness / 2;
 
   // Signed distance from the wall's centreline to the object centre, along the
@@ -156,6 +158,18 @@ export function snapToWallRun(
   point: { x: number; z: number },
   walls: readonly SnapWall[],
   width: number,
+  /**
+   * The object's depth. Required to sit it *against* the wall rather than
+   * *inside* it: the returned position is the object's centre, so it has to
+   * clear the wall face by half its own depth.
+   *
+   * Defaulting to 0 reproduces the old behaviour, where a wall cabinet's
+   * centre landed exactly on the plaster and half of it was buried — at the
+   * shipped 0.115 m wall thickness a 0.35 m cabinet's back face ended up
+   * 11.8 cm *outside* the building, visible from the dollhouse view. Seven of
+   * the 28 wall-support categories are deeper than 0.15 m.
+   */
+  depth = 0,
 ): { wallId: string; position: { x: number; z: number }; rotationY: number } | null {
   if (walls.length === 0) return null;
   let best: { wall: SnapWall; t: number; distance: number } | null = null;
@@ -177,7 +191,7 @@ export function snapToWallRun(
   const clamped = Math.min(Math.max(best.t * length, half), length - half);
   const ux = (wall.end[0] - wall.start[0]) / (length || 1);
   const uz = (wall.end[1] - wall.start[1]) / (length || 1);
-  const faceOffset = wall.thickness / 2;
+  const faceOffset = wall.thickness / 2 + depth / 2;
 
   return {
     wallId: wall.wallId,

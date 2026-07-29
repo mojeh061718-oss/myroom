@@ -104,6 +104,28 @@ export function labelWallsForPlan(plan: RoomPlan): RoomPlan {
  * RoomPlan → 3D shell (docs/06 §1). Returns null for an open or invalid plan:
  * the sandbox only ever renders a watertight room.
  */
+/**
+ * The floor area to show a user: the area inside the walls.
+ *
+ * `plan.floorArea` is the CENTRELINE polygon's area, and the schema enforces
+ * that (a cached value disagreeing by more than 0.05 m² is a validation
+ * error). The 3D shell reports the INNER offset ring's area instead. Both are
+ * defensible and they are not the same number — on a 7-vertex plan at the
+ * shipped 0.115 m wall thickness they differ by 12 ft².
+ *
+ * The app was printing the first on the drawing board and the home cards, and
+ * the second in the sandbox and on the processing screen, unlabelled. So a
+ * room measured 212 ft² while being drawn and 200 ft² the moment it was built
+ * — which reads as reconstruction having silently shrunk it.
+ *
+ * One definition wins for display, and it is this one: the floor you could
+ * actually carpet. Deriving it from `planToShell` rather than recomputing the
+ * offset means the number cannot drift from the one the sandbox renders.
+ */
+export function usableFloorArea(plan: RoomPlan): number | null {
+  return planToShell(plan)?.floorArea ?? null;
+}
+
 export function planToShell(plan: RoomPlan): ShellGeometry | null {
   if (!plan.closed) return null;
   const loop = planLoop(plan);

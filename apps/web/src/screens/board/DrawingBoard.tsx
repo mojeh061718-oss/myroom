@@ -14,7 +14,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { formatArea, formatLength, parseDisplayLength } from "@myroom/geometry";
-import { wallLength } from "@myroom/schema";
+import { usableFloorArea, wallLength } from "@myroom/schema";
 import { useDrawing, type Tool } from "../../stores/drawingStore.js";
 import { useSettings } from "../../stores/settingsStore.js";
 import { useToasts } from "../../components/Toast.js";
@@ -259,7 +259,7 @@ export function DrawingBoard() {
   const badge = useMemo(() => {
     if (!plan) return null;
     if (plan.closed && plan.floorArea != null) {
-      return { closed: true, text: `Closed ✓ · ${formatArea(plan.floorArea, settings.displayUnit)}` };
+      return { closed: true, text: `Closed ✓ · ${formatArea(usableFloorArea(plan) ?? plan.floorArea, settings.displayUnit)}` };
     }
     return { closed: false, text: `Open · ${wallCount} wall${wallCount === 1 ? "" : "s"}` };
   }, [plan, wallCount, settings.displayUnit]);
