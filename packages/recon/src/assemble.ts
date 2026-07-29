@@ -216,6 +216,7 @@ export function assembleScene(input: AssembleInput): AssembleResult {
       id: newId(),
       catalogId: model?.id ?? null,
       placeholder: model ? null : { category: m.category, shape: `${m.category}Massing` },
+      importedAssetId: null,
       label: model?.name ?? category?.label ?? (m.category === SCANNED_ITEM_CATEGORY ? SCANNED_ITEM_LABEL : m.category),
       support: m.support,
       wallId,

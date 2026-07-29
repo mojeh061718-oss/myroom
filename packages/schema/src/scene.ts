@@ -21,7 +21,7 @@ export type Support = z.infer<typeof SupportSchema>;
 
 const PlacedObjectBase = z.object({
   id: Id,
-  /** null ⇒ parametric placeholder */
+  /** null ⇒ parametric placeholder or imported model */
   catalogId: z.string().nullable(),
   placeholder: z
     .object({
@@ -29,6 +29,12 @@ const PlacedObjectBase = z.object({
       shape: z.string(),
     })
     .nullable(),
+  /**
+   * A model the user imported (docs/06 §5): the id of a device-local asset in
+   * the app's assets store, normalized to GLB at import time. `.default(null)`
+   * keeps every scene saved before this field existed parsing.
+   */
+  importedAssetId: z.string().nullable().default(null),
   label: z.string(),
   support: SupportSchema,
   /** required when support = "wall" */
@@ -55,8 +61,12 @@ const PlacedObjectBase = z.object({
 });
 
 export const PlacedObjectSchema = PlacedObjectBase.superRefine((o, ctx) => {
-  if ((o.catalogId === null) === (o.placeholder === null)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "exactly one of catalogId/placeholder must be non-null" });
+  const sources = [o.catalogId, o.placeholder, o.importedAssetId].filter((s) => s !== null).length;
+  if (sources !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "exactly one of catalogId/placeholder/importedAssetId must be non-null",
+    });
   }
   if (o.support === "wall" && o.wallId === null) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "wall-supported object requires wallId" });

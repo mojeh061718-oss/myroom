@@ -61,6 +61,7 @@ export function makePlacedObject(
     id: uuidv7(),
     catalogId: null,
     placeholder: { category: category.id, shape: `${category.id}Massing` },
+    importedAssetId: null,
     label: category.label,
     support: category.support,
     wallId: null,
@@ -95,6 +96,10 @@ interface SceneState {
   select: (id: string | null) => void;
 
   addObject: (categoryId: string, position: { x: number; y: number; z: number }, overrides?: Partial<PlacedObject>) => string;
+  addImported: (
+    asset: { id: string; name: string; nativeSize: { w: number; d: number; h: number } },
+    position: { x: number; y: number; z: number },
+  ) => string;
   updateObject: (id: string, patch: Partial<PlacedObject>, commit: boolean) => void;
   duplicateObject: (id: string) => void;
   deleteObject: (id: string) => void;
@@ -198,6 +203,32 @@ export const useScene = create<SceneState>((set, get) => {
       return object.id;
     },
 
+    addImported: (asset, position) => {
+      const { scene } = get();
+      if (!scene) return "";
+      // An imported model is its own thing — no taxonomy category, no
+      // catalog entry; the asset id is the identity (docs/06 §5).
+      const object: PlacedObject = {
+        id: uuidv7(),
+        catalogId: null,
+        placeholder: null,
+        importedAssetId: asset.id,
+        label: asset.name,
+        support: "floor",
+        wallId: null,
+        parentObjectId: null,
+        position,
+        rotationY: 0,
+        size: { ...asset.nativeSize },
+        materials: {},
+        collisionExempt: false,
+        recon: null,
+      };
+      apply(`Add ${object.label}`, withObjects(scene, [...scene.objects, object]));
+      set({ selectedId: object.id });
+      return object.id;
+    },
+
     updateObject: (id, patch, commit) => {
       const { scene } = get();
       if (!scene) return;
@@ -245,6 +276,8 @@ export const useScene = create<SceneState>((set, get) => {
         ...source,
         placeholder: model ? null : { category: category.id, shape: `${category.id}Massing` },
         catalogId: model?.id ?? null,
+        // Swapping an imported model to a catalog item replaces its identity.
+        importedAssetId: null,
         label: model?.name ?? category.label,
         support: category.support,
         collisionExempt: category.collisionExempt,

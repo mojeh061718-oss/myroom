@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CATEGORY_GROUPS, OBJECT_CATEGORIES, getCatalogItem, getCategory, modelsForCategory } from "@myroom/catalog";
-import { formatLength } from "@myroom/geometry";
+import { formatLength, parseDisplayLength, type DisplayUnit } from "@myroom/geometry";
 import type { PlacedObject } from "@myroom/schema";
 import { Sheet } from "../../components/Sheet.js";
 import { PillButton } from "../../components/PillButton.js";
+import type { LoadedModel } from "../../lib/importModel.js";
 
 /** docs/06 §4 — curated designer palettes plus a free hex field. */
 export const PALETTES: { name: string; colors: string[] }[] = [
@@ -98,6 +99,12 @@ export function ColorSheet({ open, title, swatches, onPick, onClose, extraAction
   );
 }
 
+export interface MyModelEntry {
+  id: string;
+  name: string;
+  nativeSize: { w: number; d: number; h: number };
+}
+
 interface CatalogSheetProps {
   open: boolean;
   onClose: () => void;
@@ -105,10 +112,15 @@ interface CatalogSheetProps {
   /** clearance at the tapped spot, for the "fits here" filter (docs/06 §5) */
   fitsWithin?: { w: number; d: number } | null;
   title?: string;
+  /** opens the model-import file picker (docs/06 §5) */
+  onImport?: () => void;
+  /** models this project already imported, for re-placing */
+  myModels?: MyModelEntry[];
+  onPickModel?: (model: MyModelEntry) => void;
 }
 
 /** docs/06 §5 — categories, text search, and a size-aware "fits here" filter. */
-export function CatalogSheet({ open, onClose, onPick, fitsWithin, title }: CatalogSheetProps) {
+export function CatalogSheet({ open, onClose, onPick, fitsWithin, title, onImport, myModels, onPickModel }: CatalogSheetProps) {
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<string | "all">("all");
   const [fitsOnly, setFitsOnly] = useState(false);
@@ -134,6 +146,11 @@ export function CatalogSheet({ open, onClose, onPick, fitsWithin, title }: Catal
       <h2 id="catalog-title" className="type-title" style={{ margin: "0 0 8px" }}>
         {title ?? "Add to the room"}
       </h2>
+      {onImport && (
+        <PillButton style={{ width: "100%", marginBottom: 8 }} data-testid="import-model" onClick={onImport}>
+          Import a model… (.glb .gltf .obj .stl .fbx .usdz)
+        </PillButton>
+      )}
       <input
         className="hex-field"
         style={{ width: "100%" }}
@@ -143,6 +160,20 @@ export function CatalogSheet({ open, onClose, onPick, fitsWithin, title }: Catal
         data-testid="catalog-search"
         onChange={(e) => setQuery(e.target.value)}
       />
+      {myModels && myModels.length > 0 && onPickModel && (
+        <>
+          <div className="type-caption" style={{ marginTop: 8 }}>
+            My models
+          </div>
+          <div className="chip-row">
+            {myModels.map((m) => (
+              <button key={m.id} className="chip" data-testid={`my-model-${m.id}`} onClick={() => onPickModel(m)}>
+                {m.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       <div className="chip-row">
         <button className={`chip ${group === "all" ? "active" : ""}`} onClick={() => setGroup("all")}>
           All
@@ -194,6 +225,104 @@ export function CatalogSheet({ open, onClose, onPick, fitsWithin, title }: Catal
         })}
         {results.length === 0 && <p className="type-caption">Nothing matches that search.</p>}
       </div>
+    </Sheet>
+  );
+}
+
+interface ImportConfirmProps {
+  model: LoadedModel | null;
+  unit: DisplayUnit;
+  onConfirm: (size: { w: number; d: number; h: number }) => void;
+  onCancel: () => void;
+}
+
+/**
+ * Confirm an imported model before it lands (docs/06 §5): shows the detected
+ * real-world size and lets the user correct the height — the width and depth
+ * scale with it, because a mis-scaled import is wrong uniformly.
+ */
+export function ImportConfirmSheet({ model, unit, onConfirm, onCancel }: ImportConfirmProps) {
+  const [height, setHeight] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (model) {
+      setHeight(formatLength(model.nativeSize.h, unit));
+      setError(null);
+    }
+  }, [model, unit]);
+
+  if (!model) return <Sheet open={false} onClose={onCancel} labelledBy="import-confirm-title" children={null} />;
+
+  const submit = () => {
+    const meters = parseDisplayLength(height, unit);
+    if (meters === null || meters < 0.01 || meters > 6) {
+      setError(`Type a height between ${formatLength(0.05, unit)} and ${formatLength(6, unit)}.`);
+      return;
+    }
+    const factor = meters / model.nativeSize.h;
+    onConfirm({
+      w: Math.max(0.01, model.nativeSize.w * factor),
+      d: Math.max(0.01, model.nativeSize.d * factor),
+      h: meters,
+    });
+  };
+
+  return (
+    <Sheet open onClose={onCancel} labelledBy="import-confirm-title">
+      <h2 id="import-confirm-title" className="type-title" style={{ margin: 0 }}>
+        {model.name}
+      </h2>
+      <p className="type-metric" style={{ margin: "4px 0 0", color: "var(--text-dim)" }}>
+        {formatLength(model.nativeSize.w, unit)} × {formatLength(model.nativeSize.d, unit)} ×{" "}
+        {formatLength(model.nativeSize.h, unit)} · {(model.triangles / 1000).toFixed(model.triangles < 10_000 ? 1 : 0)}k
+        triangles
+      </p>
+      {model.notes.map((note) => (
+        <p key={note} className="type-caption" style={{ margin: "6px 0 0" }}>
+          {note}
+        </p>
+      ))}
+      <form
+        style={{ display: "flex", gap: 8, marginTop: 12 }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <input
+          className="metric-field"
+          style={{
+            flex: 1,
+            fontFamily: "var(--font-mono)",
+            background: "var(--bg)",
+            color: "var(--text)",
+            border: "1px solid var(--surface-border)",
+            borderRadius: "var(--radius-sm)",
+            minHeight: 44,
+            padding: "0 12px",
+          }}
+          value={height}
+          onChange={(e) => {
+            setHeight(e.target.value);
+            setError(null);
+          }}
+          aria-label="Real-world height"
+          aria-invalid={error !== null || undefined}
+          data-testid="import-height"
+        />
+        <PillButton type="submit" variant="primary" data-testid="import-confirm">
+          Add to room
+        </PillButton>
+      </form>
+      <p className="type-caption" style={{ margin: "6px 0 0" }}>
+        How tall is it in real life? Width and depth scale with it.
+      </p>
+      {error && (
+        <p className="type-caption" role="alert" style={{ margin: "6px 0 0", color: "var(--danger)" }}>
+          {error}
+        </p>
+      )}
     </Sheet>
   );
 }

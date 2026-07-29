@@ -20,6 +20,32 @@ import { Clone, useGLTF } from "@react-three/drei";
  */
 useGLTF.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
 import { haptic } from "../../theme/tokens.js";
+import { getAsset } from "../../lib/db.js";
+
+/**
+ * Imported models load from IndexedDB via object URLs. A tiny suspense cache
+ * keyed by asset id: first render throws the load promise, later renders get
+ * the URL synchronously (mirroring useGLTF's own semantics). "missing" is a
+ * terminal state — an object whose asset was deleted renders a placeholder
+ * box rather than crashing the canvas.
+ */
+type CachedAsset = { url: string; nativeSize: { w: number; d: number; h: number } };
+const assetCache = new Map<string, CachedAsset | Promise<unknown> | "missing">();
+
+function useImportedAsset(assetId: string): CachedAsset | null {
+  const cached = assetCache.get(assetId);
+  if (cached === "missing") return null;
+  if (cached && !(cached instanceof Promise)) return cached;
+  if (cached) throw cached;
+  const promise = getAsset(assetId).then((asset) => {
+    assetCache.set(
+      assetId,
+      asset ? { url: URL.createObjectURL(asset.blob), nativeSize: asset.nativeSize } : "missing",
+    );
+  });
+  assetCache.set(assetId, promise);
+  throw promise;
+}
 
 /** Default colours per material slot, so a fresh object never renders grey mush. */
 const SLOT_COLORS: Record<string, string> = {
@@ -115,6 +141,37 @@ function CatalogModel({ object }: { object: PlacedObject }) {
       object.size.d / item.nativeSize.d,
     ],
     [object.size, item.nativeSize],
+  );
+  return <Clone object={scene} scale={scale} castShadow receiveShadow />;
+}
+
+/** A model the user imported — same contract as CatalogModel (docs/06 §5). */
+function ImportedModel({ object }: { object: PlacedObject }) {
+  const asset = useImportedAsset(object.importedAssetId!);
+  if (!asset) {
+    return (
+      <mesh castShadow receiveShadow position={[0, object.size.h / 2, 0]}>
+        <boxGeometry args={[object.size.w, object.size.h, object.size.d]} />
+        <meshStandardMaterial color="#A89C8C" roughness={0.8} />
+      </mesh>
+    );
+  }
+  return <ImportedModelMesh url={asset.url} nativeSize={asset.nativeSize} object={object} />;
+}
+
+function ImportedModelMesh({
+  url,
+  nativeSize,
+  object,
+}: {
+  url: string;
+  nativeSize: { w: number; d: number; h: number };
+  object: PlacedObject;
+}) {
+  const { scene } = useGLTF(url);
+  const scale = useMemo<[number, number, number]>(
+    () => [object.size.w / nativeSize.w, object.size.h / nativeSize.h, object.size.d / nativeSize.d],
+    [object.size, nativeSize],
   );
   return <Clone object={scene} scale={scale} castShadow receiveShadow />;
 }
@@ -310,7 +367,8 @@ export function PlacedObjects({
       {objects.map((object) => {
         const categoryId = object.placeholder?.category ?? "block";
         const hasModel = object.catalogId !== null && getCatalogItem(object.catalogId) !== undefined;
-        const parts = hasModel ? [] : placeholderParts(categoryId);
+        const imported = object.importedAssetId !== null;
+        const parts = hasModel || imported ? [] : placeholderParts(categoryId);
         const selected = object.id === selectedId;
         return (
           <group
@@ -328,6 +386,12 @@ export function PlacedObjects({
             {hasModel && (
               <Suspense fallback={null}>
                 <CatalogModel object={object} />
+              </Suspense>
+            )}
+
+            {imported && (
+              <Suspense fallback={null}>
+                <ImportedModel object={object} />
               </Suspense>
             )}
 
