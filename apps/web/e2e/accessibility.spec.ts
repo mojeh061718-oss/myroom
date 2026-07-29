@@ -31,7 +31,7 @@ async function drawRoom(page: Page): Promise<string> {
   await click(w, -d);
   await click(-w, -d);
   await click(-w, d);
-  await page.getByTestId("height-2.44").click();
+  await page.getByTestId("height-8ft").click();
   await page.waitForTimeout(300);
   return page.url().replace("/draw", "");
 }
@@ -83,7 +83,10 @@ test("the sandbox exposes its contents as a parallel navigation path", async ({ 
   const list = page.locator(".scene-a11y-list");
   await expect(list).toHaveAttribute("aria-label", /room contents/i);
   await expect(list.locator("li").first()).toContainText("Floor");
-  await expect(list.locator("li").filter({ hasText: "Wall A" })).toContainText("m");
+  // Dimensions are announced in feet and inches, like every other surface.
+  const wallA = list.locator("li").filter({ hasText: "Wall A" });
+  await expect(wallA).toContainText("'");
+  await expect(wallA).not.toContainText(" m ");
 
   // The canvas region itself is not a black hole for a screen reader.
   const results = await audit(page).analyze();

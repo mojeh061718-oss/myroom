@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   add,
   dist,
+  formatArea,
   formatLength,
   midpoint,
   normalize,
@@ -27,6 +28,13 @@ import {
   type Viewport,
 } from "./viewport.js";
 import { DimensionInputOverlay } from "./DimensionInput.js";
+
+/**
+ * Below this on a side, a drag is a tap that wandered rather than a room.
+ * Matches MIN_WALL_LENGTH so the rectangle the preview promises is one
+ * `drawRectangle` will actually accept.
+ */
+const MIN_ROOM_SIDE = 0.3;
 
 interface WallGeo {
   wall: Wall;
@@ -119,6 +127,12 @@ export function BoardCanvas() {
   const [preview, setPreview] = useState<SnapResult | null>(null);
   const [measure, setMeasure] = useState<{ a: Vec2; b: Vec2 | null } | null>(null);
   const [editingWallId, setEditingWallId] = useState<string | null>(null);
+  /**
+   * The rubber-banded rectangle for the `room` tool: two opposite corners in
+   * plan metres. Most rooms are rectangles, and dragging one out reads far
+   * better on a phone than tapping four corners in sequence.
+   */
+  const [rect, setRect] = useState<{ a: Vec2; b: Vec2 } | null>(null);
 
   const pointers = useRef(new Map<number, Vec2>());
   const gesture = useRef<GestureState | null>(null);
@@ -298,6 +312,12 @@ export function BoardCanvas() {
     }
     if (count > 2) return;
 
+    if (tool === "room" && !plan.closed) {
+      const start = snapAt(sp).point;
+      setRect({ a: start, b: start });
+      return;
+    }
+
     if (tool === "select") {
       const hit = hitTest(sp);
       drawing().select(hit);
@@ -322,6 +342,14 @@ export function BoardCanvas() {
     const prev = pointers.current.get(e.pointerId)!;
     if (dist(sp, prev) > 8) tapTracker.current.moved = true;
     pointers.current.set(e.pointerId, sp);
+
+    // A second finger means pan/zoom, so abandon the rectangle rather than
+    // dragging it to wherever the pinch happens to land.
+    if (rect && pointers.current.size >= 2) setRect(null);
+    else if (rect) {
+      setRect({ a: rect.a, b: snapAt(sp).point });
+      return;
+    }
 
     if (gesture.current && pointers.current.size >= 2) {
       const [p1, p2] = [...pointers.current.values()];
@@ -373,6 +401,22 @@ export function BoardCanvas() {
     const sp = screenPoint(e);
     const hadGesture = gesture.current;
     pointers.current.delete(e.pointerId);
+
+    if (rect) {
+      const finished = rect;
+      setRect(null);
+      // A tap rather than a drag: fall through to the wall tool so a single
+      // point still starts a chain, instead of silently doing nothing.
+      const w = Math.abs(finished.b.x - finished.a.x);
+      const d = Math.abs(finished.b.y - finished.a.y);
+      if (w >= MIN_ROOM_SIDE && d >= MIN_ROOM_SIDE) {
+        drawing().drawRectangle(finished.a, finished.b);
+      } else {
+        drawing().setTool("wall");
+        drawing().addChainPoint(finished.a);
+      }
+      return;
+    }
 
     if (hadGesture) {
       if (pointers.current.size === 0) {
@@ -594,6 +638,84 @@ export function BoardCanvas() {
               </g>
             );
           })}
+
+          {/* drag-out room preview (docs/04 §3) */}
+          {rect &&
+            (() => {
+              const x0 = Math.min(rect.a.x, rect.b.x);
+              const x1 = Math.max(rect.a.x, rect.b.x);
+              const y0 = Math.min(rect.a.y, rect.b.y);
+              const y1 = Math.max(rect.a.y, rect.b.y);
+              const w = x1 - x0;
+              const d = y1 - y0;
+              const big = w >= MIN_ROOM_SIDE && d >= MIN_ROOM_SIDE;
+              return (
+                <g pointerEvents="none">
+                  <rect
+                    x={x0}
+                    y={y0}
+                    width={w}
+                    height={d}
+                    fill="var(--accent)"
+                    fillOpacity={big ? 0.14 : 0.06}
+                    stroke="var(--accent)"
+                    strokeWidth={px(2)}
+                    strokeDasharray={big ? undefined : `${px(6)} ${px(4)}`}
+                  />
+                  {/* Dimensions sit outside the rectangle so a finger resting on
+                      the corner never covers the number being read. */}
+                  <text
+                    x={(x0 + x1) / 2}
+                    y={y1}
+                    transform={`scale(1,-1) translate(0, ${-2 * y1})`}
+                    textAnchor="middle"
+                    dominantBaseline="auto"
+                    dy={px(-10)}
+                    fill="var(--text)"
+                    stroke="var(--bg)"
+                    strokeWidth={px(4)}
+                    paintOrder="stroke"
+                    fontSize={px(19)}
+                    fontWeight={700}
+                  >
+                    {formatLength(w, unit)}
+                  </text>
+                  <text
+                    x={x1}
+                    y={(y0 + y1) / 2}
+                    transform={`scale(1,-1) translate(0, ${-(y0 + y1)})`}
+                    textAnchor="start"
+                    dominantBaseline="middle"
+                    dx={px(10)}
+                    fill="var(--text)"
+                    stroke="var(--bg)"
+                    strokeWidth={px(4)}
+                    paintOrder="stroke"
+                    fontSize={px(19)}
+                    fontWeight={700}
+                  >
+                    {formatLength(d, unit)}
+                  </text>
+                  {big && (
+                    <text
+                      x={(x0 + x1) / 2}
+                      y={(y0 + y1) / 2}
+                      transform={`scale(1,-1) translate(0, ${-(y0 + y1)})`}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="var(--text-secondary)"
+                      stroke="var(--bg)"
+                      strokeWidth={px(4)}
+                      paintOrder="stroke"
+                      fontSize={px(15)}
+                      fontWeight={600}
+                    >
+                      {formatArea(w * d, unit)}
+                    </text>
+                  )}
+                </g>
+              );
+            })()}
 
           {/* chain preview */}
           {preview && last && tool === "wall" && !plan.closed && (

@@ -22,7 +22,8 @@ async function roomSize(page: Page): Promise<{ w: number; h: number }> {
   return fits(box.width, 4) && fits(box.height, 3) ? { w: 4, h: 3 } : { w: 2.5, h: 2 };
 }
 
-const area = (m2: number) => `${(Math.round(m2 * 10) / 10).toFixed(1)} m²`;
+/** The app is feet-and-inches throughout (docs/04 §4), so the badge is ft². */
+const area = (m2: number) => `${Math.round(m2 / (0.3048 * 0.3048))} ft²`;
 
 async function toBoard(page: Page) {
   await page.goto("/");
@@ -51,7 +52,7 @@ test("draw → close → typed dimension → openings → undo/redo → persist"
   await planClick(page, 0, 0);
 
   // Wall-height sheet appears once, after closure (docs/01 §5).
-  await page.getByTestId("height-2.44").click();
+  await page.getByTestId("height-8ft").click();
 
   await expect(page.getByTestId("validation-badge")).toContainText("Closed ✓");
   await expect(page.getByTestId("validation-badge")).toContainText(area(w * h));
@@ -80,9 +81,10 @@ test("draw → close → typed dimension → openings → undo/redo → persist"
   await page.getByTestId("redo").click();
   await expect(page.locator('[data-testid="opening-window"]')).toHaveCount(1);
 
-  // Units toggle: labels flip to feet/inches.
-  await page.getByRole("group", { name: "Measurement units" }).getByText("ft").click();
+  // Feet and inches throughout — there is no unit toggle to flip, because
+  // there is no other unit (docs/04 §4).
   await expect(page.getByTestId("validation-badge")).toContainText("ft²");
+  await expect(page.getByTestId("validation-badge")).not.toContainText("m²");
 
   // Never lose work: reload and the closed room is still there (IndexedDB).
   await page.waitForTimeout(300); // allow the in-flight IDB transaction to commit
@@ -105,7 +107,7 @@ test("input discipline: short walls and crossings are rejected", async ({ page }
   // nearby tap isn't interpreted as the double-tap end-chain gesture.)
   await page.waitForTimeout(400);
   await planClick(page, w + 0.1, 0);
-  await expect(page.getByText("at least 0.3 m")).toBeVisible();
+  await expect(page.getByText('at least 12"')).toBeVisible();
   await expect(page.getByTestId("validation-badge")).toContainText("1 wall");
   // crossing wall → rejected.
   //

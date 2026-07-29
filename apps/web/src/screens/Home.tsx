@@ -178,15 +178,6 @@ export function Home() {
           </h2>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Units</span>
-            <SegmentedControl
-              ariaLabel="Measurement units"
-              options={[
-                { value: "m", label: "m" },
-                { value: "ft", label: "ft" },
-              ]}
-              value={settings.displayUnit}
-              onChange={settings.setDisplayUnit}
-            />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Graphics</span>

@@ -19,7 +19,7 @@ export const DEFAULT_HEIGHT = 2.44;
 export const DOOR_DEFAULTS = { width: 0.82, sillHeight: 0, headHeight: 2.03 };
 export const WINDOW_DEFAULTS = { width: 1.2, sillHeight: 0.9, headHeight: 2.1 };
 
-export type Tool = "wall" | "select" | "door" | "window" | "measure";
+export type Tool = "room" | "wall" | "select" | "door" | "window" | "measure";
 
 export type Selection =
   | { kind: "wall"; wallId: string }
@@ -67,6 +67,8 @@ interface DrawingState {
   select: (selection: Selection) => void;
 
   startOrContinueChain: () => Vec2 | null;
+  /** Drag out a whole rectangular room from two opposite corners. */
+  drawRectangle: (a: Vec2, b: Vec2) => "added" | "closed" | "rejected";
   addChainPoint: (p: Vec2) => "added" | "closed" | "rejected";
   endChain: () => void;
 
@@ -217,7 +219,7 @@ export const useDrawing = create<DrawingState>((set, get) => {
     plan: null as unknown as RoomPlan,
     undoStack: [],
     redoStack: [],
-    tool: "wall",
+    tool: "room",
     selection: null,
     chainActive: false,
     rejection: null,
@@ -235,7 +237,7 @@ export const useDrawing = create<DrawingState>((set, get) => {
         plan: project.plan,
         undoStack: [],
         redoStack: [],
-        tool: project.plan.closed ? "select" : "wall",
+        tool: project.plan.closed ? "select" : "room",
         selection: null,
         chainActive: false,
         rejection: null,
@@ -252,6 +254,59 @@ export const useDrawing = create<DrawingState>((set, get) => {
       if (plan.closed) return null;
       set({ chainActive: true });
       return lastChainPoint(plan);
+    },
+
+    /**
+     * Drag out a rectangular room in one gesture (docs/04 §3).
+     *
+     * Tapping a vertex at a time is the precise tool, but most rooms are
+     * rectangles and most people reach for a drag first. This builds the whole
+     * closed room from two opposite corners, as a single undo entry — five
+     * `addChainPoint` calls would leave five of them, and undo would take the
+     * room apart wall by wall rather than putting the user back where they
+     * started.
+     *
+     * Winding is normalised so wall A is always the northernmost edge,
+     * whichever direction the drag went, which is what `refreshDerived`'s
+     * geometric relabelling expects (docs/04 §5).
+     */
+    drawRectangle: (a, b) => {
+      const { plan } = get();
+      if (plan.closed) return "rejected";
+
+      const minX = Math.min(a.x, b.x);
+      const maxX = Math.max(a.x, b.x);
+      const minY = Math.min(a.y, b.y);
+      const maxY = Math.max(a.y, b.y);
+      if (maxX - minX < MIN_WALL_LENGTH || maxY - minY < MIN_WALL_LENGTH) return reject("tooShort");
+
+      // Clockwise from the north-west corner, so the first wall runs along the
+      // top edge before relabelling confirms it.
+      const corners = [
+        { x: minX, y: maxY },
+        { x: maxX, y: maxY },
+        { x: maxX, y: minY },
+        { x: minX, y: minY },
+      ];
+      const vertices = corners.map((c) => ({ id: uuidv7(), x: c.x, y: c.y }));
+      const walls: Wall[] = vertices.map((v, i) => ({
+        id: uuidv7(),
+        label: indexToLabel(i),
+        start: v.id,
+        end: vertices[(i + 1) % vertices.length]!.id,
+        thickness: DEFAULT_THICKNESS,
+        height: DEFAULT_HEIGHT,
+        openings: [],
+      }));
+
+      let next: RoomPlan = { ...plan, vertices, walls, closed: true };
+      const loop = planLoop(next);
+      if (!loop || !isSimplePolygon(loop)) return reject("selfIntersect");
+      next = refreshDerived(next);
+      commit("Draw room", next);
+      set({ chainActive: false, closedAt: Date.now(), heightSheetOpen: true, tool: "select" });
+      haptic("medium");
+      return "closed";
     },
 
     addChainPoint: (p) => {

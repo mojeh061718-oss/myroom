@@ -9,6 +9,7 @@ import {
   Ruler,
   Scissors,
   RectangleHorizontal,
+  Square,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -24,6 +25,7 @@ import { BoardCanvas } from "./BoardCanvas.js";
 import "./board.css";
 
 const TOOLS: { id: Tool; label: string; icon: typeof Pencil }[] = [
+  { id: "room", label: "Room", icon: Square },
   { id: "wall", label: "Wall", icon: Pencil },
   { id: "select", label: "Select", icon: MousePointer2 },
   { id: "door", label: "Door", icon: DoorOpen },
@@ -32,7 +34,7 @@ const TOOLS: { id: Tool; label: string; icon: typeof Pencil }[] = [
 ];
 
 const REJECTION_COPY = {
-  tooShort: "Walls need to be at least 0.3 m long",
+  tooShort: 'Walls need to be at least 12" long',
   selfIntersect: "Walls can't cross each other",
   openingOverlap: "Openings can't overlap or hang off the wall",
   invalid: "That doesn't work here",
@@ -46,12 +48,17 @@ function HeightSheet() {
   const [custom, setCustom] = useState("");
 
   // docs/04 §5: default 2.44 m / 8 ft; presets 2.4 / 2.7 / 3.0 m; custom field.
+  // Whole feet, so the label the user taps is the number the wall reads back.
+  // The old metric presets rendered as 7'10½", 8'10¼" and 9'10" — technically
+  // correct and useless to anyone building a room in feet.
+  // `id` is what the test hooks address: keying them off the metre value made
+  // every preset change a rename across five E2E specs.
   const presets = [
-    { m: 2.44, label: unit === "ft" ? "8 ft (standard)" : "2.44 m (standard)" },
-    { m: 2.4, label: "2.40 m" },
-    { m: 2.7, label: "2.70 m" },
-    { m: 3.0, label: "3.00 m" },
-  ];
+    { id: "8ft", m: 8 * 0.3048, standard: true },
+    { id: "9ft", m: 9 * 0.3048, standard: false },
+    { id: "10ft", m: 10 * 0.3048, standard: false },
+    { id: "12ft", m: 12 * 0.3048, standard: false },
+  ].map((p) => ({ ...p, label: p.standard ? `${formatLength(p.m, unit)} (standard)` : formatLength(p.m, unit) }));
 
   const choose = (m: number) => {
     setHeights(m);
@@ -68,7 +75,7 @@ function HeightSheet() {
       </p>
       <div className="height-presets">
         {presets.map((p) => (
-          <PillButton key={p.label} onClick={() => choose(p.m)} data-testid={`height-${p.m}`}>
+          <PillButton key={p.label} onClick={() => choose(p.m)} data-testid={`height-${p.id}`}>
             {p.label}
           </PillButton>
         ))}
@@ -286,15 +293,6 @@ export function DrawingBoard() {
         <div className={`validation-badge ${badge?.closed ? "closed" : ""}`} data-testid="validation-badge">
           {badge?.text}
         </div>
-        <SegmentedControl
-          ariaLabel="Measurement units"
-          options={[
-            { value: "m", label: "m" },
-            { value: "ft", label: "ft" },
-          ]}
-          value={settings.displayUnit}
-          onChange={settings.setDisplayUnit}
-        />
         <span
           className="primary-action"
           title={plan.closed ? undefined : "Close your room to continue — join the last wall back to the first point"}

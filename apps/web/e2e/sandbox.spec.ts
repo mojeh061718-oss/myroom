@@ -33,7 +33,7 @@ async function drawRoomAndOpenSandbox(page: Page) {
   await click(w, -d);
   await click(-w, -d);
   await click(-w, d);
-  await page.getByTestId("height-2.44").click();
+  await page.getByTestId("height-8ft").click();
   await page.getByTestId("tool-door").click();
   await click(0, -d);
   await page.getByTestId("tool-window").click();

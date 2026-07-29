@@ -23,7 +23,7 @@ async function buildRoom(page: Page) {
   await click(w, -d);
   await click(-w, -d);
   await click(-w, d);
-  await page.getByTestId("height-2.44").click();
+  await page.getByTestId("height-8ft").click();
   await page.waitForTimeout(250);
 
   await page.goto(page.url().replace("/draw", ""));

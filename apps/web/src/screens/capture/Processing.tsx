@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatArea } from "@myroom/geometry";
+import { useSettings } from "../../stores/settingsStore.js";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   STAGE_LABELS,
@@ -36,6 +38,7 @@ interface FoundObject {
 export function Processing() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const unit = useSettings((s) => s.displayUnit);
   const [project, setProject] = useState<LocalProject | null>(null);
   const [stage, setStage] = useState<JobStage>("queued");
   const [found, setFound] = useState<FoundObject[]>([]);
@@ -207,7 +210,7 @@ export function Processing() {
           {finished ? t("recon.open") : t("recon.building")}
         </PillButton>
         <p className="type-caption">
-          {shell ? `${shell.floorArea.toFixed(1)} m² · ${project?.plan.walls.length} walls · ` : ""}
+          {shell ? `${formatArea(shell.floorArea, unit)} · ${project?.plan.walls.length} walls · ` : ""}
           {t("recon.leaveHint")}
         </p>
       </footer>
