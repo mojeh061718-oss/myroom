@@ -97,9 +97,22 @@
   text-align: center;
 }
 
+/*
+ * Sits below the top bar, whatever height that turns out to be.
+ *
+ * This used to be `top: calc(72px + safe-area)` — a hardcoded guess at a
+ * one-row bar. But .board-topbar is `flex-wrap: wrap`, and at <= 620px (any
+ * phone) .primary-action goes full-width and wraps onto a second row. So the
+ * bar was ~2x taller than 72px and the "Next: add photos" button landed on top
+ * of this hint, both illegible.
+ *
+ * --board-topbar-h is measured from the live element (DrawingBoard.tsx), so
+ * this cannot drift again when the button's label changes, when Dynamic Type
+ * scales the text, or on a device whose safe area differs.
+ */
 .board-hint {
   position: absolute;
-  top: calc(72px + env(safe-area-inset-top));
+  top: calc(var(--board-topbar-h, 72px) + 12px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -110,7 +123,11 @@
   color: var(--text-dim);
   font-size: 0.9375rem;
   pointer-events: none;
-  white-space: nowrap;
+  /* Long copy wraps inside the pill instead of running under the screen edge. */
+  max-width: min(88vw, 420px);
+  text-align: center;
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* Above the toolbar — on narrow screens the tool pill spans the full width. */
@@ -152,3 +169,65 @@
 }
 
 .height-presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+
+/*
+ * The scan-first entry point, under the hint on an empty board.
+ *
+ * A scan is a measurement and drawing a room on a phone is the fiddliest thing
+ * this app asks for, so importing one has to be reachable before any drawing
+ * has happened — not buried on a later step after the room is already drawn.
+ */
+/*
+ * Sits just above the tool bar, NOT over the canvas.
+ *
+ * It started centred below the hint, which put a tappable button in the middle
+ * of the drawing surface — the first three taps of a four-corner room landed on
+ * it instead of the board, and no walls appeared. `pointer-events: none` on the
+ * container does not help, because the button itself must stay tappable.
+ *
+ * The bottom strip is already chrome, so nothing is lost by putting it there,
+ * and it stays visible while the board is empty.
+ */
+.board-import {
+  pointer-events: none;
+  position: absolute;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* Only as wide as its button, so the scale bar at the left edge stays clear. */
+  width: auto;
+  max-width: min(88vw, 420px);
+}
+
+.board-import > * {
+  pointer-events: auto;
+}
+
+.board-import-note {
+  pointer-events: none;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* The import result, once the board may no longer be empty. */
+.board-import-note.floating {
+  position: absolute;
+  top: calc(var(--board-topbar-h, 72px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  width: min(88vw, 420px);
+}

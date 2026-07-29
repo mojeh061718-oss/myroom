@@ -5,6 +5,7 @@ import {
   isSimplePolygon,
   resolveWallLength,
   indexToLabel,
+  signedArea,
   type Vec2,
 } from "@myroom/geometry";
 import type { Opening, RoomPlan, Wall } from "@myroom/schema";
@@ -67,6 +68,8 @@ interface DrawingState {
   select: (selection: Selection) => void;
 
   startOrContinueChain: () => Vec2 | null;
+  /** Build the room from a scan's traced floor outline. */
+  buildFromOutline: (points: readonly Vec2[], ceilingHeight: number | null) => "added" | "closed" | "rejected";
   /** Drag out a whole rectangular room from two opposite corners. */
   drawRectangle: (a: Vec2, b: Vec2) => "added" | "closed" | "rejected";
   addChainPoint: (p: Vec2) => "added" | "closed" | "rejected";
@@ -270,6 +273,49 @@ export const useDrawing = create<DrawingState>((set, get) => {
      * whichever direction the drag went, which is what `refreshDerived`'s
      * geometric relabelling expects (docs/04 §5).
      */
+    /**
+     * Build the whole room from a scan's traced outline (docs/05 §2).
+     *
+     * This is the scan-first path: a LiDAR scan is a measurement, and drawing a
+     * room on a phone is the fiddliest thing the app asks anyone to do — so the
+     * scan produces the plan and the person tidies it, rather than the other
+     * way round. It also means there is no scan-to-plan registration step,
+     * because the scan *is* the plan.
+     *
+     * Replaces whatever is on the board as a single undo entry, so one tap of
+     * undo puts the user back where they were if the trace is wrong.
+     */
+    buildFromOutline: (points, ceilingHeight) => {
+      if (points.length < 3) return "rejected";
+      const { plan } = get();
+
+      // Anticlockwise, so wall labelling and the shell's interior normals agree
+      // with every hand-drawn plan (docs/04 §5).
+      const ring = signedArea(points) < 0 ? [...points].reverse() : points;
+
+      const vertices = ring.map((p) => ({ id: uuidv7(), x: p.x, y: p.y }));
+      const height = ceilingHeight !== null && ceilingHeight > 1.8 && ceilingHeight < 6 ? ceilingHeight : DEFAULT_HEIGHT;
+      const walls: Wall[] = vertices.map((v, i) => ({
+        id: uuidv7(),
+        label: indexToLabel(i),
+        start: v.id,
+        end: vertices[(i + 1) % vertices.length]!.id,
+        thickness: DEFAULT_THICKNESS,
+        height,
+        openings: [],
+      }));
+
+      let next: RoomPlan = { ...plan, vertices, walls, closed: true, source: "scan" };
+      const loop = planLoop(next);
+      if (!loop || !isSimplePolygon(loop)) return reject("selfIntersect");
+      next = refreshDerived(next);
+      commit("Build room from scan", next);
+      // The height came from the scan, so do not ask for it again.
+      set({ chainActive: false, closedAt: Date.now(), heightSheetOpen: ceilingHeight === null, tool: "select" });
+      haptic("success");
+      return "closed";
+    },
+
     drawRectangle: (a, b) => {
       const { plan } = get();
       if (plan.closed) return "rejected";

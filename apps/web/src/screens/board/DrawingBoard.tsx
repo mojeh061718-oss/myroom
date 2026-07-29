@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ChevronLeft,
@@ -14,6 +14,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { formatArea, formatLength, parseDisplayLength } from "@myroom/geometry";
+import { decodeScanMesh, parseMeshScan, sniffScanFormat } from "@myroom/recon";
 import { usableFloorArea, wallLength } from "@myroom/schema";
 import { useDrawing, type Tool } from "../../stores/drawingStore.js";
 import { useSettings } from "../../stores/settingsStore.js";
@@ -236,10 +237,109 @@ export function DrawingBoard() {
   const projectName = useDrawing((s) => s.projectName);
   const tool = useDrawing((s) => s.tool);
   const setTool = useDrawing((s) => s.setTool);
+
+  /**
+   * Publish the top bar's real height so overlays can sit below it.
+   *
+   * The bar wraps: at <= 620px the "Next: add photos" button takes a full-width
+   * second row, which made it about twice the 72px the hint had hardcoded, so
+   * the two drew on top of each other.
+   *
+   * A callback ref rather than useRef + useEffect, because this screen renders
+   * a placeholder while it loads the project: on first mount the top bar does
+   * not exist, so an effect with [] deps saw a null ref, bailed, and never ran
+   * again once the real bar appeared. That is exactly how the first attempt at
+   * this fix failed — measured 72px, hint still overlapping.
+   */
+  const settings = useSettings();
+  /**
+   * Import a LiDAR scan and let it build the room (docs/05 §2).
+   *
+   * The scan-first path. A scan is a measurement and drawing a room on a phone
+   * is the fiddliest thing this app asks for, so the scan produces the plan and
+   * the person tidies it. Everything runs on the device: the file never leaves
+   * it, and there is no server involved.
+   */
+  const scanInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [importNote, setImportNote] = useState<string | null>(null);
+
+  const importScan = useCallback(
+    async (file: File) => {
+      setImporting(true);
+      setImportNote(null);
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const format = sniffScanFormat(bytes.subarray(0, 64));
+        if (format !== "glb" && format !== "ply") {
+          setImportNote(
+            format === "roomplan-json"
+              ? "That's a RoomPlan file — add it on the scan step after drawing, and it'll correct your walls."
+              : "We can read GLB scans on the device. In Scaniverse: Share → Export Model → GLB.",
+          );
+          return;
+        }
+
+        const decoded = decodeScanMesh(bytes, format);
+        if (!decoded.ok) {
+          setImportNote(decoded.reason);
+          return;
+        }
+        if (decoded.indices.length < 300) {
+          setImportNote("That scan is a point cloud with no surfaces in it — export it as GLB instead.");
+          return;
+        }
+
+        const parsed = parseMeshScan(decoded.positions, decoded.indices, format);
+        if (!parsed.parsed || parsed.walls.length < 3) {
+          setImportNote(parsed.failure ?? "We couldn't find a room in that scan.");
+          return;
+        }
+
+        // Centre the room on the origin, so it lands where the viewport is
+        // looking rather than wherever the scanner happened to start.
+        const points = parsed.walls.map((w) => w.start);
+        const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+        const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+        const centred = points.map((p) => ({ x: p.x - cx, y: p.y - cy }));
+
+        const result = useDrawing.getState().buildFromOutline(centred, parsed.ceilingHeight);
+        if (result !== "closed") {
+          setImportNote("That scan traced a shape we couldn't turn into a room. Try drawing it instead.");
+          return;
+        }
+        setImportNote(
+          parsed.ceilingHeight !== null
+            ? `Measured from your scan: ${parsed.walls.length} walls, ${formatLength(parsed.ceilingHeight, settings.displayUnit)} ceiling. Drag any corner to adjust.`
+            : `Measured from your scan: ${parsed.walls.length} walls. Drag any corner to adjust.`,
+        );
+      } catch (error) {
+        setImportNote(`We couldn't read that file (${(error as Error).message}).`);
+      } finally {
+        setImporting(false);
+      }
+    },
+    [settings.displayUnit],
+  );
+
+  const measureTopbar = useCallback((element: HTMLDivElement | null) => {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    if (!element) return;
+    const publish = () => {
+      const host = element.parentElement;
+      if (host) host.style.setProperty("--board-topbar-h", `${element.offsetHeight}px`);
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(element);
+    observerRef.current = observer;
+  }, []);
+  const observerRef = useRef<ResizeObserver | null>(null);
+  useEffect(() => () => observerRef.current?.disconnect(), []);
   const rejection = useDrawing((s) => s.rejection);
   const undoLen = useDrawing((s) => s.undoStack.length);
   const redoLen = useDrawing((s) => s.redoStack.length);
-  const settings = useSettings();
   const showToast = useToasts((s) => s.show);
   const [missing, setMissing] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
@@ -282,7 +382,7 @@ export function DrawingBoard() {
         <BoardCanvas />
       </div>
 
-      <div className="board-topbar">
+      <div className="board-topbar" ref={measureTopbar}>
         <button className="icon-button glass" style={{ borderRadius: "var(--radius-pill)" }} aria-label="Back to projects" onClick={() => navigate("/")}>
           <ChevronLeft size={22} />
         </button>
@@ -309,9 +409,43 @@ export function DrawingBoard() {
       </div>
 
       {wallCount === 0 && (
-        <div className="board-hint" data-testid="board-hint">
-          Draw your first wall — don't worry about being perfect.
-        </div>
+        <>
+          <div className="board-hint" data-testid="board-hint">
+            Drag out your room — or import a scan and we'll measure it for you.
+          </div>
+          <div className="board-import">
+            <PillButton
+              variant="secondary"
+              data-testid="import-scan"
+              disabled={importing}
+              onClick={() => scanInputRef.current?.click()}
+            >
+              {importing ? "Reading your scan…" : "Import a LiDAR scan"}
+            </PillButton>
+          </div>
+          <input
+            ref={scanInputRef}
+            type="file"
+            accept=".glb,.ply,.json,model/gltf-binary"
+            style={{ display: "none" }}
+            data-testid="scan-file-input"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void importScan(file);
+            }}
+          />
+        </>
+      )}
+
+      {/* Outside the empty-board block on purpose: a successful import fills
+          the board, which would unmount this and take the confirmation with
+          it — so the user would see the room appear with no word on what was
+          measured, or worse, an error they never got to read. */}
+      {importNote && (
+        <p className="board-import-note floating" data-testid="import-note">
+          {importNote}
+        </p>
       )}
 
       <div className="board-toolbar glass" role="toolbar" aria-label="Drawing tools">

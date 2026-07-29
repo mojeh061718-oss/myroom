@@ -45,7 +45,15 @@ const RoomPlanBase = z.object({
   closed: z.boolean(),
   /** derived, cached */
   floorArea: z.number().nonnegative().nullable(),
-  source: z.enum(["drawn", "drawn+lidarRefined"]),
+  /**
+   * Where the plan's geometry came from.
+   *
+   * "scan" is a plan the scan BUILT — the scan-first path, where a LiDAR mesh
+   * traces its own floor outline and the person tidies it. That is different
+   * from "drawn+lidarRefined", which is a hand-drawn plan a scan later
+   * corrected, and the accuracy story is different too.
+   */
+  source: z.enum(["drawn", "drawn+lidarRefined", "scan"]),
   curvedWalls: z.null(),
   roomGroups: z.null(),
 });
