@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: myroom-diffusion-workers
+Version: 0.1.0
+Summary: My Room Sandbox restyle renders (docs/06 §6)
+Requires-Python: >=3.11
+Requires-Dist: numpy>=1.26
+Provides-Extra: models
+Requires-Dist: torch>=2.2; extra == "models"
+Requires-Dist: torchvision>=0.17; extra == "models"
+Requires-Dist: diffusers>=0.27; extra == "models"
+Requires-Dist: transformers>=4.40; extra == "models"
+Requires-Dist: accelerate>=0.30; extra == "models"
+Requires-Dist: peft>=0.11; extra == "models"
+Requires-Dist: safetensors>=0.4; extra == "models"
+Requires-Dist: pillow>=10.0; extra == "models"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"

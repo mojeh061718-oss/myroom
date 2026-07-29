@@ -14,6 +14,8 @@ export const en = {
   "privacy.title": "Your photos, your room",
   "privacy.intro": "Five promises about what happens to what you give us. No defined terms, no cross-references.",
   "privacy.back": "Back to my rooms",
+  "privacy.where.title": "Where your room gets built",
+  "privacy.where.detecting": "Checking what this device can do\u2026",
   "privacy.deleteHint":
     "You can delete any room, and everything in it, from the menu on its card on the home screen.",
 

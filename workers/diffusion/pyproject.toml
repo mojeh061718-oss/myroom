@@ -1,0 +1,33 @@
+[project]
+name = "myroom-diffusion-workers"
+version = "0.1.0"
+description = "My Room Sandbox restyle renders (docs/06 §6)"
+requires-python = ">=3.11"
+# The registry and its licence gate are pure Python — they must be importable
+# (and CI-checkable) on a machine that has never fetched a diffusion weight.
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+# Only installed where restyle is actually enabled. See registry.py for why the
+# weights themselves are never vendored.
+models = [
+  "torch>=2.2",
+  "torchvision>=0.17",
+  "diffusers>=0.27",
+  "transformers>=4.40",
+  "accelerate>=0.30",
+  "peft>=0.11",
+  "safetensors>=0.4",
+  "pillow>=10.0",
+]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["myroom_diffusion*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
