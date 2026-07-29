@@ -5,6 +5,7 @@ import type { PlacedObject } from "@myroom/schema";
 import { Sheet } from "../../components/Sheet.js";
 import { PillButton } from "../../components/PillButton.js";
 import type { LoadedModel } from "../../lib/importModel.js";
+import type { FloorPattern } from "./proceduralTextures.js";
 
 /** docs/06 §4 — curated designer palettes plus a free hex field. */
 export const PALETTES: { name: string; colors: string[] }[] = [
@@ -16,14 +17,22 @@ export const PALETTES: { name: string; colors: string[] }[] = [
   { name: "Whites", colors: ["#FFFFFF", "#F7F5F1", "#EFEBE4", "#E5E0D8", "#DAD4CA"] },
 ];
 
-const FLOOR_MATERIALS = [
-  { name: "Oak", color: "#B99A72" },
-  { name: "Walnut", color: "#7A5B41" },
-  { name: "Ash", color: "#D2BFA3" },
-  { name: "Concrete", color: "#9C9C99" },
-  { name: "Slate tile", color: "#5A5F63" },
-  { name: "Warm carpet", color: "#A99884" },
+const FLOOR_MATERIALS: { name: string; color: string; pattern: FloorPattern }[] = [
+  { name: "Oak", color: "#B99A72", pattern: "wood" },
+  { name: "Walnut", color: "#7A5B41", pattern: "wood" },
+  { name: "Ash", color: "#D2BFA3", pattern: "wood" },
+  { name: "Concrete", color: "#9C9C99", pattern: "plain" },
+  { name: "Slate tile", color: "#5A5F63", pattern: "tile" },
+  { name: "Warm carpet", color: "#A99884", pattern: "carpet" },
 ];
+
+/**
+ * The finish document stores only a colour (docs/07 §3), so the pattern is
+ * derived from the swatch that colour came from; a custom hex stays flat.
+ */
+export function floorPatternFor(color: string): FloorPattern {
+  return FLOOR_MATERIALS.find((m) => m.color.toLowerCase() === color.toLowerCase())?.pattern ?? "plain";
+}
 
 function isHex(value: string): boolean {
   return /^#[0-9a-fA-F]{6}$/.test(value);

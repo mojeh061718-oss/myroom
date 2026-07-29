@@ -22,6 +22,7 @@ import { IMPORT_ACCEPT, loadModelFiles, storeModel, type LoadedModel } from "../
 import { listAssets, type LocalAsset } from "../../lib/db.js";
 import { CompareSlider } from "./Compare.js";
 import { QualityGovernor } from "./QualityGovernor.js";
+import { levelFor, type QualityLevel } from "./quality.js";
 import { AccuracyBadge } from "../../components/AccuracyBadge.js";
 import "./sandbox.css";
 
@@ -101,6 +102,7 @@ export function Sandbox() {
   const importInput = useRef<HTMLInputElement>(null);
   const [pendingImport, setPendingImport] = useState<LoadedModel | null>(null);
   const [myModels, setMyModels] = useState<LocalAsset[]>([]);
+  const [qualityLevel, setQualityLevel] = useState<QualityLevel>(() => levelFor(quality, 0));
 
   /**
    * Grab the current frame. `preserveDrawingBuffer` keeps the buffer readable
@@ -386,8 +388,8 @@ export function Sandbox() {
           }}
           onCreated={({ gl, scene: threeScene }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping; // docs/02 §7
-            gl.toneMappingExposure = 1.05;
-            threeScene.background = new THREE.Color("#0E0F12");
+            gl.toneMappingExposure = 1.1;
+            threeScene.background = new THREE.Color("#101014");
             const w = window as unknown as Record<string, unknown>;
             w.__myroomRenderer = gl;
             w.__myroomScene = threeScene;
@@ -396,9 +398,10 @@ export function Sandbox() {
         >
           <CameraRig shell={shell} view={view} />
           {/* Steps quality down when the frame rate falls, and back up when
-              headroom returns (docs/06 §8). */}
-          <QualityGovernor preference={quality} />
-          <Lighting shell={shell} />
+              headroom returns (docs/06 §8). The level reaches the lighting
+              rig, which owns the shadow-map and AO knobs. */}
+          <QualityGovernor preference={quality} onChange={setQualityLevel} />
+          <Lighting shell={shell} quality={qualityLevel} />
           <Shell
             shell={shell}
             finishes={{

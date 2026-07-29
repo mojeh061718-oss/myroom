@@ -52,6 +52,8 @@ export interface WallShell {
   thickness: number;
   /** how many doors/windows pierce this wall */
   openingCount: number;
+  /** total glazed area, m² — the lighting rig aims daylight through it */
+  windowArea: number;
 }
 
 export interface ShellGeometry {
@@ -436,6 +438,9 @@ export function buildShell(
       height: h,
       thickness: wall.thickness,
       openingCount: wall.openings.length,
+      windowArea: wall.openings
+        .filter((o) => o.kind === "window")
+        .reduce((sum, o) => sum + o.width * Math.max(0, o.headHeight - o.sillHeight), 0),
     });
   }
 

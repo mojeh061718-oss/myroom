@@ -18,13 +18,13 @@ describe("auto quality stepping (docs/06 §8)", () => {
   });
 
   it("steps down in the order the budget specifies", () => {
-    // pixel ratio first, then shadow map, then AO, then environment.
+    // pixel ratio first, then shadow map, then AO.
     const [best, high, balanced, saver, minimum] = QUALITY_LEVELS;
     expect(high!.pixelRatio).toBeLessThan(best!.pixelRatio);
     expect(balanced!.shadowMapSize).toBeLessThan(high!.shadowMapSize);
     expect(saver!.ao).toBe(false);
     expect(balanced!.ao).toBe(true);
-    expect(minimum!.environmentResolution).toBeLessThan(saver!.environmentResolution);
+    expect(minimum!.shadowMapSize).toBeLessThan(balanced!.shadowMapSize);
   });
 
   it("climbs back only with sustained headroom, and more slowly than it fell", () => {
