@@ -14,8 +14,9 @@ import {
   Undo2,
 } from "lucide-react";
 import { formatArea, formatLength, parseDisplayLength, type DisplayUnit } from "@myroom/geometry";
-import { decodeScanMesh, parseMeshScan, sniffScanFormat } from "@myroom/recon";
+import { parseMeshScan, parsePointCloudScan, SCAN_EXTENSIONS } from "@myroom/recon";
 import { OBJECT_CATEGORIES } from "@myroom/catalog";
+import { decodeScanFile } from "../../lib/scanDecode.js";
 import { usableFloorArea, wallLength } from "@myroom/schema";
 import { useDrawing, type Tool } from "../../stores/drawingStore.js";
 import { useSettings } from "../../stores/settingsStore.js";
@@ -424,30 +425,20 @@ export function DrawingBoard() {
       setImporting(true);
       setImportNote(null);
       try {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const format = sniffScanFormat(bytes.subarray(0, 64));
-        if (format !== "glb" && format !== "ply") {
-          setImportNote(
-            format === "roomplan-json"
-              ? "That's a RoomPlan file — add it on the scan step after drawing, and it'll correct your walls."
-              : "We can read GLB scans on the device. In Scaniverse: Share → Export Model → GLB.",
-          );
+        const geometry = await decodeScanFile(file);
+        if (geometry.kind === "error") {
+          setImportNote(`We couldn't read that scan: ${geometry.reason}.`);
+          return;
+        }
+        if (geometry.kind === "roomplan-json") {
+          setImportNote("That's a RoomPlan file — add it on the scan step after drawing, and it'll correct your walls.");
           return;
         }
 
-        const decoded = decodeScanMesh(bytes, format);
-        if (!decoded.ok) {
-          setImportNote(decoded.reason);
-          return;
-        }
-        if (decoded.indices.length < 300) {
-          setImportNote("That scan is a point cloud with no surfaces in it — export it as GLB instead.");
-          return;
-        }
-
-        const parsed = parseMeshScan(decoded.positions, decoded.indices, format, {
-          categories: OBJECT_CATEGORIES,
-        });
+        const parsed =
+          geometry.kind === "mesh"
+            ? parseMeshScan(geometry.positions, geometry.indices, geometry.format, { categories: OBJECT_CATEGORIES })
+            : parsePointCloudScan(geometry.positions, geometry.format, { categories: OBJECT_CATEGORIES });
         if (!parsed.parsed || parsed.walls.length < 3) {
           setImportNote(parsed.failure ?? "We couldn't find a room in that scan.");
           return;
@@ -590,7 +581,7 @@ export function DrawingBoard() {
           <input
             ref={scanInputRef}
             type="file"
-            accept=".glb,.ply,.json,model/gltf-binary"
+            accept={SCAN_EXTENSIONS.join(",")}
             style={{ display: "none" }}
             data-testid="scan-file-input"
             onChange={(e) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MeasuredObject } from "@myroom/schema";
-import { fuseSeedBoxes } from "../src/fuse.js";
+import { fuseSeedBoxes, SCANNED_ITEM_CATEGORY } from "../src/fuse.js";
 import type { ScanSeedObject } from "../src/scan.js";
 
 let counter = 0;
@@ -69,10 +69,19 @@ describe("seed-box fusion (docs/05 §5)", () => {
     expect(out.find((o) => o.category === "sofa")!.support).toBe("floor");
   });
 
-  it("keeps an unnamed box out of the room rather than guessing a class", () => {
+  it("keeps an unnamed box as a measured 'scanned item' rather than dropping it", () => {
+    // Dropping unnamed boxes fell the whole room back to invented demo
+    // furniture — the measurement is real, only the name is missing
+    // (docs/05 §6: never silently omit a detected object).
     const { measured: out, added } = fuseSeedBoxes([], [seed({ category: null })], { newId });
-    expect(added).toBe(0);
-    expect(out).toHaveLength(0);
+    expect(added).toBe(1);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.category).toBe(SCANNED_ITEM_CATEGORY);
+    expect(out[0]!.support).toBe("floor");
+    // Honest about the uncertainty: flagged low-confidence, so the UI offers
+    // the "wrong item?" swap.
+    expect(out[0]!.lowConfidence).toBe(true);
+    expect(out[0]!.confidence).toBeLessThanOrEqual(0.6);
   });
 
   it("uses an unnamed box to correct an object the photos did name", () => {

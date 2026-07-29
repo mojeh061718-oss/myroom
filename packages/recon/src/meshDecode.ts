@@ -1,12 +1,12 @@
 /**
  * Decode a scan file into the triangles `parseMeshScan` reads (docs/05 §2).
  *
- * Dependency-free on purpose. The obvious alternative is three.js's GLTFLoader
- * plus DRACOLoader, but DRACOLoader fetches its WASM decoder from a CDN at
- * runtime, which breaks the offline-first promise (docs/03 §6) and would not
- * survive the service worker's precache. Everything here is a few hundred lines
- * of container parsing over an ArrayBuffer, runs in a worker, and is testable
- * in Node against a real scanner export.
+ * Dependency-free on purpose: everything here is a few hundred lines of
+ * container parsing over an ArrayBuffer, runs in a worker or Node, and is
+ * testable against a real scanner export. Draco-compressed GLB needs the WASM
+ * decoder and three.js, so the app layer (apps/web/src/lib/scanDecode.ts)
+ * handles it with the decoder vendored at public/draco/ and falls back to
+ * this module for everything plain.
  *
  * Two formats, because Scaniverse offers both and they trade off differently:
  *
@@ -189,11 +189,11 @@ export function decodeGlb(bytes: Uint8Array): DecodeResult {
 
   const used = (json.extensionsRequired as string[] | undefined) ?? [];
   if (used.includes("KHR_draco_mesh_compression")) {
-    // Decoding Draco needs a WASM module we deliberately do not ship (see the
-    // module docstring). Say what to do instead rather than failing blankly.
+    // Decoding Draco needs the WASM decoder, which lives in the app layer
+    // (scanDecode.ts). Node/test callers land here and get told the truth.
     return {
       ok: false,
-      reason: "that GLB is Draco-compressed — export it as PLY instead, or turn compression off",
+      reason: "that GLB is Draco-compressed — the app decodes these in the browser; here, export it as PLY or turn compression off",
     };
   }
   if (!bin) return { ok: false, reason: "that GLB has no geometry data in it" };

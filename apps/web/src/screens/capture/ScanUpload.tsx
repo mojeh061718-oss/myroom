@@ -17,19 +17,19 @@ import "./capture.css";
 const HELP = [
   {
     app: "Apple RoomPlan apps (iPhone/iPad Pro)",
-    body: "RoomPlan-based scanners export a .usdz with a companion .json. The .json is the one we want — it already contains walls and furniture boxes.",
+    body: "RoomPlan-based scanners export a .usdz with a companion .json. The .json is the best input — it already contains walls and furniture boxes. The .usdz works too when it has that JSON (or a mesh) inside.",
   },
   {
     app: "Polycam",
-    body: "Export → Point Cloud (.ply) or Mesh (.glb). Either works; .ply keeps more of the room's shape.",
+    body: "Export → Point Cloud (.ply) or Mesh (.glb). Either works — both are read right here on your device, Draco-compressed GLB included.",
   },
   {
     app: "Scaniverse",
-    body: "Share → Export Model → PLY. Choose the highest detail your phone offers.",
+    body: "Share → Export Model → GLB or PLY. Choose the highest detail your phone offers.",
   },
   {
     app: "3d Scanner App",
-    body: "Share → Export → PLY or E57. Skip the textured mesh — we only need geometry.",
+    body: "Share → Export → PLY or LAS. Skip the textured mesh — we only need geometry. (E57 and compressed LAZ can't be read on the device — pick PLY or LAS instead.)",
   },
 ];
 

@@ -31,7 +31,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+        // wasm covers the vendored Draco decoder (public/draco/), which scan
+        // decoding and catalog models both need offline.
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,wasm}"],
         navigateFallback: `${process.env.PUBLIC_BASE_PATH ?? "/"}index.html`,
         runtimeCaching: [
           {

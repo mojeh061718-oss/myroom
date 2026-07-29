@@ -8,6 +8,7 @@ import {
 } from "@myroom/geometry";
 import { getCatalogItem, getCategory } from "@myroom/catalog";
 import type { CatalogMatch, MeasuredObject, PlacedObject, Scene } from "@myroom/schema";
+import { SCANNED_ITEM_CATEGORY, SCANNED_ITEM_LABEL } from "./fuse.js";
 
 /**
  * Stage 6 — scene assembly (docs/05 §7).
@@ -129,7 +130,7 @@ export function assembleScene(input: AssembleInput): AssembleResult {
       // Explicit, not silent: the object is here, just as a stand-in. Collected
       // and reported once at the end — eight near-identical lines is noise, and
       // each object carries its own "wrong item?" prompt anyway.
-      placeholders.push(category?.label ?? m.category);
+      placeholders.push(category?.label ?? (m.category === SCANNED_ITEM_CATEGORY ? SCANNED_ITEM_LABEL : m.category));
     }
 
     let position = { ...m.position };
@@ -215,7 +216,7 @@ export function assembleScene(input: AssembleInput): AssembleResult {
       id: newId(),
       catalogId: model?.id ?? null,
       placeholder: model ? null : { category: m.category, shape: `${m.category}Massing` },
-      label: model?.name ?? category?.label ?? m.category,
+      label: model?.name ?? category?.label ?? (m.category === SCANNED_ITEM_CATEGORY ? SCANNED_ITEM_LABEL : m.category),
       support: m.support,
       wallId,
       parentObjectId: null,
