@@ -48,6 +48,44 @@ Measured on the four-core, GPU-less container this repository's CI runs in:
   for model weights that the npm dependency gate cannot see. Explicitly *not*
   part of reconstruction; see docs/05 §11.
 
+### Fixed
+
+Found by an audit fan-out across every pipeline segment. Each of these was
+reproduced against running code before it was touched; one further claim — a
+"critical" hole in ear-clipping triangulation — did not reproduce, and its repro
+is kept as a regression test rather than recorded here as a bug.
+
+- **Anyone could sign in as anyone.** `POST /v1/auth/magic-link` returned the
+  sign-in token in its response body unless `NODE_ENV` was exactly
+  `"production"`, and nothing in this repository sets `NODE_ENV` — no
+  Dockerfile, and a bare `tsx src/server.ts` start script. Reproduced end to
+  end: an unauthenticated request with a stranger's address returned their
+  token, which redeemed for a valid session. The same gate selected the
+  hardcoded signing secret and dropped `Secure` from the session cookie. The
+  default is now inverted — absent configuration means production behaviour.
+- **JSON uploads were destroyed on arrival.** The catch-all body parser was
+  registered as `"*"`, which Fastify consults only for types its built-in
+  parsers decline, so `application/json` bodies reached the blob route already
+  parsed and were stored as the fifteen bytes `[object Object]`. Browsers set
+  `File.type` to `application/json` for a `.json` file, so this hit RoomPlan
+  JSON — docs/05 §2's "gold input" — on the default path.
+- **Every scanned object was a quarter-turn out.** RoomPlan yaw was read off
+  column 0 of the transform instead of column 2, a constant +π/2 error measured
+  across five angles.
+- **A scan silently rescaled plans it should have queried.** `applyRefinements`
+  never consulted the `needsReview` flag it computed, rescaling a 6.20 m wall to
+  6.94 m while the notes told the user "we left your drawing alone" —
+  contradicting docs/05 §2 and itself.
+- **Splitting a wall deleted doors and windows across the split point.** Both
+  halves filtered on "lies wholly within me", so a straddling opening belonged
+  to neither.
+- **Four detections in five could not be matched.** Stage 1 emitted the
+  detector's raw prompt as the category while stage 4 keys on taxonomy ids; only
+  69 of 368 prompts coincide, so correctly recognised objects fell through to
+  parametric placeholders.
+- **Stage 0 emitted a format string its own schema rejects.** A RoomPlan `.json`
+  sidecar parsed correctly and then failed output validation.
+
 ### Changed
 
 - **docs/05 is now 2.0.** §1a describes the three tiers; §9 states that accuracy
