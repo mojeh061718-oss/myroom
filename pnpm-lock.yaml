@@ -86,9 +86,6 @@ importers:
       three:
         specifier: ^0.169.0
         version: 0.169.0
-      three-mesh-bvh:
-        specifier: ^0.7.8
-        version: 0.7.8(three@0.169.0)
       zustand:
         specifier: ^4.5.4
         version: 4.5.7(@types/react@18.3.31)(react@18.3.1)

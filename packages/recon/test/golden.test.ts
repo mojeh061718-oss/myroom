@@ -6,6 +6,7 @@ const object = (category: string, x: number, z: number, size: { w: number; d: nu
   id: `${category}-${x}-${z}`,
   catalogId,
   placeholder: catalogId ? null : { category, shape: `${category}Massing` },
+  importedAssetId: null,
   label: category,
   support: "floor",
   wallId: null,

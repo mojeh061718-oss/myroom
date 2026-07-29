@@ -20,6 +20,32 @@ import { Clone, useGLTF } from "@react-three/drei";
  */
 useGLTF.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
 import { haptic } from "../../theme/tokens.js";
+import { getAsset } from "../../lib/db.js";
+
+/**
+ * Imported models load from IndexedDB via object URLs. A tiny suspense cache
+ * keyed by asset id: first render throws the load promise, later renders get
+ * the URL synchronously (mirroring useGLTF's own semantics). "missing" is a
+ * terminal state — an object whose asset was deleted renders a placeholder
+ * box rather than crashing the canvas.
+ */
+type CachedAsset = { url: string; nativeSize: { w: number; d: number; h: number } };
+const assetCache = new Map<string, CachedAsset | Promise<unknown> | "missing">();
+
+function useImportedAsset(assetId: string): CachedAsset | null {
+  const cached = assetCache.get(assetId);
+  if (cached === "missing") return null;
+  if (cached && !(cached instanceof Promise)) return cached;
+  if (cached) throw cached;
+  const promise = getAsset(assetId).then((asset) => {
+    assetCache.set(
+      assetId,
+      asset ? { url: URL.createObjectURL(asset.blob), nativeSize: asset.nativeSize } : "missing",
+    );
+  });
+  assetCache.set(assetId, promise);
+  throw promise;
+}
 
 /** Default colours per material slot, so a fresh object never renders grey mush. */
 const SLOT_COLORS: Record<string, string> = {
@@ -85,12 +111,26 @@ function partGeometry(part: PlaceholderPart, size: { w: number; d: number; h: nu
   const sy = part.size[1] * size.h;
   const sz = part.size[2] * size.d;
   if (part.shape === "cylinder") {
-    return <cylinderGeometry args={[Math.max(sx, sz) / 2, Math.max(sx, sz) / 2, sy, 16]} />;
+    return <cylinderGeometry args={[Math.max(sx, sz) / 2, Math.max(sx, sz) / 2, sy, 24]} />;
   }
   if (part.shape === "sphere") {
-    return <sphereGeometry args={[Math.max(sx, sy, sz) / 2, 16, 12]} />;
+    return <sphereGeometry args={[Math.max(sx, sy, sz) / 2, 24, 16]} />;
   }
   return <boxGeometry args={[sx, sy, sz]} />;
+}
+
+/**
+ * Categories that emit light (docs/02 §7: a lit chandelier must not render as
+ * dark grey metal). Emissive shades on every lamp; a real point light on the
+ * first few, capped so a room of a dozen lamps stays inside the draw budget.
+ */
+const LIGHT_CATEGORIES = new Set(["floor-lamp", "table-lamp", "desk-lamp", "chandelier", "ceiling-light", "wall-sconce"]);
+const MAX_POINT_LIGHTS = 4;
+const GLOW_SLOTS = new Set(["shade", "lights"]);
+
+function lightCategoryOf(object: PlacedObject): string | null {
+  const category = object.placeholder?.category ?? (object.catalogId ? getCatalogItem(object.catalogId)?.category : null);
+  return category && LIGHT_CATEGORIES.has(category) ? category : null;
 }
 
 export interface DragFeedback {
@@ -115,6 +155,37 @@ function CatalogModel({ object }: { object: PlacedObject }) {
       object.size.d / item.nativeSize.d,
     ],
     [object.size, item.nativeSize],
+  );
+  return <Clone object={scene} scale={scale} castShadow receiveShadow />;
+}
+
+/** A model the user imported — same contract as CatalogModel (docs/06 §5). */
+function ImportedModel({ object }: { object: PlacedObject }) {
+  const asset = useImportedAsset(object.importedAssetId!);
+  if (!asset) {
+    return (
+      <mesh castShadow receiveShadow position={[0, object.size.h / 2, 0]}>
+        <boxGeometry args={[object.size.w, object.size.h, object.size.d]} />
+        <meshStandardMaterial color="#A89C8C" roughness={0.8} />
+      </mesh>
+    );
+  }
+  return <ImportedModelMesh url={asset.url} nativeSize={asset.nativeSize} object={object} />;
+}
+
+function ImportedModelMesh({
+  url,
+  nativeSize,
+  object,
+}: {
+  url: string;
+  nativeSize: { w: number; d: number; h: number };
+  object: PlacedObject;
+}) {
+  const { scene } = useGLTF(url);
+  const scale = useMemo<[number, number, number]>(
+    () => [object.size.w / nativeSize.w, object.size.h / nativeSize.h, object.size.d / nativeSize.d],
+    [object.size, nativeSize],
   );
   return <Clone object={scene} scale={scale} castShadow receiveShadow />;
 }
@@ -305,13 +376,25 @@ export function PlacedObjects({
     window.addEventListener("pointerup", endDrag);
   };
 
+  // The first N lamps get a real point light; the rest glow emissively only.
+  const litLampIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const object of objects) {
+      if (lightCategoryOf(object) && ids.size < MAX_POINT_LIGHTS) ids.add(object.id);
+    }
+    return ids;
+  }, [objects]);
+
   return (
     <group name="objects">
       {objects.map((object) => {
         const categoryId = object.placeholder?.category ?? "block";
         const hasModel = object.catalogId !== null && getCatalogItem(object.catalogId) !== undefined;
-        const parts = hasModel ? [] : placeholderParts(categoryId);
+        const imported = object.importedAssetId !== null;
+        const parts = hasModel || imported ? [] : placeholderParts(categoryId);
         const selected = object.id === selectedId;
+        const isLamp = lightCategoryOf(object) !== null;
+        const ringRadius = Math.hypot(object.size.w, object.size.d) / 2;
         return (
           <group
             key={object.id}
@@ -331,48 +414,73 @@ export function PlacedObjects({
               </Suspense>
             )}
 
-            {parts.map((part, i) => (
-              <mesh
-                key={i}
-                castShadow
-                receiveShadow
-                position={[
-                  part.position[0] * object.size.w,
-                  part.position[1] * object.size.h,
-                  part.position[2] * object.size.d,
-                ]}
-              >
-                {partGeometry(part, object.size)}
-                <meshStandardMaterial
-                  color={object.materials[part.slot]?.color ?? slotColor(part.slot)}
-                  roughness={part.slot === "glass" || part.slot === "screen" ? 0.25 : 0.75}
-                  metalness={part.slot === "handles" || part.slot === "hardware" ? 0.6 : 0.05}
-                  emissive={selected ? "#4C8DFF" : "#000000"}
-                  emissiveIntensity={selected ? 0.28 : 0}
-                />
-              </mesh>
-            ))}
+            {imported && (
+              <Suspense fallback={null}>
+                <ImportedModel object={object} />
+              </Suspense>
+            )}
 
-            {/* Low-confidence outline (docs/05 §8): an object the pipeline
+            {parts.map((part, i) => {
+              const glows = isLamp && GLOW_SLOTS.has(part.slot);
+              return (
+                <mesh
+                  key={i}
+                  castShadow
+                  receiveShadow
+                  position={[
+                    part.position[0] * object.size.w,
+                    part.position[1] * object.size.h,
+                    part.position[2] * object.size.d,
+                  ]}
+                >
+                  {partGeometry(part, object.size)}
+                  <meshStandardMaterial
+                    color={object.materials[part.slot]?.color ?? slotColor(part.slot)}
+                    roughness={part.slot === "glass" || part.slot === "screen" ? 0.25 : 0.75}
+                    metalness={part.slot === "handles" || part.slot === "hardware" ? 0.6 : 0.05}
+                    emissive={selected ? "#4C8DFF" : glows ? "#FFE0AE" : "#000000"}
+                    emissiveIntensity={selected ? 0.28 : glows ? 0.9 : 0}
+                  />
+                </mesh>
+              );
+            })}
+
+            {/* A lamp lights its surroundings — shadowless and range-limited,
+                capped scene-wide so the draw budget holds. */}
+            {litLampIds.has(object.id) && (
+              <pointLight
+                position={[0, object.size.h * 0.75, 0]}
+                intensity={0.55}
+                color="#FFDFAE"
+                distance={5}
+                decay={1.8}
+              />
+            )}
+
+            {/* Low-confidence marker (docs/05 §8): an object the pipeline
                 placed from its wall tag rather than a solved camera pose is
                 marked amber, so "roughly here" never reads as "measured". */}
             {!selected && object.recon?.lowConfidence && (
-              <lineSegments position={[0, 0.004, 0]} renderOrder={2}>
-                <edgesGeometry
-                  args={[new THREE.BoxGeometry(object.size.w * 1.04, 0.008, object.size.d * 1.04)]}
-                />
-                <lineBasicMaterial color="#FFB35C" depthTest={false} transparent opacity={0.9} />
-              </lineSegments>
+              <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={2}>
+                <ringGeometry args={[ringRadius * 0.94, ringRadius * 1.04, 40]} />
+                <meshBasicMaterial color="#FFB35C" transparent opacity={0.85} depthTest={false} depthWrite={false} />
+              </mesh>
             )}
 
-            {/* Selection footprint — the accent outline of docs/06 §2. */}
+            {/* Selection halo — the accent marker of docs/06 §2. A soft floor
+                ring reads identically on placeholders, catalog models and
+                imports, where the old hairline box read as debug geometry. */}
             {selected && (
-              <lineSegments position={[0, 0.004, 0]} renderOrder={2}>
-                <edgesGeometry
-                  args={[new THREE.BoxGeometry(object.size.w * 1.04, 0.008, object.size.d * 1.04)]}
-                />
-                <lineBasicMaterial color="#4C8DFF" depthTest={false} transparent opacity={0.95} />
-              </lineSegments>
+              <group renderOrder={2}>
+                <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                  <ringGeometry args={[ringRadius * 0.96, ringRadius * 1.06, 40]} />
+                  <meshBasicMaterial color="#4C8DFF" transparent opacity={0.95} depthTest={false} depthWrite={false} />
+                </mesh>
+                <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                  <circleGeometry args={[ringRadius * 0.96, 40]} />
+                  <meshBasicMaterial color="#4C8DFF" transparent opacity={0.1} depthTest={false} depthWrite={false} />
+                </mesh>
+              </group>
             )}
           </group>
         );

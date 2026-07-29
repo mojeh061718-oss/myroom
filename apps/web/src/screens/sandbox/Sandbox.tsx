@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
@@ -17,9 +17,12 @@ import { Shell } from "./Shell.js";
 import { Lighting } from "./Lighting.js";
 import { CameraRig, type ViewMode } from "./CameraRig.js";
 import { PlacedObjects, type DragFeedback } from "./PlacedObjects.js";
-import { CatalogSheet, ColorSheet, FLOOR_MATERIALS, ObjectSheet } from "./EditSheets.js";
+import { CatalogSheet, ColorSheet, FLOOR_MATERIALS, ImportConfirmSheet, ObjectSheet } from "./EditSheets.js";
+import { IMPORT_ACCEPT, loadModelFiles, storeModel, type LoadedModel } from "../../lib/importModel.js";
+import { listAssets, type LocalAsset } from "../../lib/db.js";
 import { CompareSlider } from "./Compare.js";
 import { QualityGovernor } from "./QualityGovernor.js";
+import { levelFor, type QualityLevel } from "./quality.js";
 import { AccuracyBadge } from "../../components/AccuracyBadge.js";
 import "./sandbox.css";
 
@@ -96,6 +99,10 @@ export function Sandbox() {
     afterName: string;
   } | null>(null);
   const [compareFrom, setCompareFrom] = useState<string | null>(null);
+  const importInput = useRef<HTMLInputElement>(null);
+  const [pendingImport, setPendingImport] = useState<LoadedModel | null>(null);
+  const [myModels, setMyModels] = useState<LocalAsset[]>([]);
+  const [qualityLevel, setQualityLevel] = useState<QualityLevel>(() => levelFor(quality, 0));
 
   /**
    * Grab the current frame. `preserveDrawingBuffer` keeps the buffer readable
@@ -176,6 +183,7 @@ export function Sandbox() {
         setMissing(!ok);
         setLoaded(true);
       });
+    void listAssets(id).then(setMyModels);
   }, [id]);
 
   const selected = useMemo(
@@ -306,8 +314,68 @@ export function Sandbox() {
     showToast(`${category?.label ?? "Object"} added — drag to place it`);
   };
 
+  /** Place a stored imported model in clear floor space (docs/06 §5). */
+  const placeImported = (asset: { id: string; name: string; nativeSize: { w: number; d: number; h: number } }) => {
+    if (!shell) return;
+    const snapWalls: SnapWall[] = shell.walls.map((w) => ({
+      wallId: w.wallId,
+      start: [w.start[0], w.start[2]],
+      end: [w.end[0], w.end[2]],
+      inwardNormal: [w.inwardNormal[0], w.inwardNormal[2]],
+      thickness: w.thickness,
+    }));
+    const spot = findFreeSpot(
+      snapWalls,
+      (useScene.getState().scene?.objects ?? []).map((o) => ({
+        position: { x: o.position.x, z: o.position.z },
+        size: o.size,
+        rotationY: o.rotationY,
+        collisionExempt: o.collisionExempt,
+      })),
+      asset.nativeSize,
+      [shell.center[0], shell.center[2]],
+    );
+    store().addImported(asset, { x: spot.x, y: 0, z: spot.z });
+    setCatalogOpen(false);
+    showToast(`${asset.name} added — drag to place it`);
+  };
+
+  const handleImportFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    try {
+      setPendingImport(await loadModelFiles(files));
+    } catch (error) {
+      showToast((error as Error).message);
+    }
+  };
+
+  const confirmImport = async (size: { w: number; d: number; h: number }) => {
+    if (!pendingImport || !id) return;
+    try {
+      const asset = await storeModel(pendingImport, id, size);
+      setMyModels((prev) => [asset, ...prev]);
+      placeImported(asset);
+    } catch (error) {
+      showToast(`We couldn't save that model (${(error as Error).message}).`);
+    } finally {
+      setPendingImport(null);
+    }
+  };
+
   return (
-    <main className="sandbox" data-testid="sandbox">
+    <main
+      className="sandbox"
+      data-testid="sandbox"
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+      }}
+      onDrop={(e) => {
+        const files = [...e.dataTransfer.files];
+        if (files.length === 0) return;
+        e.preventDefault();
+        void handleImportFiles(files);
+      }}
+    >
       {shell && scene && (
         <Canvas
           shadows
@@ -320,8 +388,8 @@ export function Sandbox() {
           }}
           onCreated={({ gl, scene: threeScene }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping; // docs/02 §7
-            gl.toneMappingExposure = 1.05;
-            threeScene.background = new THREE.Color("#0E0F12");
+            gl.toneMappingExposure = 1.1;
+            threeScene.background = new THREE.Color("#101014");
             const w = window as unknown as Record<string, unknown>;
             w.__myroomRenderer = gl;
             w.__myroomScene = threeScene;
@@ -330,9 +398,10 @@ export function Sandbox() {
         >
           <CameraRig shell={shell} view={view} />
           {/* Steps quality down when the frame rate falls, and back up when
-              headroom returns (docs/06 §8). */}
-          <QualityGovernor preference={quality} />
-          <Lighting shell={shell} />
+              headroom returns (docs/06 §8). The level reaches the lighting
+              rig, which owns the shadow-map and AO knobs. */}
+          <QualityGovernor preference={quality} onChange={setQualityLevel} />
+          <Lighting shell={shell} quality={qualityLevel} />
           <Shell
             shell={shell}
             finishes={{
@@ -505,10 +574,34 @@ export function Sandbox() {
         title={swapFor ? "Swap for…" : "Add to the room"}
         fitsWithin={roomClearance}
         onPick={addFromCatalog}
+        onImport={swapFor ? undefined : () => importInput.current?.click()}
+        myModels={swapFor ? undefined : myModels}
+        onPickModel={placeImported}
         onClose={() => {
           setCatalogOpen(false);
           setSwapFor(null);
         }}
+      />
+
+      <input
+        ref={importInput}
+        type="file"
+        accept={IMPORT_ACCEPT}
+        multiple
+        hidden
+        data-testid="import-model-input"
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])];
+          e.target.value = "";
+          void handleImportFiles(files);
+        }}
+      />
+
+      <ImportConfirmSheet
+        model={pendingImport}
+        unit={unit}
+        onConfirm={(size) => void confirmImport(size)}
+        onCancel={() => setPendingImport(null)}
       />
 
       <ColorSheet

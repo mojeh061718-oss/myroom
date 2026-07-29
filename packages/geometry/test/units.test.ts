@@ -21,6 +21,28 @@ describe("parseLength (docs/04 §4 examples)", () => {
       expect(parseLength(bad), bad).toBeNull();
     }
   });
+
+  it("reads a bare number in the display unit the user is looking at", () => {
+    // Typing "12" against a label reading 12'4" must mean feet, not meters.
+    expect(parseLength("12", "ft")).toBeCloseTo(12 * 0.3048, 9);
+    expect(parseLength("9", "ft")).toBeCloseTo(9 * 0.3048, 9);
+    expect(parseLength("12", "m")).toBeCloseTo(12, 9);
+    expect(parseLength("12")).toBeCloseTo(12, 9); // default stays metric
+    expect(parseDisplayLength("9", "ft")).toBeCloseTo(9 * 0.3048, 9);
+  });
+
+  it("explicit suffixes beat the display unit", () => {
+    expect(parseLength("3.76m", "ft")).toBeCloseTo(3.76, 9);
+    expect(parseLength("376cm", "ft")).toBeCloseTo(3.76, 9);
+    expect(parseLength(`12'4"`, "m")).toBeCloseTo(12 * 0.3048 + 4 * 0.0254, 9);
+    expect(parseLength("2440mm", "ft")).toBeCloseTo(2.44, 9);
+  });
+
+  it("accepts a leading decimal point", () => {
+    expect(parseLength(".5 m")).toBeCloseTo(0.5, 9);
+    expect(parseLength(",5")).toBeCloseTo(0.5, 9);
+    expect(parseLength(".5", "ft")).toBeCloseTo(0.5 * 0.3048, 9);
+  });
 });
 
 describe("format ⇄ parse round-trips (docs/04 §7)", () => {

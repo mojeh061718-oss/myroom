@@ -48,8 +48,13 @@ export interface TierReport {
   reason: string;
 }
 
-/** `navigator.gpu` is not in the DOM lib for every TS version we build against. */
-interface NavigatorWithGPU extends Navigator {
+/**
+ * `navigator.gpu` is not in the DOM lib for every TS version we build
+ * against — and when three's WebGPU declarations are in the program they
+ * type it differently, so this is a standalone structural view rather than
+ * an extension of Navigator.
+ */
+interface NavigatorWithGPU {
   gpu?: {
     requestAdapter(options?: { powerPreference?: "low-power" | "high-performance" }): Promise<GPUAdapterLike | null>;
   };

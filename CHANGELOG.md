@@ -4,6 +4,78 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.1.0] — Every input reads, every dimension lands, and the room finally looks warm
+
+**Ships:** the owner's four complaints, fixed at the root: dimension entry
+that means what the label says, a scan importer that reads every format it
+advertises, user-model import, and the lighting overhaul the M6 polish pass
+deferred.
+
+### Fixed — dimensions & walls
+
+- **A bare typed number meant metres in a feet-labelled app.** Typing "12"
+  against a wall labelled 12'4" produced a 39 ft wall; typing "9" for a 9 ft
+  ceiling was silently discarded by the metric 2–6 m guard.
+  `parseLength`/`parseDisplayLength` now take the display unit; explicit
+  suffixes still win. The Units row in Settings has an actual ft/m control,
+  and the load-time force-override to "ft" is gone.
+- **Typing a length sheared a closed room into a trapezoid** — asserted as
+  intended by the golden-path spec. `resolveLoopWallLength` propagates the
+  correction around the loop (perpendicular walls translate, the first
+  parallel wall absorbs the delta); a rectangle stays a rectangle, and the
+  e2e now asserts the exact grown area.
+- Grid snap was dead at the opening zoom (60 px/m < the 1:50 threshold), so
+  dragged rooms landed on 13'2¾"-style lengths. The board opens at 80 px/m.
+- Wall thickness: a proper sheet in inches/mm replaces the `window.prompt`
+  that displayed mm and parsed metres. Dimension fields commit valid entries
+  on blur, re-shake on repeated bad input, and explain out-of-range heights.
+  Slow drags no longer register as taps; undo restores the active tool.
+
+### Fixed — scanning
+
+- **Point-cloud PLY parses on the device** — the worker's numpy pipeline
+  (RANSAC wall fit, occupancy outline, voxel clustering) ported to TS. The
+  app's own help text steered Polycam/Scaniverse users into PLY and then
+  rejected every such file.
+- **Draco GLB decodes** using the decoder that was already vendored; the
+  refusal cited a CDN constraint that no longer existed. **LAS** parses in
+  pure TS; LAZ and E57 name the export switch to flip. **USDZ** is unzipped:
+  an embedded RoomPlan JSON or mesh is used, ASCII USDA parses, binary USDC
+  gets an actionable message.
+- **A scan that can't line up wall-for-wall still corrects the ceiling
+  height**, and says what it kept. **Scan-measured furniture is no longer
+  thrown away**: unnamed boxes become low-confidence "Scanned item" objects
+  (swap to name them) instead of the room falling back to invented demo
+  furniture — and the lidar badge is earned by those measurements.
+- A configured-but-unreachable API falls back to the on-device pipeline
+  with a warning instead of dead-ending the build.
+
+### Added — model import
+
+- **Any common 3D file becomes a first-class object**: GLB/GLTF/OBJ/STL/
+  FBX/USDZ via Add → Import (or drag-and-drop), normalized once (grounded,
+  unit-heuristic scaled, re-exported to GLB) into a device-local assets
+  store. Confirm sheet shows real-world size and triangle count; imports
+  move, duplicate, undo, version and swap like catalog furniture.
+
+### Changed — lighting & graphics
+
+- Warm procedural environment replaces the neutral RoomEnvironment; key
+  light aims through the wall with the most glazing; hemisphere + cool
+  bounce replace the flat ambient; PCSS soft shadows at the higher tiers.
+- **Contact shadows are live** — `frames={1}` had frozen them at mount, so
+  dragged furniture left its shadow behind.
+- The quality governor's shadow-map and AO knobs are actually wired now
+  (they only ever changed pixel ratio); the never-implemented
+  environment-resolution knob is retired.
+- Procedural wood/tile/carpet floor textures and a wall roughness map at
+  true world scale, zero downloads. Ceilings receive shadows. Lamps glow
+  and cast real light (capped at four point lights). Selection is a soft
+  accent halo. Tutorial steps 2–5 got real animated vignettes.
+
+All within the docs/06 §8 budgets — the sandbox and edit-mode suites pass
+against the new rig on the same ≤300k-triangle / ≤150-draw-call assertions.
+
 ## [2.0.0] — Reconstruction Pipeline 2.0: the pipeline runs on the device you have
 
 **Ships:** the removal of a hardware requirement that was never real, a tier

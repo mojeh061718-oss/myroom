@@ -13,14 +13,14 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
-import { formatArea, formatLength, parseDisplayLength } from "@myroom/geometry";
-import { decodeScanMesh, parseMeshScan, sniffScanFormat } from "@myroom/recon";
+import { formatArea, formatLength, parseDisplayLength, type DisplayUnit } from "@myroom/geometry";
+import { parseMeshScan, parsePointCloudScan, SCAN_EXTENSIONS } from "@myroom/recon";
 import { OBJECT_CATEGORIES } from "@myroom/catalog";
+import { decodeScanFile } from "../../lib/scanDecode.js";
 import { usableFloorArea, wallLength } from "@myroom/schema";
 import { useDrawing, type Tool } from "../../stores/drawingStore.js";
 import { useSettings } from "../../stores/settingsStore.js";
 import { useToasts } from "../../components/Toast.js";
-import { SegmentedControl } from "../../components/SegmentedControl.js";
 import { PillButton } from "../../components/PillButton.js";
 import { Sheet } from "../../components/Sheet.js";
 import { BoardCanvas } from "./BoardCanvas.js";
@@ -35,12 +35,19 @@ const TOOLS: { id: Tool; label: string; icon: typeof Pencil }[] = [
   { id: "measure", label: "Measure", icon: Ruler },
 ];
 
-const REJECTION_COPY = {
-  tooShort: 'Walls need to be at least 12" long',
-  selfIntersect: "Walls can't cross each other",
-  openingOverlap: "Openings can't overlap or hang off the wall",
-  invalid: "That doesn't work here",
-} as const;
+function rejectionCopy(reason: "tooShort" | "selfIntersect" | "openingOverlap" | "invalid", unit: DisplayUnit): string {
+  switch (reason) {
+    case "tooShort":
+      // MIN_WALL_LENGTH is 0.3 m; the friendly figure in each unit.
+      return unit === "ft" ? 'Walls need to be at least 12" long' : "Walls need to be at least 0.3 m long";
+    case "selfIntersect":
+      return "Walls can't cross each other";
+    case "openingOverlap":
+      return "Openings can't overlap or hang off the wall";
+    default:
+      return "That doesn't work here";
+  }
+}
 
 function HeightSheet() {
   const open = useDrawing((s) => s.heightSheetOpen);
@@ -48,6 +55,7 @@ function HeightSheet() {
   const setHeights = useDrawing((s) => s.setHeights);
   const unit = useSettings((s) => s.displayUnit);
   const [custom, setCustom] = useState("");
+  const [customError, setCustomError] = useState<string | null>(null);
 
   // docs/04 §5: default 2.44 m / 8 ft; presets 2.4 / 2.7 / 3.0 m; custom field.
   // Whole feet, so the label the user taps is the number the wall reads back.
@@ -86,8 +94,17 @@ function HeightSheet() {
         style={{ display: "flex", gap: 8 }}
         onSubmit={(e) => {
           e.preventDefault();
-          const m = parseDisplayLength(custom);
-          if (m !== null && m >= 2 && m <= 6) choose(m);
+          const m = parseDisplayLength(custom, unit);
+          if (m === null) {
+            setCustomError("We couldn't read that height — try something like " + (unit === "ft" ? `9' or 9'6"` : "2.6 m"));
+            return;
+          }
+          if (m < 2 || m > 6) {
+            setCustomError(`Wall heights go from ${formatLength(2, unit)} to ${formatLength(6, unit)}`);
+            return;
+          }
+          setCustomError(null);
+          choose(m);
         }}
       >
         <input
@@ -104,13 +121,143 @@ function HeightSheet() {
           }}
           placeholder={unit === "ft" ? `Custom — e.g. 9'6"` : "Custom — e.g. 2.6 m"}
           value={custom}
-          onChange={(e) => setCustom(e.target.value)}
+          onChange={(e) => {
+            setCustom(e.target.value);
+            setCustomError(null);
+          }}
           aria-label="Custom wall height"
+          aria-invalid={customError !== null || undefined}
         />
         <PillButton type="submit" variant="primary">
           Set
         </PillButton>
       </form>
+      {customError && (
+        <p className="type-caption" role="alert" style={{ margin: "6px 0 0", color: "var(--danger)" }}>
+          {customError}
+        </p>
+      )}
+    </Sheet>
+  );
+}
+
+/** Wall thickness in the display unit's small denomination: mm, or inches. */
+function formatThickness(meters: number, unit: DisplayUnit): string {
+  if (unit === "m") return `${Math.round(meters * 1000)} mm`;
+  const quarters = Math.round(meters / 0.0254 / 0.25);
+  const whole = Math.floor(quarters / 4);
+  const frac = quarters % 4;
+  const fracStr = frac === 0 ? "" : frac === 1 ? "¼" : frac === 2 ? "½" : "¾";
+  return `${whole === 0 && fracStr ? "" : whole}${fracStr}"`;
+}
+
+/**
+ * Wall thickness editor (docs/04 §3): presets for the common builds plus a
+ * custom field. A bare number is millimetres in metric, inches in ft-mode —
+ * the same denomination the button shows.
+ */
+function ThicknessSheet({
+  open,
+  current,
+  unit,
+  onClose,
+  onSet,
+}: {
+  open: boolean;
+  current: number;
+  unit: DisplayUnit;
+  onClose: () => void;
+  onSet: (meters: number) => void;
+}) {
+  const [custom, setCustom] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setCustom("");
+      setError(null);
+    }
+  }, [open]);
+
+  const presets = [0.1, 0.14, 0.2];
+
+  const submit = () => {
+    const s = custom.trim().replace(/″/g, '"').replace(/¼/g, ".25").replace(/½/g, ".5").replace(/¾/g, ".75");
+    const numeric = /^(\d+(?:[.,]\d+)?|[.,]\d+)\s*(mm|cm|m|"|in|inches)?$/i.exec(s);
+    if (!numeric) {
+      setError(`Try a number of ${unit === "ft" ? "inches" : "millimetres"} — like ${unit === "ft" ? "6" : "150"}`);
+      return;
+    }
+    const value = parseFloat(numeric[1]!.replace(",", "."));
+    const suffix = numeric[2]?.toLowerCase();
+    const meters =
+      suffix === "mm" ? value / 1000
+      : suffix === "cm" ? value / 100
+      : suffix === "m" ? value
+      : suffix === '"' || suffix === "in" || suffix === "inches" ? value * 0.0254
+      : unit === "ft" ? value * 0.0254
+      : value / 1000;
+    if (meters < 0.05 || meters > 0.5) {
+      setError(`Thickness goes from ${formatThickness(0.05, unit)} to ${formatThickness(0.5, unit)}`);
+      return;
+    }
+    onSet(meters);
+    onClose();
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose} labelledBy="thickness-sheet-title">
+      <h2 id="thickness-sheet-title" className="type-title" style={{ margin: 0 }}>
+        Wall thickness
+      </h2>
+      <p className="type-caption" style={{ margin: "4px 0 0" }}>
+        Currently {formatThickness(current, unit)}
+      </p>
+      <div className="height-presets">
+        {presets.map((m) => (
+          <PillButton key={m} data-testid={`thickness-${Math.round(m * 1000)}`} onClick={() => { onSet(m); onClose(); }}>
+            {formatThickness(m, unit)}
+          </PillButton>
+        ))}
+      </div>
+      <form
+        style={{ display: "flex", gap: 8 }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+      >
+        <input
+          className="metric-field"
+          style={{
+            flex: 1,
+            fontFamily: "var(--font-mono)",
+            background: "var(--bg)",
+            color: "var(--text)",
+            border: "1px solid var(--surface-border)",
+            borderRadius: "var(--radius-sm)",
+            minHeight: 44,
+            padding: "0 12px",
+          }}
+          placeholder={unit === "ft" ? `Custom — inches, e.g. 6` : "Custom — mm, e.g. 150"}
+          value={custom}
+          onChange={(e) => {
+            setCustom(e.target.value);
+            setError(null);
+          }}
+          aria-label="Custom wall thickness"
+          aria-invalid={error !== null || undefined}
+          data-testid="thickness-custom"
+        />
+        <PillButton type="submit" variant="primary">
+          Set
+        </PillButton>
+      </form>
+      {error && (
+        <p className="type-caption" role="alert" style={{ margin: "6px 0 0", color: "var(--danger)" }}>
+          {error}
+        </p>
+      )}
     </Sheet>
   );
 }
@@ -120,9 +267,13 @@ function ContextPill() {
   const plan = useDrawing((s) => s.plan);
   const unit = useSettings((s) => s.displayUnit);
   const [lengthDraft, setLengthDraft] = useState<string | null>(null);
+  const [thicknessOpen, setThicknessOpen] = useState(false);
   const state = useDrawing.getState;
 
-  useEffect(() => setLengthDraft(null), [selection]);
+  useEffect(() => {
+    setLengthDraft(null);
+    setThicknessOpen(false);
+  }, [selection]);
 
   if (!selection || !plan) return null;
 
@@ -143,7 +294,7 @@ function ContextPill() {
           onChange={(e) => setLengthDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && lengthDraft) {
-              const m = parseDisplayLength(lengthDraft);
+              const m = parseDisplayLength(lengthDraft, unit);
               if (m !== null) state().setTypedLength(wall.id, m);
               setLengthDraft(null);
               (e.target as HTMLInputElement).blur();
@@ -158,19 +309,23 @@ function ContextPill() {
         <button
           className="icon-button"
           aria-label="Wall thickness"
-          onClick={() => {
-            const t = prompt("Wall thickness (m, 0.05–0.5)", String(wall.thickness));
-            const m = t ? parseDisplayLength(t) : null;
-            if (m !== null) state().setWallThickness(wall.id, m);
-          }}
+          data-testid="thickness-button"
+          onClick={() => setThicknessOpen(true)}
         >
-          <span className="type-metric">{Math.round(wall.thickness * 1000)}</span>
-          <span>mm</span>
+          <span className="type-metric">{formatThickness(wall.thickness, unit)}</span>
+          <span>thick</span>
         </button>
         <button className="icon-button" aria-label="Delete wall" onClick={() => state().deleteWall(wall.id)} data-testid="delete-wall">
           <Trash2 size={18} />
           <span>Delete</span>
         </button>
+        <ThicknessSheet
+          open={thicknessOpen}
+          current={wall.thickness}
+          unit={unit}
+          onClose={() => setThicknessOpen(false)}
+          onSet={(m) => state().setWallThickness(wall.id, m)}
+        />
       </div>
     );
   }
@@ -192,7 +347,7 @@ function ContextPill() {
           onChange={(e) => setLengthDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && lengthDraft) {
-              const m = parseDisplayLength(lengthDraft);
+              const m = parseDisplayLength(lengthDraft, unit);
               if (m !== null) state().updateOpening(wall.id, opening.id, { width: m }, true);
               setLengthDraft(null);
               (e.target as HTMLInputElement).blur();
@@ -270,30 +425,20 @@ export function DrawingBoard() {
       setImporting(true);
       setImportNote(null);
       try {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const format = sniffScanFormat(bytes.subarray(0, 64));
-        if (format !== "glb" && format !== "ply") {
-          setImportNote(
-            format === "roomplan-json"
-              ? "That's a RoomPlan file — add it on the scan step after drawing, and it'll correct your walls."
-              : "We can read GLB scans on the device. In Scaniverse: Share → Export Model → GLB.",
-          );
+        const geometry = await decodeScanFile(file);
+        if (geometry.kind === "error") {
+          setImportNote(`We couldn't read that scan: ${geometry.reason}.`);
+          return;
+        }
+        if (geometry.kind === "roomplan-json") {
+          setImportNote("That's a RoomPlan file — add it on the scan step after drawing, and it'll correct your walls.");
           return;
         }
 
-        const decoded = decodeScanMesh(bytes, format);
-        if (!decoded.ok) {
-          setImportNote(decoded.reason);
-          return;
-        }
-        if (decoded.indices.length < 300) {
-          setImportNote("That scan is a point cloud with no surfaces in it — export it as GLB instead.");
-          return;
-        }
-
-        const parsed = parseMeshScan(decoded.positions, decoded.indices, format, {
-          categories: OBJECT_CATEGORIES,
-        });
+        const parsed =
+          geometry.kind === "mesh"
+            ? parseMeshScan(geometry.positions, geometry.indices, geometry.format, { categories: OBJECT_CATEGORIES })
+            : parsePointCloudScan(geometry.positions, geometry.format, { categories: OBJECT_CATEGORIES });
         if (!parsed.parsed || parsed.walls.length < 3) {
           setImportNote(parsed.failure ?? "We couldn't find a room in that scan.");
           return;
@@ -362,7 +507,7 @@ export function DrawingBoard() {
   useEffect(() => {
     if (!rejection) return;
     setShakeKey(rejection.at);
-    showToast(REJECTION_COPY[rejection.reason]);
+    showToast(rejectionCopy(rejection.reason, useSettings.getState().displayUnit));
   }, [rejection, showToast]);
 
   const wallCount = plan?.walls.length ?? 0;
@@ -436,7 +581,7 @@ export function DrawingBoard() {
           <input
             ref={scanInputRef}
             type="file"
-            accept=".glb,.ply,.json,model/gltf-binary"
+            accept={SCAN_EXTENSIONS.join(",")}
             style={{ display: "none" }}
             data-testid="scan-file-input"
             onChange={(e) => {

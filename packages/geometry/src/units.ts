@@ -11,10 +11,15 @@ export type DisplayUnit = "m" | "ft";
 const METERS_PER_FOOT = 0.3048;
 const METERS_PER_INCH = 0.0254;
 
-const NUM = "(\\d+(?:[.,]\\d+)?)";
+const NUM = "(\\d+(?:[.,]\\d+)?|[.,]\\d+)";
 
-/** Parse a user-typed length into meters. Returns null when unparseable or non-positive. */
-export function parseLength(input: string): number | null {
+/**
+ * Parse a user-typed length into meters. Returns null when unparseable or
+ * non-positive. A bare number ("12") is read in `defaultUnit` — the unit the
+ * user is currently looking at — so typing "12" against a label reading
+ * 12'4" means feet, not meters (docs/04 §4).
+ */
+export function parseLength(input: string, defaultUnit: DisplayUnit = "m"): number | null {
   const s = input.trim().toLowerCase().replace(/′/g, "'").replace(/″/g, '"').replace(/”/g, '"').replace(/’/g, "'");
   if (s.length === 0) return null;
 
@@ -37,8 +42,11 @@ export function parseLength(input: string): number | null {
   const metric = new RegExp(`^${NUM}\\s*(m|cm|mm|meter|meters|metre|metres)?$`).exec(s);
   if (metric && metric[1] !== undefined) {
     const value = num(metric[1]);
-    const unit = metric[2] ?? "m";
-    const factor = unit === "cm" ? 0.01 : unit === "mm" ? 0.001 : 1;
+    if (metric[2] === undefined) {
+      const m = defaultUnit === "ft" ? value * METERS_PER_FOOT : value;
+      return m > 0 ? m : null;
+    }
+    const factor = metric[2] === "cm" ? 0.01 : metric[2] === "mm" ? 0.001 : 1;
     const m = value * factor;
     return m > 0 ? m : null;
   }
@@ -82,7 +90,7 @@ export function formatArea(m2: number, unit: DisplayUnit): string {
 }
 
 /** Parse the unicode fraction forms formatLength produces, so round-trips hold. */
-export function parseDisplayLength(input: string): number | null {
+export function parseDisplayLength(input: string, defaultUnit: DisplayUnit = "m"): number | null {
   const s = input.trim().replace(/¼/g, ".25").replace(/½/g, ".5").replace(/¾/g, ".75");
-  return parseLength(s);
+  return parseLength(s, defaultUnit);
 }

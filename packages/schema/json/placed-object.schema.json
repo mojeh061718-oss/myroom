@@ -37,6 +37,13 @@
             }
           ]
         },
+        "importedAssetId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
         "label": {
           "type": "string"
         },

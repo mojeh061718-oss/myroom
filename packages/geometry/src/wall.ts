@@ -22,6 +22,70 @@ export function resolveWallLength(
 }
 
 /**
+ * Typed dimensions on a closed loop (docs/04 §4) without shearing the room.
+ *
+ * Sliding only the edited wall's end vertex turns a rectangle into a
+ * trapezoid — the one thing nobody typing "12'" wants. Instead the correction
+ * is propagated: the end vertex moves along the wall direction, every
+ * following vertex whose outgoing edge is near-perpendicular to the edited
+ * wall translates with it, and the first near-parallel edge absorbs the delta
+ * by changing length. For a rectangle that means the opposite wall keeps its
+ * length and the two side walls grow or shrink together — the room stays
+ * rectangular.
+ *
+ * `loop` is the closed vertex ring (edge i runs loop[i] → loop[(i+1)%n]).
+ * Returns the new ring, or null when the shape can't be preserved this way
+ * (diagonal walls in the path, the absorbing edge would collapse or flip) —
+ * callers fall back to the simple end-vertex slide.
+ */
+export function resolveLoopWallLength(
+  loop: readonly Vec2[],
+  edgeIndex: number,
+  newLength: number,
+  angleToleranceDeg = 5,
+): Vec2[] | null {
+  const n = loop.length;
+  if (n < 3 || newLength <= 0 || edgeIndex < 0 || edgeIndex >= n) return null;
+  const p0 = loop[edgeIndex]!;
+  const p1 = loop[(edgeIndex + 1) % n]!;
+  const current = dist(p0, p1);
+  if (current === 0) return null;
+  const dir = normalize(sub(p1, p0));
+  const delta = scale(dir, newLength - current);
+
+  const sinTol = Math.sin((angleToleranceDeg * Math.PI) / 180);
+  const cosTol = Math.cos((angleToleranceDeg * Math.PI) / 180);
+
+  const out = loop.map((p) => ({ ...p }));
+  out[(edgeIndex + 1) % n] = add(p1, delta);
+
+  for (let k = 2; k <= n; k++) {
+    const fromIdx = (edgeIndex + k - 1) % n;
+    const toIdx = (edgeIndex + k) % n;
+    const edge = sub(loop[toIdx]!, loop[fromIdx]!);
+    const len = dist(loop[fromIdx]!, loop[toIdx]!);
+    if (len === 0) return null;
+    const dot = (edge.x * dir.x + edge.y * dir.y) / len;
+
+    if (Math.abs(dot) >= cosTol) {
+      // Near-parallel: this edge absorbs the delta. Refuse when that would
+      // collapse it or flip its direction.
+      const absorbed = sub(out[toIdx]!, out[fromIdx]!);
+      const along = absorbed.x * edge.x + absorbed.y * edge.y;
+      if (along <= 0 || dist(out[fromIdx]!, out[toIdx]!) < 1e-6) return null;
+      return out;
+    }
+    if (Math.abs(dot) <= sinTol) {
+      if (toIdx === edgeIndex) return null; // walked the whole loop, nothing absorbed
+      out[toIdx] = add(loop[toIdx]!, delta);
+      continue;
+    }
+    return null; // diagonal — can't preserve the shape, let the caller fall back
+  }
+  return null;
+}
+
+/**
  * Wall labeling (docs/04 §5, docs/07 §2): walls are labeled A, B, C… clockwise
  * starting from the northernmost wall.
  *

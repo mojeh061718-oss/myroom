@@ -21,6 +21,7 @@ import { useSettings } from "../../stores/settingsStore.js";
 import { haptic } from "../../theme/tokens.js";
 import {
   clampPpm,
+  DEFAULT_PPM,
   planGroupTransform,
   scaleBarMeters,
   toPlan,
@@ -122,7 +123,7 @@ export function BoardCanvas() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const geomRef = useRef<SVGGElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [viewport, setViewport] = useState<Viewport>({ cx: 0, cy: 0, ppm: 60 });
+  const [viewport, setViewport] = useState<Viewport>({ cx: 0, cy: 0, ppm: DEFAULT_PPM });
   const [gesturing, setGesturing] = useState(false);
   const [preview, setPreview] = useState<SnapResult | null>(null);
   const [measure, setMeasure] = useState<{ a: Vec2; b: Vec2 | null } | null>(null);
@@ -138,7 +139,7 @@ export function BoardCanvas() {
   const gesture = useRef<GestureState | null>(null);
   const drag = useRef<DragState | null>(null);
   const shiftHeld = useRef(false);
-  const tapTracker = useRef({ maxPointers: 0, startedAt: 0, moved: false });
+  const tapTracker = useRef({ maxPointers: 0, startedAt: 0, moved: false, downAt: { x: 0, y: 0 } });
   const lastTap = useRef({ at: 0, x: 0, y: 0 });
 
   // --- size tracking -------------------------------------------------------
@@ -260,17 +261,17 @@ export function BoardCanvas() {
 
   const hitTest = (sp: Vec2): ReturnType<typeof useDrawing.getState>["selection"] => {
     const p = plan;
-    // vertices first (16 px)
+    // vertices first — 22 px slop for a ~44 px touch target (docs/04 §2)
     for (const v of p.vertices) {
       const s = toScreen(v, viewport, size.w, size.h);
-      if (dist(s, sp) <= 16) return { kind: "vertex", vertexId: v.id };
+      if (dist(s, sp) <= 22) return { kind: "vertex", vertexId: v.id };
     }
-    // openings (16 px around their center)
+    // openings (22 px around their center)
     for (const g of geo) {
       for (const o of g.wall.openings) {
         const center = add(g.a, scale(g.dir, o.offset + o.width / 2));
         const s = toScreen(center, viewport, size.w, size.h);
-        if (dist(s, sp) <= 18) return { kind: "opening", wallId: g.wall.id, openingId: o.id };
+        if (dist(s, sp) <= 22) return { kind: "opening", wallId: g.wall.id, openingId: o.id };
       }
     }
     // walls (12 px from centerline)
@@ -291,7 +292,7 @@ export function BoardCanvas() {
     pointers.current.set(e.pointerId, sp);
     const count = pointers.current.size;
     if (count === 1) {
-      tapTracker.current = { maxPointers: 1, startedAt: Date.now(), moved: false };
+      tapTracker.current = { maxPointers: 1, startedAt: Date.now(), moved: false, downAt: sp };
     } else {
       tapTracker.current.maxPointers = Math.max(tapTracker.current.maxPointers, count);
     }
@@ -339,8 +340,9 @@ export function BoardCanvas() {
       return;
     }
     const sp = screenPoint(e);
-    const prev = pointers.current.get(e.pointerId)!;
-    if (dist(sp, prev) > 8) tapTracker.current.moved = true;
+    // Total displacement from pointer-down, not the per-event delta — a slow
+    // finger arriving in 2-3 px increments is still a drag, not a tap.
+    if (dist(sp, tapTracker.current.downAt) > 8) tapTracker.current.moved = true;
     pointers.current.set(e.pointerId, sp);
 
     // A second finger means pan/zoom, so abandon the rectangle rather than
@@ -703,7 +705,7 @@ export function BoardCanvas() {
                       transform={`scale(1,-1) translate(0, ${-(y0 + y1)})`}
                       textAnchor="middle"
                       dominantBaseline="middle"
-                      fill="var(--text-secondary)"
+                      fill="var(--text-dim)"
                       stroke="var(--bg)"
                       strokeWidth={px(4)}
                       paintOrder="stroke"
@@ -902,7 +904,8 @@ export function BoardCanvas() {
               key={editingWallId}
               x={s.x}
               y={s.y}
-              initial={formatLength(g.length, unit).replace(/ .*$/, unit === "m" ? "" : "")}
+              unit={unit}
+              initial={formatLength(g.length, unit)}
               onCommit={(meters) => {
                 drawing().setTypedLength(editingWallId, meters);
                 setEditingWallId(null);

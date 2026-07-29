@@ -2,18 +2,21 @@ import { planToShell, type JobEvent, type RoomPlan, type Scene } from "@myroom/s
 import {
   applyRefinements,
   assembleScene,
-  decodeScanMesh,
   demoMeasuredObjects,
   describeRefinements,
   fuseSeedBoxes,
   matchCatalog,
   parseMeshScan,
+  parsePointCloudScan,
   parseRoomPlanJson,
   proposeRefinements,
-  sniffScanFormat,
+  SCANNED_ITEM_CATEGORY,
+  SCANNED_ITEM_LABEL,
+  type RefinementProposal,
   type ScanSeedObject,
 } from "@myroom/recon";
-import { getCategory } from "@myroom/catalog";
+import { getCategory, OBJECT_CATEGORIES } from "@myroom/catalog";
+import { decodeScanFile } from "./scanDecode.js";
 import { t } from "../i18n/index.js";
 import { uuidv7 } from "./uuid.js";
 import type { LocalUpload } from "./db.js";
@@ -57,7 +60,20 @@ export interface ReconstructInput {
 }
 
 export async function reconstruct(input: ReconstructInput): Promise<ReconstructResult> {
-  return hasApi ? viaApi(input) : locally(input);
+  if (!hasApi) return locally(input);
+  try {
+    return await viaApi(input);
+  } catch (error) {
+    if (input.signal?.aborted) throw error;
+    // A configured-but-unreachable API must not be a dead end when the whole
+    // pipeline can run on the device (docs/03 §6). Say which path ran.
+    input.onEvent({
+      type: "warning",
+      message: "We couldn't reach the server, so your room was built on this device instead.",
+      wallLabel: null,
+    });
+    return locally(input);
+  }
 }
 
 export interface ScanRefinement {
@@ -71,106 +87,78 @@ export interface ScanRefinement {
 }
 
 /**
- * Stage 0 on the device (docs/05 §2), for the formats we can read here.
+ * Refinements that survive a wall-count mismatch. Length-rank pairing needs
+ * one scanned wall per drawn wall, but the ceiling height the scan measured
+ * is a scalar and stays true however many walls the tracer found — a scan
+ * that can't correct the outline can still correct the ceiling.
+ */
+function applyWhatFits(
+  plan: RoomPlan,
+  proposal: RefinementProposal,
+  seeds: ScanSeedObject[],
+): ScanRefinement {
+  if (proposal.comparable) {
+    const refinedPlan = applyRefinements(plan, proposal);
+    return { plan: refinedPlan, notes: describeRefinements(proposal, refinedPlan, plan), refined: true, seeds };
+  }
+  const partial: RefinementProposal = { ...proposal, disagreements: [], uniformScale: null };
+  const refinedPlan = applyRefinements(plan, partial);
+  const ceilingChanged = refinedPlan !== plan;
+  const notes = [
+    `We couldn't line the scan up with your plan (${proposal.reason}), so we kept your walls as you drew them.`,
+    ...describeRefinements(partial, refinedPlan, plan),
+  ];
+  return { plan: refinedPlan, notes, refined: ceilingChanged, seeds };
+}
+
+/**
+ * Stage 0 on the device (docs/05 §2).
  *
- * A RoomPlan export is already parametric, so its measurements can correct the
- * drawn plan without a worker: a consistent scale error and the ceiling height
- * are applied, and anything bigger is reported for the user to decide. Meshes
- * and point clouds need the worker tier, and say so rather than silently doing
- * nothing.
+ * Every accepted format is read here: RoomPlan JSON (parametric — the gold
+ * input), GLB and PLY meshes (including Draco), PLY and LAS point clouds, and
+ * USDZ archives. The scan corrects the drawn plan — uniform scale and ceiling
+ * height — and its measured furniture comes back as seeds for stage 3.
+ * Formats that genuinely can't be read on the device (LAZ, E57, binary USDC)
+ * get a message that says which export switch to flip.
  */
 export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Promise<ScanRefinement> {
   const scan = uploads.find((u) => u.kind === "lidar");
   if (!scan) return { plan, notes: [], refined: false, seeds: [] };
 
-  const head = new Uint8Array(await scan.blob.slice(0, 64).arrayBuffer());
-  const format = sniffScanFormat(head);
+  const geometry = await decodeScanFile(scan.blob);
 
-  // Mesh scans are read here, on the device (docs/05 §2). They used to fall
-  // through to the branch below and be dropped with a note about a server that
-  // is not deployed — so a scan of a real room did nothing at all.
-  if (format === "glb" || format === "ply") {
-    const decoded = decodeScanMesh(new Uint8Array(await scan.blob.arrayBuffer()), format);
-    if (!decoded.ok) {
-      return { plan, notes: [`We couldn't read that scan: ${decoded.reason}.`], refined: false, seeds: [] };
-    }
-    if (decoded.indices.length < 300) {
-      // A point cloud carries no surfaces, and every measurement here is
-      // area-weighted over triangles. Name the format that does carry them.
-      return {
-        plan,
-        notes: ["That scan is a point cloud with no surfaces in it — export it as GLB and we can measure the room from it."],
-        refined: false,
-        seeds: [],
-      };
-    }
-
-    const parsed = parseMeshScan(decoded.positions, decoded.indices, format);
-    if (!parsed.parsed) {
-      return { plan, notes: [`We couldn't read that scan: ${parsed.failure ?? "unknown reason"}.`], refined: false, seeds: [] };
-    }
-
-    // ScanParse carries walls as {x, y} points; the refiner wants tuples.
-    const lines = parsed.walls.map((w) => ({
-      start: [w.start.x, w.start.y] as [number, number],
-      end: [w.end.x, w.end.y] as [number, number],
-    }));
-    const proposal = proposeRefinements(plan, lines, parsed.ceilingHeight);
-    if (!proposal.comparable) {
-      return {
-        plan,
-        notes: [`We measured your scan but couldn't line it up with your plan (${proposal.reason}), so we left your drawing as it is.`],
-        refined: false,
-        seeds: [],
-      };
-    }
-    const refinedPlan = applyRefinements(plan, proposal);
-    return {
-      plan: refinedPlan,
-      notes: describeRefinements(proposal, refinedPlan, plan),
-      refined: true,
-      // A mesh scan names nothing, so it corrects the room without furnishing
-      // it — and the accuracy badge stays honest about that.
-      seeds: [],
-    };
+  if (geometry.kind === "error") {
+    return { plan, notes: [`We couldn't read that scan: ${geometry.reason}.`], refined: false, seeds: [] };
   }
 
-  if (format !== "roomplan-json") {
-    return {
-      plan,
-      notes: [
-        hasApi
-          ? "We'll read your scan on the server while your room is built."
-          : `We can't read ${format ?? "that format"} on the device yet — export your scan as GLB and we'll measure the room from it.`,
-      ],
-      refined: false,
-      seeds: [],
-    };
+  if (geometry.kind === "roomplan-json") {
+    const preview = parseRoomPlanJson(geometry.text);
+    if (!preview) {
+      // docs/05 §8: a scan we can't read is a toast, not a failure.
+      return { plan, notes: ["We couldn't read that scan, so we used your plan and photos."], refined: false, seeds: [] };
+    }
+    const proposal = proposeRefinements(plan, preview.walls, preview.ceilingHeight);
+    return applyWhatFits(plan, proposal, preview.objects);
   }
 
-  const preview = parseRoomPlanJson(await scan.blob.text());
-  if (!preview) {
-    // docs/05 §8: a scan we can't read is a toast, not a failure.
-    return {
-      plan,
-      notes: ["We couldn't read that scan, so we used your plan and photos."],
-      refined: false,
-      seeds: [],
-    };
+  const parsed =
+    geometry.kind === "mesh"
+      ? parseMeshScan(geometry.positions, geometry.indices, geometry.format, { categories: OBJECT_CATEGORIES })
+      : parsePointCloudScan(geometry.positions, geometry.format, { categories: OBJECT_CATEGORIES });
+  if (!parsed.parsed) {
+    return { plan, notes: [`We couldn't read that scan: ${parsed.failure ?? "unknown reason"}.`], refined: false, seeds: [] };
   }
 
-  const proposal = proposeRefinements(plan, preview.walls, preview.ceilingHeight);
-  if (!proposal.comparable) {
-    return {
-      plan,
-      notes: [`We couldn't line the scan up with your plan (${proposal.reason}), so we left your drawing as it is.`],
-      refined: false,
-      seeds: preview.objects,
-    };
-  }
-  const refinedPlan = applyRefinements(plan, proposal);
-  const notes = describeRefinements(proposal, refinedPlan, plan);
-  return { plan: refinedPlan, notes, refined: true, seeds: preview.objects };
+  // ScanParse carries walls as {x, y} points; the refiner wants tuples.
+  const lines = parsed.walls.map((w) => ({
+    start: [w.start.x, w.start.y] as [number, number],
+    end: [w.end.x, w.end.y] as [number, number],
+  }));
+  const proposal = proposeRefinements(plan, lines, parsed.ceilingHeight);
+  // The boxes the scan measured are seeds whether or not the outline lined
+  // up — they were thrown away here once, which meant a scanned room came
+  // back furnished with invented demo furniture.
+  return applyWhatFits(plan, proposal, parsed.seedBoxes);
 }
 
 // --- demo path ---------------------------------------------------------------
@@ -193,18 +181,21 @@ async function locally({ plan, uploads, scanParsed, seeds, onEvent, signal }: Re
   onEvent({ type: "stage", stage: "detect-segment", progress: null });
   await sleep(240, signal);
 
-  // A scan that named its own objects is measured data about this room, so it
-  // replaces the demo layout rather than being mixed with it — half-real
-  // furniture would be impossible for anyone to reason about.
+  // Anything the scan measured is data about this room, so it replaces the
+  // demo layout rather than being mixed with it — half-real furniture would
+  // be impossible for anyone to reason about. An unnamed box still earns its
+  // place: "something this size is here" was measured, and the user can say
+  // what it is with Swap. Falling back to invented demo furniture because the
+  // scan declined to *name* what it measured was the old behaviour, and it
+  // meant a scanned room came back furnished with fiction.
   const scanSeeds = seeds ?? [];
-  const named = scanSeeds.filter((s) => s.category !== null);
   const measured =
-    named.length > 0
+    scanSeeds.length > 0
       ? fuseSeedBoxes([], scanSeeds, { newId: uuidv7 }).measured
       : photos.length > 0
         ? demoMeasuredObjects(shell, { newId: uuidv7 })
         : [];
-  const fromScan = named.length > 0;
+  const fromScan = scanSeeds.length > 0;
   // Say it before the first fabricated object appears, not after the room is
   // finished — a label that arrives late has already misled someone.
   if (!fromScan && photos.length > 0) onEvent({ type: "warning", message: DEMO_NOTICE, wallLabel: null });
@@ -222,7 +213,7 @@ async function locally({ plan, uploads, scanParsed, seeds, onEvent, signal }: Re
     onEvent({
       type: "object",
       category: m.category,
-      label: getCategory(m.category)?.label ?? m.category,
+      label: getCategory(m.category)?.label ?? (m.category === SCANNED_ITEM_CATEGORY ? SCANNED_ITEM_LABEL : m.category),
       position: m.position,
       size: m.size,
       confidence: m.confidence,

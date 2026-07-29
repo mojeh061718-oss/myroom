@@ -12,7 +12,8 @@
             "ply",
             "glb",
             "e57",
-            "las"
+            "las",
+            "laz"
           ]
         },
         "parsed": {

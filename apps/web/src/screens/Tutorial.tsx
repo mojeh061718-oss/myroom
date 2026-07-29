@@ -6,8 +6,8 @@ import { useSettings } from "../stores/settingsStore.js";
 /**
  * T1–T5 — Tutorial (docs/01 §3). Skip is always visible top-right on every
  * step; page dots allow jumping. Completing OR skipping sets tutorialSeen.
- * M1 ships T1 content only; T2–T5 are placeholders (docs/09 M1) whose final
- * animations land in M6.
+ * Each step carries its own animated vignette in the T1 style — CSS-driven,
+ * aria-hidden, and frozen to a legible final frame under reduced motion.
  */
 
 const STEPS = [
@@ -33,16 +33,94 @@ function T1Demo() {
   );
 }
 
-function PlaceholderDemo({ index }: { index: number }) {
+/** T2 — a wall in the guided capture frame, corner brackets locking on. */
+function T2Demo() {
   return (
-    <div
-      className="card"
-      style={{ width: "100%", maxWidth: 420, aspectRatio: "4 / 3", display: "flex", alignItems: "center", justifyContent: "center" }}
-    >
-      <span className="type-caption">Demo animation — coming with the finished engine (M6) · step {index + 1}</span>
-    </div>
+    <svg viewBox="0 0 320 240" width="100%" style={{ maxWidth: 420 }} aria-hidden>
+      {/* the wall being photographed, with a door for scale */}
+      <rect x="70" y="60" width="180" height="120" fill="var(--surface-solid, #fff)" opacity="0.08" stroke="var(--text-dim)" strokeWidth="2" />
+      <rect x="130" y="100" width="34" height="80" fill="none" stroke="var(--text-dim)" strokeWidth="2" />
+      <rect x="196" y="92" width="34" height="30" fill="none" stroke="var(--text-dim)" strokeWidth="2" />
+      {/* camera guide frame */}
+      <g className="t2-frame" stroke="var(--accent)" strokeWidth="5" fill="none" strokeLinecap="round">
+        <path d="M52 66 v-24 h24" />
+        <path d="M268 42 h-24 M268 42 v24" transform="translate(0,0)" />
+        <path d="M52 174 v24 h24" />
+        <path d="M268 198 h-24 M268 198 v-24" />
+      </g>
+      <circle cx="160" cy="222" r="9" fill="var(--accent-warm)" className="t2-shutter" />
+    </svg>
   );
 }
+
+/** T3 — a point cloud resolving into the room's outline. */
+function T3Demo() {
+  // Deterministic scatter around the rectangle's edges — a scan of walls.
+  const dots: [number, number][] = [];
+  let seed = 9;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed % 1000) / 1000;
+  };
+  for (let i = 0; i < 26; i++) dots.push([44 + rand() * 232, 42 + rand() * 8 - 4]);
+  for (let i = 0; i < 26; i++) dots.push([44 + rand() * 232, 198 + rand() * 8 - 4]);
+  for (let i = 0; i < 18; i++) dots.push([44 + rand() * 8 - 4, 42 + rand() * 156]);
+  for (let i = 0; i < 18; i++) dots.push([276 + rand() * 8 - 4, 42 + rand() * 156]);
+  return (
+    <svg viewBox="0 0 320 240" width="100%" style={{ maxWidth: 420 }} aria-hidden>
+      <g className="t3-dots" fill="var(--accent-warm)">
+        {dots.map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="2.4" style={{ animationDelay: `${(i % 13) * 90}ms` }} />
+        ))}
+      </g>
+      <rect x="44" y="42" width="232" height="156" rx="2" fill="none" stroke="var(--accent)" strokeWidth="5" className="t3-outline" pathLength={1} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** T4 — the plan extruding into a room: walls rise from the floor plate. */
+function T4Demo() {
+  return (
+    <svg viewBox="0 0 320 240" width="100%" style={{ maxWidth: 420 }} aria-hidden>
+      {/* floor plate, isometric-ish */}
+      <polygon points="160,196 268,158 160,120 52,158" fill="var(--accent)" opacity="0.16" stroke="var(--accent)" strokeWidth="2.5" strokeLinejoin="round" />
+      {/* rising walls */}
+      <g className="t4-walls" stroke="var(--text)" strokeWidth="2.5" fill="var(--surface-solid, #fff)" fillOpacity="0.07" strokeLinejoin="round">
+        <polygon points="52,158 160,120 160,52 52,90" />
+        <polygon points="160,120 268,158 268,90 160,52" />
+      </g>
+      {/* a sofa block landing inside */}
+      <g className="t4-sofa">
+        <polygon points="160,178 200,164 200,150 160,164" fill="var(--accent-warm)" opacity="0.9" />
+        <polygon points="160,164 200,150 200,140 160,154" fill="var(--accent-warm)" opacity="0.65" />
+      </g>
+    </svg>
+  );
+}
+
+/** T5 — editing: the sofa slides across the room, the wall changes colour. */
+function T5Demo() {
+  return (
+    <svg viewBox="0 0 320 240" width="100%" style={{ maxWidth: 420 }} aria-hidden>
+      <rect x="44" y="42" width="232" height="156" rx="2" fill="none" stroke="var(--text-dim)" strokeWidth="3" strokeLinejoin="round" />
+      {/* the wall being repainted */}
+      <rect x="44" y="42" width="232" height="10" className="t5-wall" />
+      {/* the sofa on the move */}
+      <g className="t5-sofa">
+        <rect x="0" y="0" width="64" height="30" rx="5" fill="var(--accent-warm)" />
+        <rect x="0" y="-8" width="64" height="12" rx="5" fill="var(--accent-warm)" opacity="0.7" />
+      </g>
+      {/* palette dots */}
+      <g className="t5-palette">
+        <circle cx="236" cy="222" r="8" fill="#9CAF88" />
+        <circle cx="258" cy="222" r="8" fill="#C97B5A" />
+        <circle cx="280" cy="222" r="8" fill="#4C6E8F" />
+      </g>
+    </svg>
+  );
+}
+
+const DEMOS = [T1Demo, T2Demo, T3Demo, T4Demo, T5Demo] as const;
 
 export function Tutorial() {
   const [step, setStep] = useState(0);
@@ -55,12 +133,15 @@ export function Tutorial() {
   };
 
   const current = STEPS[step]!;
+  const Demo = DEMOS[step] ?? T1Demo;
   return (
     <main className="tutorial" data-testid="tutorial">
       <PillButton variant="ghost" className="tutorial-skip" onClick={finish} data-testid="tutorial-skip">
         Skip
       </PillButton>
-      <div className="tutorial-demo">{step === 0 ? <T1Demo /> : <PlaceholderDemo index={step} />}</div>
+      <div className="tutorial-demo">
+        <Demo />
+      </div>
       <h2 className="type-display-l" style={{ margin: "0 0 8px", textAlign: "center" }}>
         {current.title}
       </h2>

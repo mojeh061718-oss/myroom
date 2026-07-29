@@ -62,16 +62,35 @@ export interface LocalUpload {
   remoteId: string | null;
 }
 
+/**
+ * A 3D model the user imported into the sandbox (docs/06 §5). Whatever format
+ * it arrived in, it is stored normalized to GLB so there is exactly one render
+ * path — and it stays on the device, like everything else.
+ */
+export interface LocalAsset {
+  id: string;
+  projectId: string;
+  /** display name, from the imported filename */
+  name: string;
+  /** normalized GLB bytes */
+  blob: Blob;
+  /** real-world size after import scaling, meters */
+  nativeSize: { w: number; d: number; h: number };
+  triangles: number;
+  createdAt: string;
+}
+
 interface MyRoomDB extends DBSchema {
   projects: { key: string; value: LocalProject };
   settings: { key: string; value: Settings };
   uploads: { key: string; value: LocalUpload; indexes: { byProject: string } };
+  assets: { key: string; value: LocalAsset; indexes: { byProject: string } };
 }
 
 let dbPromise: Promise<IDBPDatabase<MyRoomDB>> | null = null;
 
 function db(): Promise<IDBPDatabase<MyRoomDB>> {
-  dbPromise ??= openDB<MyRoomDB>("myroom", 2, {
+  dbPromise ??= openDB<MyRoomDB>("myroom", 3, {
     upgrade(database, oldVersion) {
       if (oldVersion < 1) {
         database.createObjectStore("projects", { keyPath: "id" });
@@ -80,6 +99,10 @@ function db(): Promise<IDBPDatabase<MyRoomDB>> {
       if (oldVersion < 2) {
         const uploads = database.createObjectStore("uploads", { keyPath: "id" });
         uploads.createIndex("byProject", "projectId");
+      }
+      if (oldVersion < 3) {
+        const assets = database.createObjectStore("assets", { keyPath: "id" });
+        assets.createIndex("byProject", "projectId");
       }
     },
   });
@@ -102,11 +125,14 @@ export async function putProject(project: LocalProject): Promise<void> {
 export async function deleteProject(id: string): Promise<void> {
   const database = await db();
   await database.delete("projects", id);
-  // Deleting a project deletes its photos with it — on the device as well as in
-  // the cloud (docs/03 §7, docs/01 §12). Leaving them behind would keep images
-  // of someone's home after they asked for them to be gone.
+  // Deleting a project deletes its photos — and its imported models — with it,
+  // on the device as well as in the cloud (docs/03 §7, docs/01 §12). Leaving
+  // them behind would keep pieces of someone's home after they asked for them
+  // to be gone.
   const orphans = await database.getAllKeysFromIndex("uploads", "byProject", id);
   await Promise.all(orphans.map((key) => database.delete("uploads", key)));
+  const assets = await database.getAllKeysFromIndex("assets", "byProject", id);
+  await Promise.all(assets.map((key) => database.delete("assets", key)));
 }
 
 export async function putUpload(upload: LocalUpload): Promise<void> {
@@ -122,12 +148,28 @@ export async function deleteUpload(id: string): Promise<void> {
   await (await db()).delete("uploads", id);
 }
 
+export async function putAsset(asset: LocalAsset): Promise<void> {
+  await (await db()).put("assets", asset);
+}
+
+export async function getAsset(id: string): Promise<LocalAsset | undefined> {
+  return (await db()).get("assets", id);
+}
+
+export async function listAssets(projectId: string): Promise<LocalAsset[]> {
+  const all = await (await db()).getAllFromIndex("assets", "byProject", projectId);
+  return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function deleteAsset(id: string): Promise<void> {
+  await (await db()).delete("assets", id);
+}
+
 export async function getSettings(): Promise<Settings> {
   const stored = await (await db()).get("settings", "app");
-  // The app is feet-and-inches throughout (docs/04 §4). Anyone carrying a
-  // stored "m" from before that decision is migrated forward, because the unit
-  // control that would have let them change it back no longer exists.
-  return { ...DEFAULT_SETTINGS, ...stored, displayUnit: "ft" };
+  // Defaults are feet-and-inches (docs/04 §4); the Units control in Settings
+  // persists whichever the user picks.
+  return { ...DEFAULT_SETTINGS, ...stored };
 }
 
 export async function putSettings(settings: Settings): Promise<void> {

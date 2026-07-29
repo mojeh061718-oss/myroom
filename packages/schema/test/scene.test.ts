@@ -21,7 +21,7 @@ describe("PlacedObject invariants (docs/07 §4)", () => {
   it("accepts a valid floor object", () => {
     expect(PlacedObjectSchema.safeParse(sofa).success).toBe(true);
   });
-  it("requires exactly one of catalogId/placeholder", () => {
+  it("requires exactly one of catalogId/placeholder/importedAssetId", () => {
     expect(PlacedObjectSchema.safeParse({ ...sofa, catalogId: null }).success).toBe(false);
     expect(
       PlacedObjectSchema.safeParse({
@@ -36,6 +36,17 @@ describe("PlacedObject invariants (docs/07 §4)", () => {
         placeholder: { category: "sofa", shape: "sofaMassing" },
       }).success,
     ).toBe(false);
+    expect(
+      PlacedObjectSchema.safeParse({ ...sofa, catalogId: null, importedAssetId: "asset-1" }).success,
+    ).toBe(true);
+    expect(PlacedObjectSchema.safeParse({ ...sofa, importedAssetId: "asset-1" }).success).toBe(false);
+  });
+  it("parses scenes saved before importedAssetId existed", () => {
+    const legacy = { ...sofa } as Record<string, unknown>;
+    delete legacy.importedAssetId;
+    const parsed = PlacedObjectSchema.safeParse(legacy);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.importedAssetId).toBeNull();
   });
   it("requires wallId for wall support and parentObjectId for surface support", () => {
     expect(PlacedObjectSchema.safeParse({ ...sofa, support: "wall" }).success).toBe(false);

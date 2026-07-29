@@ -205,9 +205,12 @@ describe("mesh scans are read on the device", () => {
  */
 const POSITIONS = "/tmp/sv_positions.bin";
 const INDICES = "/tmp/sv_indices.bin";
-describe.skipIf(!existsSync(POSITIONS) || !existsSync(INDICES))("a real Scaniverse scan", () => {
-  const positions = new Float32Array(readFileSync(POSITIONS).buffer);
-  const indices = new Uint32Array(readFileSync(INDICES).buffer);
+const HAVE_SCAN = existsSync(POSITIONS) && existsSync(INDICES);
+describe.skipIf(!HAVE_SCAN)("a real Scaniverse scan", () => {
+  // skipIf still collects the suite body, so the fixture reads must not run
+  // when the files are absent.
+  const positions = HAVE_SCAN ? new Float32Array(readFileSync(POSITIONS).buffer) : new Float32Array();
+  const indices = HAVE_SCAN ? new Uint32Array(readFileSync(INDICES).buffer) : new Uint32Array();
 
   it("parses", () => {
     expect(parseMeshScan(positions, indices, "glb").parsed).toBe(true);

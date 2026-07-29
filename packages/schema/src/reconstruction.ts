@@ -119,7 +119,7 @@ export type CatalogMatch = z.infer<typeof CatalogMatchSchema>;
 
 // --- Stage 0, LiDAR (docs/05 §2) ---------------------------------------------
 
-export const ScanFormatSchema = z.enum(["roomplan-json", "usdz", "ply", "glb", "e57", "las"]);
+export const ScanFormatSchema = z.enum(["roomplan-json", "usdz", "ply", "glb", "e57", "las", "laz"]);
 
 /**
  * A wall the scan found, expressed in the plan's own 2D frame after

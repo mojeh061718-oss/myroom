@@ -61,6 +61,34 @@ describe("sceneStore (docs/06 §6 command pattern)", () => {
     expect(() => SceneSchema.parse(s().scene)).not.toThrow();
   });
 
+  it("adds an imported model as a schema-valid, undoable, swappable object", () => {
+    const s = useScene.getState;
+    const asset = { id: "asset-1", name: "Grandpa's chair", nativeSize: { w: 0.7, d: 0.7, h: 1.0 } };
+    const objectId = s().addImported(asset, { x: 1, y: 0, z: -1 });
+    const obj = s().scene!.objects.find((o) => o.id === objectId)!;
+    expect(obj.importedAssetId).toBe("asset-1");
+    expect(obj.catalogId).toBeNull();
+    expect(obj.placeholder).toBeNull();
+    expect(obj.label).toBe("Grandpa's chair");
+    expect(obj.size).toEqual(asset.nativeSize);
+    expect(() => SceneSchema.parse(s().scene)).not.toThrow();
+
+    // Duplicate keeps the asset reference.
+    s().duplicateObject(objectId);
+    expect(s().scene!.objects.filter((o) => o.importedAssetId === "asset-1")).toHaveLength(2);
+
+    // Swapping to a catalog category replaces the imported identity.
+    s().swapObject(objectId, "armchair");
+    const swapped = s().scene!.objects.find((o) => o.id === objectId)!;
+    expect(swapped.importedAssetId).toBeNull();
+    expect(swapped.placeholder?.category).toBe("armchair");
+    expect(() => SceneSchema.parse(s().scene)).not.toThrow();
+
+    // Undo restores the imported object.
+    s().undo();
+    expect(s().scene!.objects.find((o) => o.id === objectId)!.importedAssetId).toBe("asset-1");
+  });
+
   it("keeps ceiling and wall objects schema-valid", () => {
     const s = useScene.getState;
     s().addObject("ceiling-fan", { x: 0, y: 2.26, z: 0 });

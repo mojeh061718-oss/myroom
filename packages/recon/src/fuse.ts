@@ -15,6 +15,15 @@ import type { ScanSeedObject } from "./scan.js";
 /** How far apart two boxes can be and still describe the same object. */
 export const FUSE_RADIUS_M = 0.6;
 
+/**
+ * The category of a box the scan measured but could not name. It is not in
+ * the taxonomy on purpose — a guessed name would be fiction — but the box is
+ * a real measurement and must survive to the scene, where the user can say
+ * what it is with Swap (docs/05 §6: never silently omit a detected object).
+ */
+export const SCANNED_ITEM_CATEGORY = "scanned-item";
+export const SCANNED_ITEM_LABEL = "Scanned item";
+
 export interface FuseOptions {
   newId: () => string;
   /** confidence attached to objects the scan found but no photo did */
@@ -70,19 +79,22 @@ export function fuseSeedBoxes(
 
   let added = 0;
   seeds.forEach((seed, index) => {
-    if (claimed.has(index) || seed.category === null) return;
+    if (claimed.has(index)) return;
+    // An unnamed seed used to be dropped here, which fell the whole room back
+    // to demo furniture. The box was measured; only the name is missing.
+    const category = seed.category ?? SCANNED_ITEM_CATEGORY;
     out.push({
       id: options.newId(),
-      category: seed.category,
+      category,
       position: { ...seed.position },
       rotationY: seed.rotationY,
       size: { ...seed.size },
       // How a thing is held in the room is a property of what it is, not of
       // where the scanner happened to see it.
-      support: getCategory(seed.category)?.support ?? "floor",
-      confidence: scanConfidence,
+      support: getCategory(category)?.support ?? "floor",
+      confidence: seed.category === null ? Math.min(scanConfidence, 0.6) : scanConfidence,
       sourcePhotoIds: ["scan"],
-      lowConfidence: false,
+      lowConfidence: seed.category === null,
       palette: [],
       faceTextureRef: null,
     });

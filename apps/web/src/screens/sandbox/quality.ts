@@ -2,11 +2,13 @@
  * Auto quality stepping (docs/06 §8).
  *
  * "monitor rolling FPS; below threshold step down pixel ratio → shadow map size
- * → AO off → environment resolution, in that order (and back up when headroom
- * returns)."
+ * → AO off, in that order (and back up when headroom returns)." The spec's
+ * fourth knob, environment resolution, is retired: the IBL is baked once by
+ * PMREM at a fixed size, so there was never a per-frame cost to step.
  *
  * The policy is pure so it can be tested without a GPU; the renderer wiring
- * that applies it lives in `QualityGovernor`.
+ * that applies it lives in `QualityGovernor`, and the shadow/AO knobs land in
+ * `Lighting` via the level Sandbox passes down.
  */
 
 export interface QualityLevel {
@@ -14,18 +16,17 @@ export interface QualityLevel {
   /** cap on devicePixelRatio */
   pixelRatio: number;
   shadowMapSize: number;
-  /** contact shadows / ambient occlusion */
+  /** contact shadows / soft-shadow (PCSS) tier */
   ao: boolean;
-  environmentResolution: number;
 }
 
 /** Ordered best → worst; stepping down means moving one index later. */
 export const QUALITY_LEVELS: QualityLevel[] = [
-  { name: "Best quality", pixelRatio: 2, shadowMapSize: 2048, ao: true, environmentResolution: 256 },
-  { name: "High", pixelRatio: 1.5, shadowMapSize: 1024, ao: true, environmentResolution: 256 },
-  { name: "Balanced", pixelRatio: 1.25, shadowMapSize: 512, ao: true, environmentResolution: 128 },
-  { name: "Battery saver", pixelRatio: 1, shadowMapSize: 512, ao: false, environmentResolution: 128 },
-  { name: "Minimum", pixelRatio: 1, shadowMapSize: 256, ao: false, environmentResolution: 64 },
+  { name: "Best quality", pixelRatio: 2, shadowMapSize: 2048, ao: true },
+  { name: "High", pixelRatio: 1.5, shadowMapSize: 1024, ao: true },
+  { name: "Balanced", pixelRatio: 1.25, shadowMapSize: 512, ao: true },
+  { name: "Battery saver", pixelRatio: 1, shadowMapSize: 512, ao: false },
+  { name: "Minimum", pixelRatio: 1, shadowMapSize: 256, ao: false },
 ];
 
 /** docs/06 §8: 60 fps target, 30 fps floor. */
