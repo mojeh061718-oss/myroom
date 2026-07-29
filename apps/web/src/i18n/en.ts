@@ -44,7 +44,7 @@ export const en = {
   "recon.open": "See your room",
   "recon.openAnyway": "Open the room anyway",
   "recon.leaveHint": "You can leave this screen; we'll keep going.",
-  "recon.found": "Found: {label} · {size} m",
+  "recon.found": "Found: {label} · {size}",
 
   "notify.roomReadyTitle": "Your room is ready",
   "notify.roomReadyBody": "{name} is built and waiting.",
@@ -52,9 +52,9 @@ export const en = {
   "accuracy.sketch": "Sketch",
   "accuracy.photo": "Photo-calibrated",
   "accuracy.lidar": "LiDAR-verified",
-  "accuracy.sketch.help": "Walls exactly as you drew them; nothing measured from photos.",
-  "accuracy.photo.help": "Walls exact; object positions within about 15 cm, sizes within 10%.",
-  "accuracy.lidar.help": "Shell within about 2 cm; object positions within 5 cm, sizes within 5%.",
+  "accuracy.sketch.help": "Walls exactly as you drew them. Anything in the room is an example, not something measured from your photos.",
+  "accuracy.photo.help": "Walls exact; object positions within about 6 inches, sizes within 10%.",
+  "accuracy.lidar.help": "Shell within about ¾ inch; object positions within 2 inches, sizes within 5%.",
 } as const;
 
 export type MessageKey = keyof typeof en;

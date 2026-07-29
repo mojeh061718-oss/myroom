@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatArea } from "@myroom/geometry";
+import { formatArea, formatLength } from "@myroom/geometry";
 import { useSettings } from "../../stores/settingsStore.js";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -154,7 +154,7 @@ export function Processing() {
         <ul className="processing-found" data-testid="processing-found">
           {found.map((object, i) => (
             <li key={`${object.label}-${i}`} className="processing-found-item">
-              {t("recon.found", { label: object.label, size: object.width.toFixed(1) })}
+              {t("recon.found", { label: object.label, size: formatLength(object.width, unit) })}
             </li>
           ))}
         </ul>

@@ -179,10 +179,21 @@ async function locally({ plan, uploads, scanParsed, seeds, onEvent, signal }: Re
   }
 
   onEvent({ type: "stage", stage: "scene-assemble", progress: 0 });
-  // The LiDAR tier is claimed only when a scan was actually read and used —
-  // uploading a file we couldn't parse doesn't make the room more accurate
-  // (docs/05 §9: the badge is the honesty contract).
-  const tier: Scene["provenance"]["tier"] = scanned ? "lidar" : photos.length > 0 ? "photo" : "sketch";
+  // The badge is the honesty contract (docs/05 §9), and the same test has to
+  // apply to photos as to scans: a tier is earned by what was *measured*, not
+  // by what was uploaded.
+  //
+  // This used to read `photos.length > 0 ? "photo" : "sketch"`, which awarded
+  // "Photo-calibrated" — and its promise of "positions within about 15 cm" —
+  // to any room where the user had attached photos, whatever happened next. On
+  // this path nothing happens next: `demoMeasuredObjects` lays out a typical
+  // room from the floor plan and never opens a photo. A user who took four
+  // photos got a confident accuracy claim over furniture that was invented.
+  //
+  // `fromScan` is the only way this path produces measured objects, so it is
+  // the only thing that can lift the tier above "sketch" here. When the vision
+  // tier lands, this becomes a real test of whether stage 1 actually ran.
+  const tier: Scene["provenance"]["tier"] = scanned ? "lidar" : "sketch";
   const { scene, warnings } = assembleScene({
     sceneId: uuidv7(),
     planId: plan.id,
