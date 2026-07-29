@@ -23,18 +23,20 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NodeIO, getBounds } from "@gltf-transform/core";
 import { KHRDracoMeshCompression, ALL_EXTENSIONS } from "@gltf-transform/extensions";
-import { dedup, prune, weld, draco, resample, textureCompress } from "@gltf-transform/functions";
+import { dedup, prune, weld, draco, resample, simplify, textureCompress } from "@gltf-transform/functions";
+import { MeshoptSimplifier } from "meshoptimizer";
 import draco3d from "draco3dgltf";
 import sharp from "sharp";
 import { OBJECT_CATEGORIES } from "../src/taxonomy.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
-// No cap by default. This defaulted to 40, which is why the shipped catalog
-// held 77 models covering 36 of 187 categories while Poly Haven offers 521
-// CC0 models, 189 of which map to a category here (57 distinct). Models that
-// match no category are skipped before any download, so an uncapped run costs
-// only what it actually ingests.
+// No cap by default; this used to be 40. Removing it changed nothing on its
+// own — of Poly Haven's 521 published models only 107 match a category here,
+// because `matchCategory` reads the id and name and deliberately ignores the
+// broad tags. The catalog is small because Poly Haven is mostly props and
+// decor, not because the ingest stopped early. Models matching no category are
+// skipped before any download, so an uncapped run costs only what it ingests.
 const limitArg = args.indexOf("--limit");
 const limit = limitArg >= 0 ? Number(args[limitArg + 1]) || Infinity : Infinity;
 // Models are written straight into the web app's served static dir; only the
@@ -170,6 +172,7 @@ async function main() {
 
   const manifest = [];
   const skipped = [];
+  const decimated = [];
   let processed = 0;
 
   for (const [id, asset] of entries) {
@@ -230,9 +233,36 @@ async function main() {
       );
       document.createExtension(KHRDracoMeshCompression).setRequired(true);
 
-      const tris = triangleCount(document);
+      let tris = triangleCount(document);
       if (tris > MAX_TRIS) {
-        skipped.push({ id, why: `${tris} tris over budget` });
+        // Over budget is a reason to decimate, not to drop the model. The
+        // rejects here are real furniture — dining chairs, drawer cabinets,
+        // ceiling fans — and the catalog has no substitute for them: 151 of
+        // 187 categories have no model at all, so every rejection becomes a
+        // parametric placeholder in someone's room.
+        //
+        // Simplify to the budget with a tight error bound and re-measure. A
+        // model that still will not fit is genuinely too dense to ship and is
+        // skipped as before.
+        try {
+          await document.transform(
+            weld(),
+            simplify({ simplifier: MeshoptSimplifier, ratio: MAX_TRIS / tris, error: 0.005 }),
+            draco(),
+          );
+          const after = triangleCount(document);
+          if (after <= MAX_TRIS) {
+            decimated.push({ id, from: tris, to: after });
+            tris = after;
+          }
+        } catch (error) {
+          skipped.push({ id, why: `${tris} tris, simplify failed: ${error.message}` });
+          await rm(work, { recursive: true, force: true });
+          continue;
+        }
+      }
+      if (tris > MAX_TRIS) {
+        skipped.push({ id, why: `${tris} tris over budget even after simplify` });
         await rm(work, { recursive: true, force: true });
         continue;
       }

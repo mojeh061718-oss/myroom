@@ -21,6 +21,7 @@
     "@gltf-transform/extensions": "^4.4.2",
     "@gltf-transform/functions": "^4.4.2",
     "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^1.2.0",
     "sharp": "^0.33.5",
     "tsx": "^4.23.1",
     "typescript": "^5.5.4",
