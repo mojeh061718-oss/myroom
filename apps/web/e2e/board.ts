@@ -1,5 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
+/** The board's opening zoom — mirrors DEFAULT_PPM in src/screens/board/viewport.ts. */
+export const PPM = 80;
+
 export interface Box {
   x: number;
   y: number;

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { boardBox } from "./board.js";
+import { boardBox, PPM } from "./board.js";
 
 /**
  * M2 golden path: draw → build. The drawn plan must extrude into a correct,
@@ -24,10 +24,10 @@ async function drawRoomAndOpenSandbox(page: Page) {
 
   const box = await boardBox(page);
   const click = (x: number, y: number) =>
-    page.mouse.click(box.x + box.width / 2 + 60 * x, box.y + box.height / 2 - 60 * y);
+    page.mouse.click(box.x + box.width / 2 + PPM * x, box.y + box.height / 2 - PPM * y);
 
-  const w = box.width / 2 / 60 > 3.4 ? 2.6 : 1.8;
-  const d = box.height / 2 / 60 > 3.4 ? 1.8 : 1.4;
+  const w = box.width / 2 / PPM > 3.4 ? 2.6 : 1.8;
+  const d = box.height / 2 / PPM > 3.4 ? 1.8 : 1.4;
   await click(-w, d);
   await click(w, d);
   await click(w, -d);
@@ -100,7 +100,7 @@ test("an unclosed plan explains itself instead of rendering an empty scene", asy
   await page.getByTestId("drawing-board").waitFor();
   const box = await boardBox(page);
   const click = (x: number, y: number) =>
-    page.mouse.click(box.x + box.width / 2 + 60 * x, box.y + box.height / 2 - 60 * y);
+    page.mouse.click(box.x + box.width / 2 + PPM * x, box.y + box.height / 2 - PPM * y);
   await click(-1.5, 1);
   await click(1.5, 1);
   await page.waitForTimeout(300);

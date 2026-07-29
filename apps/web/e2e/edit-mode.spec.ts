@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { boardBox } from "./board.js";
+import { boardBox, PPM } from "./board.js";
 
 /**
  * M3 golden path: the docs/01 §10 running example — furnish a room, move a
@@ -15,9 +15,9 @@ async function buildRoom(page: Page) {
 
   const box = await boardBox(page);
   const click = (x: number, y: number) =>
-    page.mouse.click(box.x + box.width / 2 + 60 * x, box.y + box.height / 2 - 60 * y);
-  const w = box.width / 2 / 60 > 3.4 ? 2.6 : 1.8;
-  const d = box.height / 2 / 60 > 3.4 ? 1.8 : 1.4;
+    page.mouse.click(box.x + box.width / 2 + PPM * x, box.y + box.height / 2 - PPM * y);
+  const w = box.width / 2 / PPM > 3.4 ? 2.6 : 1.8;
+  const d = box.height / 2 / PPM > 3.4 ? 1.8 : 1.4;
   await click(-w, d);
   await click(w, d);
   await click(w, -d);

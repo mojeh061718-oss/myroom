@@ -180,6 +180,15 @@ export function Home() {
           </h2>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Units</span>
+            <SegmentedControl
+              ariaLabel="Display units"
+              options={[
+                { value: "ft", label: "ft / in" },
+                { value: "m", label: "m" },
+              ]}
+              value={settings.displayUnit}
+              onChange={settings.setDisplayUnit}
+            />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Graphics</span>
@@ -194,16 +203,6 @@ export function Home() {
               onChange={settings.setQuality}
             />
           </div>
-          <button
-            className="settings-link"
-            data-testid="privacy-link"
-            onClick={() => {
-              setSettingsOpen(false);
-              navigate("/privacy");
-            }}
-          >
-            Your photos, your room — what we do with them
-          </button>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Theme</span>
             <SegmentedControl
@@ -216,6 +215,16 @@ export function Home() {
               onChange={settings.setTheme}
             />
           </div>
+          <button
+            className="settings-link"
+            data-testid="privacy-link"
+            onClick={() => {
+              setSettingsOpen(false);
+              navigate("/privacy");
+            }}
+          >
+            Your photos, your room — what we do with them
+          </button>
           <PillButton
             onClick={() => {
               setSettingsOpen(false);

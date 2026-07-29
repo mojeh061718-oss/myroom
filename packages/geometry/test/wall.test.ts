@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { indexToLabel, labelWalls, resolveWallLength } from "../src/wall.js";
+import { indexToLabel, labelWalls, resolveLoopWallLength, resolveWallLength } from "../src/wall.js";
 import { dist, sub, normalize } from "../src/vec.js";
 import type { Vec2 } from "../src/vec.js";
 
@@ -40,6 +40,87 @@ describe("resolveWallLength (docs/04 §7: typed length preserves the fixed endpo
     const p = { x: 1, y: 2 };
     expect(resolveWallLength(p, p, 3, "start")).toEqual({ start: p, end: p });
     expect(resolveWallLength(p, { x: 2, y: 2 }, 0, "start")).toEqual({ start: p, end: { x: 2, y: 2 } });
+  });
+});
+
+describe("resolveLoopWallLength (docs/04 §4: typed length keeps the room's shape)", () => {
+  // A 4×3 rectangle, CCW: edge 0 is the south wall (0,0)→(4,0).
+  const rect: Vec2[] = [
+    { x: 0, y: 0 },
+    { x: 4, y: 0 },
+    { x: 4, y: 3 },
+    { x: 0, y: 3 },
+  ];
+
+  const edgeLen = (loop: readonly Vec2[], i: number) => dist(loop[i]!, loop[(i + 1) % loop.length]!);
+
+  it("keeps a rectangle rectangular: the opposite wall matches, side walls keep their length", () => {
+    const out = resolveLoopWallLength(rect, 0, 5)!;
+    expect(out).not.toBeNull();
+    expect(edgeLen(out, 0)).toBeCloseTo(5, 9); // edited south wall
+    expect(edgeLen(out, 2)).toBeCloseTo(5, 9); // opposite north wall follows
+    expect(edgeLen(out, 1)).toBeCloseTo(3, 9); // east side untouched in length
+    expect(edgeLen(out, 3)).toBeCloseTo(3, 9); // west side untouched in length
+    // All four corners stay right angles.
+    for (let i = 0; i < 4; i++) {
+      const a = sub(out[(i + 1) % 4]!, out[i]!);
+      const b = sub(out[(i + 2) % 4]!, out[(i + 1) % 4]!);
+      expect(Math.abs(a.x * b.x + a.y * b.y)).toBeLessThan(1e-9);
+    }
+    // The edited wall's start vertex does not move.
+    expect(out[0]).toEqual(rect[0]);
+  });
+
+  it("shrinking works the same way", () => {
+    const out = resolveLoopWallLength(rect, 1, 2)!;
+    expect(out).not.toBeNull();
+    expect(edgeLen(out, 1)).toBeCloseTo(2, 9);
+    expect(edgeLen(out, 3)).toBeCloseTo(2, 9);
+    expect(edgeLen(out, 0)).toBeCloseTo(4, 9);
+    expect(edgeLen(out, 2)).toBeCloseTo(4, 9);
+  });
+
+  it("finds the absorbing wall mid-loop in an L-shape", () => {
+    // L-shape: the wall parallel to the edited one is two edges away.
+    const ell: Vec2[] = [
+      { x: 0, y: 0 },
+      { x: 4, y: 0 },
+      { x: 4, y: 1.5 },
+      { x: 2, y: 1.5 },
+      { x: 2, y: 3 },
+      { x: 0, y: 3 },
+    ];
+    const out = resolveLoopWallLength(ell, 0, 5)!;
+    expect(out).not.toBeNull();
+    expect(edgeLen(out, 0)).toBeCloseTo(5, 9);
+    // First parallel run (edge 2, the notch return) absorbs the extra meter.
+    expect(edgeLen(out, 2)).toBeCloseTo(3, 9);
+    // Everything beyond the absorber is untouched.
+    expect(out[4]).toEqual(ell[4]);
+    expect(out[5]).toEqual(ell[5]);
+  });
+
+  it("returns null for a skewed quad so the caller can fall back", () => {
+    const skewed: Vec2[] = [
+      { x: 0, y: 0 },
+      { x: 4, y: 0 },
+      { x: 5, y: 3 },
+      { x: 1, y: 3 },
+    ];
+    expect(resolveLoopWallLength(skewed, 0, 5)).toBeNull();
+  });
+
+  it("refuses to collapse or flip the absorbing wall", () => {
+    // Shrinking the south wall by more than the notch return's 2 m would flip it.
+    const ell: Vec2[] = [
+      { x: 0, y: 0 },
+      { x: 4, y: 0 },
+      { x: 4, y: 1.5 },
+      { x: 2, y: 1.5 },
+      { x: 2, y: 3 },
+      { x: 0, y: 3 },
+    ];
+    expect(resolveLoopWallLength(ell, 0, 1.5)).toBeNull();
   });
 });
 

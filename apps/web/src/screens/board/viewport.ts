@@ -13,6 +13,14 @@ export interface Viewport {
 export const MIN_PPM = 19;
 export const MAX_PPM = 378;
 
+/**
+ * Opening zoom. Past GRID_MIN_PX_PER_M (75 — 1:50 per docs/04 §4), so the
+ * 5 cm grid snap is live from the first drag; at the old 60 px/m nothing
+ * snapped and a dragged-out room landed on arbitrary lengths.
+ * e2e/board.ts mirrors this value — keep them in sync.
+ */
+export const DEFAULT_PPM = 80;
+
 export const clampPpm = (ppm: number): number => Math.min(MAX_PPM, Math.max(MIN_PPM, ppm));
 
 export function toScreen(p: Vec2, v: Viewport, w: number, h: number): Vec2 {

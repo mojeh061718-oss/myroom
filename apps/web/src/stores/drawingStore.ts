@@ -3,6 +3,7 @@ import {
   chainSegmentConflicts,
   dist,
   isSimplePolygon,
+  resolveLoopWallLength,
   resolveWallLength,
   indexToLabel,
   signedArea,
@@ -37,6 +38,10 @@ interface Command {
   label: string;
   before: RoomPlan;
   after: RoomPlan;
+  /** The tool that was active when the command ran, so undo can restore it —
+   * undoing a room closure otherwise leaves the board on "select" and looking
+   * unresponsive. */
+  tool: Tool;
 }
 
 export interface RejectionInfo {
@@ -103,6 +108,19 @@ function chainOrder(plan: RoomPlan): string[] {
   const ids = [plan.walls[0]!.start];
   for (const w of plan.walls) ids.push(w.end);
   return ids;
+}
+
+/**
+ * The closed loop's vertex ids in wall order (edge i runs ids[i] → ids[i+1],
+ * wrapping), or null when the walls don't form one clean cycle in array order.
+ */
+function orderedLoopIds(plan: RoomPlan): string[] | null {
+  const n = plan.walls.length;
+  if (n < 3) return null;
+  for (let i = 0; i < n; i++) {
+    if (plan.walls[i]!.end !== plan.walls[(i + 1) % n]!.start) return null;
+  }
+  return plan.walls.map((w) => w.start);
 }
 
 export function chainPoints(plan: RoomPlan): Vec2[] {
@@ -203,7 +221,7 @@ export const useDrawing = create<DrawingState>((set, get) => {
     const before = get().dragBaseline ?? get().plan;
     set({
       plan: after,
-      undoStack: [...get().undoStack, { label, before, after }],
+      undoStack: [...get().undoStack, { label, before, after, tool: get().tool }],
       redoStack: [],
       dragBaseline: null,
     });
@@ -376,7 +394,8 @@ export const useDrawing = create<DrawingState>((set, get) => {
       const pts = chainPoints(plan);
       if (chainSegmentConflicts(pts, last, target)) return reject("selfIntersect");
 
-      const lastId = chainOrder(plan)[chainOrder(plan).length - 1]!;
+      const chain = chainOrder(plan);
+      const lastId = chain[chain.length - 1]!;
 
       if (closing) {
         const originId = plan.walls[0]!.start;
@@ -518,10 +537,40 @@ export const useDrawing = create<DrawingState>((set, get) => {
         reject("tooShort");
         return false;
       }
+
+      // Typed dimensions beat drawn ones (docs/04 §4). On a closed loop the
+      // correction propagates so the room keeps its shape — typing "12'" on a
+      // rectangle's wall must not shear it into a trapezoid. When the shape
+      // can't be preserved (diagonal walls), fall back to sliding just the
+      // edited wall's end vertex.
+      if (plan.closed) {
+        const chained = orderedLoopIds(plan);
+        if (chained) {
+          const edgeIndex = chained.indexOf(wall.start);
+          const loop = chained.map((id) => {
+            const v = vertexById(plan, id)!;
+            return { x: v.x, y: v.y };
+          });
+          const solvedLoop = edgeIndex >= 0 ? resolveLoopWallLength(loop, edgeIndex, meters) : null;
+          if (solvedLoop) {
+            const byId = new Map(chained.map((id, i) => [id, solvedLoop[i]!]));
+            const next: RoomPlan = {
+              ...plan,
+              vertices: plan.vertices.map((v) => {
+                const p = byId.get(v.id);
+                return p ? { ...v, x: p.x, y: p.y } : v;
+              }),
+            };
+            if (planGeometryValid(next) && allOpeningsValid(next)) {
+              commit("Set wall length", refreshDerived(next));
+              return true;
+            }
+          }
+        }
+      }
+
       const a = vertexById(plan, wall.start)!;
       const b = vertexById(plan, wall.end)!;
-      // Typed dimensions beat drawn ones (docs/04 §4): keep the start vertex
-      // (the shared vertex when mid-chain) fixed, move the far endpoint.
       const solved = resolveWallLength({ x: a.x, y: a.y }, { x: b.x, y: b.y }, meters, "start");
       const moved = { ...b, x: solved.end.x, y: solved.end.y };
       const next: RoomPlan = {
@@ -619,6 +668,7 @@ export const useDrawing = create<DrawingState>((set, get) => {
         redoStack: [...redoStack, cmd],
         selection: null,
         chainActive: false,
+        tool: cmd.tool,
       });
       persist();
     },

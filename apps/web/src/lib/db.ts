@@ -124,10 +124,9 @@ export async function deleteUpload(id: string): Promise<void> {
 
 export async function getSettings(): Promise<Settings> {
   const stored = await (await db()).get("settings", "app");
-  // The app is feet-and-inches throughout (docs/04 §4). Anyone carrying a
-  // stored "m" from before that decision is migrated forward, because the unit
-  // control that would have let them change it back no longer exists.
-  return { ...DEFAULT_SETTINGS, ...stored, displayUnit: "ft" };
+  // Defaults are feet-and-inches (docs/04 §4); the Units control in Settings
+  // persists whichever the user picks.
+  return { ...DEFAULT_SETTINGS, ...stored };
 }
 
 export async function putSettings(settings: Settings): Promise<void> {

@@ -54,7 +54,7 @@ describe("drawingStore (docs/04 acceptance)", () => {
     expect(useDrawing.getState().rejection?.reason).toBe("selfIntersect");
   });
 
-  it("typed dimension re-solves the wall keeping the shared vertex fixed", () => {
+  it("typed dimension keeps the room rectangular (docs/04 §4)", () => {
     drawRectangle();
     const plan = useDrawing.getState().plan;
     const wall = plan.walls[0]!; // 6.2 m north wall drawn from (0,4.8)→(6.2,4.8)
@@ -62,11 +62,41 @@ describe("drawingStore (docs/04 acceptance)", () => {
     expect(useDrawing.getState().setTypedLength(wall.id, 6.0)).toBe(true);
     const after = useDrawing.getState().plan;
     const startAfter = after.vertices.find((v) => v.id === wall.start)!;
+    // The edited wall's start vertex holds still and the wall hits its length.
     expect(startAfter.x).toBe(startBefore.x);
     expect(startAfter.y).toBe(startBefore.y);
     expect(wallLength(after, after.walls.find((w) => w.id === wall.id)!)).toBeCloseTo(6.0, 9);
-    // area recomputed
-    expect(after.floorArea).not.toBeCloseTo(29.76, 3);
+    // The correction propagates: the opposite wall follows, the side walls
+    // keep their length, and every corner stays square — no trapezoid.
+    const lengths = after.walls.map((w) => wallLength(after, w));
+    expect(lengths.filter((l) => Math.abs(l - 6.0) < 1e-9)).toHaveLength(2);
+    expect(lengths.filter((l) => Math.abs(l - 4.8) < 1e-9)).toHaveLength(2);
+    expect(after.floorArea).toBeCloseTo(6.0 * 4.8, 6);
+  });
+
+  it("typed dimension falls back to the end-vertex slide on a skewed room", () => {
+    const s = useDrawing.getState();
+    expect(s.addChainPoint({ x: 0, y: 0 })).toBe("added");
+    expect(s.addChainPoint({ x: 4, y: 0 })).toBe("added");
+    expect(s.addChainPoint({ x: 5, y: 3 })).toBe("added"); // skewed east wall
+    expect(s.addChainPoint({ x: 1, y: 3 })).toBe("added");
+    expect(s.addChainPoint({ x: 0, y: 0 })).toBe("closed");
+    const plan = useDrawing.getState().plan;
+    const south = plan.walls[0]!;
+    expect(useDrawing.getState().setTypedLength(south.id, 4.5)).toBe(true);
+    const after = useDrawing.getState().plan;
+    expect(wallLength(after, after.walls.find((w) => w.id === south.id)!)).toBeCloseTo(4.5, 9);
+    expect(after.closed).toBe(true);
+  });
+
+  it("undo restores the tool that was active when the command ran", () => {
+    const s = useDrawing.getState;
+    s().setTool("wall");
+    drawRectangle(); // closing the room switches the tool to "select"
+    expect(s().tool).toBe("select");
+    s().undo();
+    // Undoing the closure puts the wall tool back so drawing can continue.
+    expect(s().tool).toBe("wall");
   });
 
   it("adds, slides, resizes and deletes openings with overlap rejection", () => {
