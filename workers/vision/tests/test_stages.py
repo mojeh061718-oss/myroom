@@ -260,3 +260,81 @@ def test_a_span_that_wraps_a_known_prompt_still_resolves():
 def test_a_label_outside_the_vocabulary_resolves_to_nothing():
     assert detect.category_for_label("aardvark") is None
     assert detect.category_for_label("") is None
+
+
+# --- stage 2: the affine depth solve ------------------------------------------
+
+
+def _affine_room(width=64, near=2.0, far=6.0, a=3.1, b=0.27):
+    """A room whose true depth ramps near→far, seen through an affine-invariant
+    network: what we observe is `a / d + b`, with a and b unknown to the solver."""
+    true = np.linspace(near, far, width)[None, :].repeat(width, 0)
+    observed = a * (1.0 / true) + b
+    return true, observed
+
+
+def test_a_scale_only_solve_drifts_away_from_its_anchor():
+    """Why fit_metric_depth exists, pinned as a fact rather than a comment."""
+    true, observed = _affine_room()
+    wall = np.zeros(true.shape, dtype=bool)
+    wall[:, -3:] = True  # anchor on the far wall
+    rescaled, _ = solve.rescale_depth(1.0 / observed, wall_mask=wall, expected_distance=true[0, -1])
+    error = np.abs(rescaled - true)[0]
+    # Small where it was measured...
+    assert error[-1] < 0.10
+    # ...and far outside the docs/05 §9 ±15 cm budget in the middle of the room.
+    assert error[len(error) // 2] > 0.30
+
+
+def test_the_affine_solve_recovers_true_metres_from_two_constraints():
+    true, observed = _affine_room()
+    # Single-column constraints, so each mask's median observed value
+    # corresponds exactly to the distance being asserted.
+    near_mask = np.zeros(true.shape, dtype=bool)
+    near_mask[:, 0] = True
+    far_mask = np.zeros(true.shape, dtype=bool)
+    far_mask[:, -1] = True
+
+    metric, (a, b) = solve.fit_metric_depth(
+        observed,
+        [(near_mask, float(true[0, 0])), (far_mask, float(true[0, -1]))],
+    )
+    np.testing.assert_allclose(metric, true, atol=1e-3)
+    assert a > 0
+
+
+def test_the_affine_solve_is_least_squares_over_every_constraint():
+    """A floor plane contributes many samples; more constraints must not hurt."""
+    true, observed = _affine_room()
+    masks = []
+    for column in (2, 20, 40, 61):
+        m = np.zeros(true.shape, dtype=bool)
+        m[:, column] = True
+        masks.append((m, float(true[0, column])))
+    metric, _ = solve.fit_metric_depth(observed, masks)
+    np.testing.assert_allclose(metric, true, atol=1e-3)
+
+
+def test_one_constraint_is_refused_rather_than_guessed():
+    true, observed = _affine_room()
+    only = np.zeros(true.shape, dtype=bool)
+    only[:, -3:] = True
+    with pytest.raises(ValueError) as error:
+        solve.fit_metric_depth(observed, [(only, float(true[0, -1]))])
+    # The message has to say what to add, not just that it failed.
+    assert "two" in str(error.value) and "floor" in str(error.value)
+
+
+def test_a_constraint_the_camera_cannot_see_is_skipped_not_fatal():
+    true, observed = _affine_room()
+    visible_near = np.zeros(true.shape, dtype=bool)
+    visible_near[:, 0] = True
+    visible_far = np.zeros(true.shape, dtype=bool)
+    visible_far[:, -1] = True
+    invisible = np.zeros(true.shape, dtype=bool)  # occluded wall: no pixels
+
+    metric, _ = solve.fit_metric_depth(
+        observed,
+        [(visible_near, float(true[0, 0])), (invisible, 3.0), (visible_far, float(true[0, -1]))],
+    )
+    np.testing.assert_allclose(metric, true, atol=1e-3)
