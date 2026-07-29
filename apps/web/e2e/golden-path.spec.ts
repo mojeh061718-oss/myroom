@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { boardBox } from "./board.js";
 
 /**
  * M1 golden path (docs/04 §7 + docs/09 M1): splash → tutorial (skippable) →
@@ -10,14 +11,13 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 async function planClick(page: Page, x: number, y: number) {
-  const canvas = page.getByTestId("board-canvas");
-  const box = (await canvas.boundingBox())!;
+  const box = await boardBox(page);
   await page.mouse.click(box.x + box.width / 2 + 60 * x, box.y + box.height / 2 - 60 * y);
 }
 
 /** Room sized to fit the viewport at 60 px/m (mobile devices get a smaller room). */
 async function roomSize(page: Page): Promise<{ w: number; h: number }> {
-  const box = (await page.getByTestId("board-canvas").boundingBox())!;
+  const box = await boardBox(page);
   const fits = (px: number, m: number) => px / 2 / 60 > m + 0.7;
   return fits(box.width, 4) && fits(box.height, 3) ? { w: 4, h: 3 } : { w: 2.5, h: 2 };
 }

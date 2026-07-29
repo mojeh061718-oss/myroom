@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { boardBox } from "./board.js";
 
 /**
  * M3 golden path: the docs/01 §10 running example — furnish a room, move a
@@ -12,7 +13,7 @@ async function buildRoom(page: Page) {
   await page.getByTestId("new-room").click();
   await page.getByTestId("drawing-board").waitFor();
 
-  const box = (await page.getByTestId("board-canvas").boundingBox())!;
+  const box = await boardBox(page);
   const click = (x: number, y: number) =>
     page.mouse.click(box.x + box.width / 2 + 60 * x, box.y + box.height / 2 - 60 * y);
   const w = box.width / 2 / 60 > 3.4 ? 2.6 : 1.8;
