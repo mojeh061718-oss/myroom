@@ -215,6 +215,23 @@ export function Home() {
               onChange={settings.setTheme}
             />
           </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span>AI object naming (optional)</span>
+            <input
+              type="password"
+              className="hex-field"
+              style={{ width: "100%" }}
+              placeholder="Anthropic API key — sk-ant-…"
+              aria-label="Anthropic API key for AI object naming"
+              data-testid="anthropic-key"
+              value={settings.anthropicKey}
+              onChange={(e) => settings.setAnthropicKey(e.target.value.trim())}
+            />
+            <span className="type-caption" style={{ color: "var(--text-dim)" }}>
+              With a key, small rendered crops of your scan are sent to the Anthropic API to name what it found
+              (fridge, sofa, …). The key stays on this device. Leave empty to keep everything local.
+            </span>
+          </div>
           <button
             className="settings-link"
             data-testid="privacy-link"

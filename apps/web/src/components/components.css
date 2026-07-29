@@ -191,3 +191,15 @@
   from { transform: scale(0.4); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Mono text field (hex colours, search, API keys) — shared across screens. */
+.hex-field {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+  padding: 0 12px;
+  flex: 1;
+}

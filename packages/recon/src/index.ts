@@ -11,3 +11,4 @@ export * from "./meshDecode.js";
 export * from "./meshObjects.js";
 export * from "./pointcloudScan.js";
 export * from "./las.js";
+export * from "./registerScan.js";

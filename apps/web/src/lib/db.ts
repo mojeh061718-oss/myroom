@@ -33,6 +33,12 @@ export interface Settings {
   theme: "dark" | "light";
   /** manual override for auto quality stepping (docs/06 §8) */
   quality: "auto" | "best" | "saver";
+  /**
+   * Optional Anthropic API key for AI naming of scanned objects. Stored on
+   * the device only, never synced; when set, small rendered crops of the
+   * scan are sent to the Anthropic API to identify what each object is.
+   */
+  anthropicKey: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,6 +46,7 @@ export const DEFAULT_SETTINGS: Settings = {
   displayUnit: "ft",
   theme: "dark",
   quality: "auto",
+  anthropicKey: "",
 };
 
 /**

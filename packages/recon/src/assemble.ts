@@ -138,6 +138,10 @@ export function assembleScene(input: AssembleInput): AssembleResult {
     let wallId: string | null = null;
     const size = { ...m.size };
     const collisionExempt = category?.collisionExempt ?? false;
+    // A scan-measured pose is ground truth about the user's actual room:
+    // "helpful" wall-snapping and collision shuffling turned a real layout
+    // into a scrambled one. Real furniture overlaps its rug; leave it be.
+    const pinned = m.sourcePhotoIds.includes("scan");
 
     if (m.support === "wall") {
       // Mount flush to the nearest wall face, facing into the room.
@@ -162,8 +166,9 @@ export function assembleScene(input: AssembleInput): AssembleResult {
       position.y = Math.max(0, shell.height - size.h);
     } else if (m.support === "floor") {
       position.y = 0;
-      // Snap near-wall objects parallel and flush (docs/05 §7c).
-      const nearest = distancesToWalls({ x: position.x, z: position.z }, walls)[0];
+      // Snap near-wall objects parallel and flush (docs/05 §7c) — but never
+      // a scan-measured one, whose angle and standoff were observed.
+      const nearest = pinned ? undefined : distancesToWalls({ x: position.x, z: position.z }, walls)[0];
       const wall = nearest ? shell.walls.find((w) => w.wallId === nearest.wallId) : undefined;
       if (wall && nearest && nearest.distance - size.d / 2 - wall.thickness / 2 < AGAINST_WALL_M) {
         rotationY = Math.atan2(wall.inwardNormal[0], wall.inwardNormal[2]);
@@ -177,7 +182,10 @@ export function assembleScene(input: AssembleInput): AssembleResult {
 
       // Soft collision: two pieces of furniture can't occupy one patch of floor.
       // The later (lower-confidence) one moves, the confident one stays put.
+      // Scan-measured objects are exempt — they demonstrably DO occupy that
+      // patch of floor.
       const clashes =
+        !pinned &&
         !collisionExempt &&
         placed.some(
           (other) =>
