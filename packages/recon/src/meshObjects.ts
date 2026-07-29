@@ -1,6 +1,6 @@
 import type { ScanParse } from "@myroom/schema";
 
-import type { Triangle } from "./mesh.js";
+import { verticalCoverage, type Triangle } from "./mesh.js";
 
 /**
  * Pull the furniture out of a mesh scan (docs/05 §5).
@@ -50,11 +50,92 @@ export interface ExtractOptions {
 
 const DEFAULTS: Required<ExtractOptions> = {
   voxelMetres: 0.12,
-  wallMarginMetres: 0.28,
-  minExtentMetres: 0.18,
-  minAreaSqMetres: 0.35,
+  /*
+   * 0.28 here erased most of a real room: fridges, consoles, shelves and
+   * kitchen nooks stand AGAINST walls, and the reference scan came back with
+   * its entire left-wall run, right-wall run and kitchen unboxed. The margin
+   * is now a *zone*, not a verdict: inside it, geometry is dropped only when
+   * it belongs to a wall-height vertical surface (the wall itself); furniture
+   * standing in the zone survives.
+   */
+  wallMarginMetres: 0.25,
+  minExtentMetres: 0.15,
+  minAreaSqMetres: 0.25,
   floorClearanceMetres: 0.06,
 };
+
+/**
+ * Split a merged cluster at the density valleys of its own footprint.
+ *
+ * 26-connected voxel flooding at 12 cm merges anything closer than ~17 cm —
+ * in a lived-in room that is the couch with its side table, the shelf run
+ * with the next shelf, occasionally half the wall line. The reference scan's
+ * review listed a 6'×5'×6'4" "object". Real adjacent objects still show a
+ * thin waist in plan view; cutting at the thinnest interior column of the
+ * footprint, recursively, turns one blob into the objects it was.
+ */
+function splitAtValleys<T extends { u: number; v: number }>(members: T[], depth = 0): T[][] {
+  const BIN = 0.1;
+  let minU = Infinity;
+  let maxU = -Infinity;
+  let minV = Infinity;
+  let maxV = -Infinity;
+  const occupied = new Set<string>();
+  for (const m of members) {
+    minU = Math.min(minU, m.u);
+    maxU = Math.max(maxU, m.u);
+    minV = Math.min(minV, m.v);
+    maxV = Math.max(maxV, m.v);
+    occupied.add(`${Math.round(m.u / BIN)},${Math.round(m.v / BIN)}`);
+  }
+  if (depth >= 5 || (maxU - minU < 1.4 && maxV - minV < 1.4) || members.length < 32) return [members];
+
+  // Occupied-cell count per 0.1 m column, along each axis in turn.
+  const profile = (axis: "u" | "v") => {
+    const counts = new Map<number, number>();
+    for (const key of occupied) {
+      const [cu, cv] = key.split(",").map(Number) as [number, number];
+      const bin = axis === "u" ? cu : cv;
+      counts.set(bin, (counts.get(bin) ?? 0) + 1);
+    }
+    return counts;
+  };
+
+  let best: { axis: "u" | "v"; at: number; score: number } | null = null;
+  for (const axis of ["u", "v"] as const) {
+    const lo = axis === "u" ? minU : minV;
+    const hi = axis === "u" ? maxU : maxV;
+    if (hi - lo < 0.9) continue; // nothing worth splitting along this axis
+    const counts = profile(axis);
+    let peak = 0;
+    for (const c of counts.values()) peak = Math.max(peak, c);
+    const from = Math.round((lo + 0.3) / BIN);
+    const to = Math.round((hi - 0.3) / BIN);
+    for (let bin = from; bin <= to; bin++) {
+      const crossing = counts.get(bin) ?? 0;
+      const score = crossing / Math.max(1, peak);
+      if (score <= 0.45 && (!best || score < best.score)) best = { axis, at: (bin + 0.5) * BIN, score };
+    }
+  }
+  // No waist, but too long to be one object: a continuous 17-foot run along
+  // a wall is shelving and clutter, not a thing anyone can tick in a review.
+  // Bisect the long axis so each box sits over the stuff it contains.
+  if (!best) {
+    const spanU = maxU - minU;
+    const spanV = maxV - minV;
+    if (Math.max(spanU, spanV) <= 2.8) return [members];
+    best =
+      spanU >= spanV
+        ? { axis: "u", at: (minU + maxU) / 2, score: 1 }
+        : { axis: "v", at: (minV + maxV) / 2, score: 1 };
+  }
+
+  const side = best;
+  const left = members.filter((m) => (side.axis === "u" ? m.u : m.v) <= side.at);
+  const right = members.filter((m) => (side.axis === "u" ? m.u : m.v) > side.at);
+  if (left.length < 8 || right.length < 8) return [members];
+  return [...splitAtValleys(left, depth + 1), ...splitAtValleys(right, depth + 1)];
+}
 
 /** Perpendicular distance from a point to a 2D segment. */
 function distanceToSegment(px: number, pz: number, ax: number, az: number, bx: number, bz: number): number {
@@ -94,6 +175,27 @@ export function extractObjectClusters(
   const cos = Math.cos(-angle);
   const sin = Math.sin(-angle);
 
+  // Wall-height vertical surface per room-frame cell: inside the wall margin
+  // this is what separates the wall itself (drop) from the fridge standing
+  // against it (keep). Distance alone erased a room's worth of against-wall
+  // furniture; height alone would erase the fridge too — the pair works.
+  const coverage = verticalCoverage(facets, { floorY, ceilingY, floorArea: 0, ceilingArea: 0 }, angle);
+  const wallHeight = 0.6;
+
+  // Scanned clutter beyond the walls is not furniture in this room. The
+  // chamfered outlines made this real: geometry past a diagonal boundary
+  // used to end up inside a box that straddled the wall.
+  const loop = walls.map((w) => w.start);
+  const insideRoom = (x: number, y: number): boolean => {
+    let inside = false;
+    for (let i = 0, j = loop.length - 1; i < loop.length; j = i++) {
+      const a = loop[i]!;
+      const b = loop[j]!;
+      if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  };
+
   // Candidate facets: above the skirting, below the ceiling, away from walls.
   interface Sample {
     u: number;
@@ -109,6 +211,7 @@ export function extractObjectClusters(
     // Plan coordinates use +Y north, so world −z maps to plan +y.
     const planX = t.cx;
     const planY = -t.cz;
+    if (!insideRoom(planX, planY)) continue;
     let nearWall = false;
     for (const wall of walls) {
       if (
@@ -119,14 +222,14 @@ export function extractObjectClusters(
         break;
       }
     }
-    if (nearWall) continue;
+    const u = t.cx * cos - t.cz * sin;
+    const v = t.cx * sin + t.cz * cos;
+    if (nearWall) {
+      const tall = coverage.get(`${Math.round(u / 0.15)},${Math.round(v / 0.15)}`) ?? 0;
+      if (tall >= wallHeight) continue; // the wall's own surface
+    }
 
-    samples.push({
-      u: t.cx * cos - t.cz * sin,
-      y: t.cy,
-      v: t.cx * sin + t.cz * cos,
-      area: t.area,
-    });
+    samples.push({ u, y: t.cy, v, area: t.area });
   }
   if (samples.length < 20) return [];
 
@@ -171,51 +274,55 @@ export function extractObjectClusters(
     }
     if (members.length < 8) continue;
 
-    let minU = Infinity;
-    let maxU = -Infinity;
-    let minV = Infinity;
-    let maxV = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    let area = 0;
-    for (const m of members) {
-      if (m.u < minU) minU = m.u;
-      if (m.u > maxU) maxU = m.u;
-      if (m.v < minV) minV = m.v;
-      if (m.v > maxV) maxV = m.v;
-      if (m.y < minY) minY = m.y;
-      if (m.y > maxY) maxY = m.y;
-      area += m.area;
+    // A component is not yet an object: adjacent furniture flood-fills into
+    // one blob. Cut at footprint valleys first, box the pieces.
+    for (const piece of splitAtValleys(members)) {
+      let minU = Infinity;
+      let maxU = -Infinity;
+      let minV = Infinity;
+      let maxV = -Infinity;
+      let minY = Infinity;
+      let maxY = -Infinity;
+      let area = 0;
+      for (const m of piece) {
+        if (m.u < minU) minU = m.u;
+        if (m.u > maxU) maxU = m.u;
+        if (m.v < minV) minV = m.v;
+        if (m.v > maxV) maxV = m.v;
+        if (m.y < minY) minY = m.y;
+        if (m.y > maxY) maxY = m.y;
+        area += m.area;
+      }
+
+      const width = maxU - minU;
+      const depth = maxV - minV;
+      const height = maxY - minY;
+      if (area < minAreaSqMetres) continue;
+      if (width < minExtentMetres || depth < minExtentMetres || height < minExtentMetres) continue;
+      // A piece spanning most of the room is scanner drift, not furniture —
+      // the trace already told us how big the room is.
+      if (width > 6 || depth > 6 || height > 2.6) continue;
+
+      // Back into world coordinates.
+      const midU = (minU + maxU) / 2;
+      const midV = (minV + maxV) / 2;
+      const backCos = Math.cos(angle);
+      const backSin = Math.sin(angle);
+      clusters.push({
+        cx: midU * backCos - midV * backSin,
+        cy: (minY + maxY) / 2,
+        cz: midU * backSin + midV * backCos,
+        width,
+        depth,
+        height,
+        baseY: minY - floorY,
+        area,
+        // Objects in a room overwhelmingly align with it, and nothing in a
+        // raw cluster distinguishes a sofa's front from its back — so inherit
+        // the room's angle rather than invent one from noise.
+        rotationY: angle,
+      });
     }
-
-    const width = maxU - minU;
-    const depth = maxV - minV;
-    const height = maxY - minY;
-    if (area < minAreaSqMetres) continue;
-    if (width < minExtentMetres || depth < minExtentMetres || height < minExtentMetres) continue;
-    // A cluster spanning most of the room is scanner drift, not a piece of
-    // furniture — the trace already told us how big the room is.
-    if (width > 6 || depth > 6 || height > 2.6) continue;
-
-    // Back into world coordinates.
-    const midU = (minU + maxU) / 2;
-    const midV = (minV + maxV) / 2;
-    const backCos = Math.cos(angle);
-    const backSin = Math.sin(angle);
-    clusters.push({
-      cx: midU * backCos - midV * backSin,
-      cy: (minY + maxY) / 2,
-      cz: midU * backSin + midV * backCos,
-      width,
-      depth,
-      height,
-      baseY: minY - floorY,
-      area,
-      // Objects in a room overwhelmingly align with it, and nothing in a raw
-      // cluster distinguishes a sofa's front from its back — so inherit the
-      // room's angle rather than invent one from noise.
-      rotationY: angle,
-    });
   }
 
   // Largest first: if anything downstream truncates, it should keep the sofa.
