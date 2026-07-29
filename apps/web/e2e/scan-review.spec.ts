@@ -86,8 +86,16 @@ test("a rotated point-cloud scan reviews, registers, and furnishes the drawn roo
   // The review step: the scan's objects drawn over the plan, tickable.
   await expect(page.getByTestId("seed-review")).toBeVisible({ timeout: 45_000 });
   const items = page.locator('[data-testid^="seed-keep-"]');
-  expect(await items.count()).toBeGreaterThanOrEqual(1);
+  const detected = await items.count();
+  expect(detected).toBeGreaterThanOrEqual(1);
   await expect(page.getByTestId("seed-review-plan")).toBeVisible();
+
+  // The layout question: walls are confirmable, and a missed object can be
+  // added by hand — it joins the list ticked.
+  await expect(page.getByTestId("review-adjust-walls")).toBeVisible();
+  await page.getByTestId("review-add-item").click();
+  await expect(items).toHaveCount(detected + 1);
+  await expect(page.locator(`[data-testid="seed-keep-${detected}"]`)).toBeChecked();
 
   await page.getByTestId("review-build").click();
   await expect(page.getByTestId("processing-open")).toBeEnabled({ timeout: 45_000 });

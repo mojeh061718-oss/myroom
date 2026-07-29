@@ -323,3 +323,16 @@
 }
 .seed-review-label { flex: 1; }
 .seed-review-dims { color: var(--text-dim); white-space: nowrap; }
+
+/* The layout question — walls first, furniture second. */
+.seed-review-walls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+}
+.seed-review-walls .pill-button { flex-shrink: 0; }

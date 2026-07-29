@@ -26,26 +26,50 @@ interface NameInput {
   scanSeeds: readonly ScanSeedObject[];
   /** decoded scan geometry, scan frame, world Y-up; indices empty = point cloud */
   scanMesh: { positions: Float32Array; indices: Uint32Array };
+  /** optional room photos — far better evidence than normal-shaded crops */
+  photos?: readonly Blob[];
+}
+
+export interface MissedItem {
+  category: string;
+  size: { w: number; d: number; h: number };
 }
 
 /**
  * Returns a taxonomy category id (or null) per seed, index-aligned with
- * `scanSeeds`. Never throws — a network/API/render failure returns all nulls
- * plus a note explaining why.
+ * `scanSeeds`, plus items visible in the photos that the scan missed.
+ * Never throws — a network/API/render failure returns all nulls plus a note
+ * explaining why.
  */
-export async function nameScannedObjects({ apiKey, scanSeeds, scanMesh }: NameInput): Promise<{
+export async function nameScannedObjects({ apiKey, scanSeeds, scanMesh, photos = [] }: NameInput): Promise<{
   categories: (string | null)[];
+  missing: MissedItem[];
   note: string | null;
 }> {
   const none: (string | null)[] = scanSeeds.map(() => null);
   const targets = scanSeeds.slice(0, MAX_NAMED_SEEDS);
-  if (targets.length === 0) return { categories: [], note: null };
+  if (targets.length === 0) return { categories: [], missing: [], note: null };
 
   let grid: string;
   try {
     grid = renderCropGrid(scanMesh, targets);
   } catch (error) {
-    return { categories: none, note: `AI naming skipped — couldn't render the scan (${(error as Error).message}).` };
+    return {
+      categories: none,
+      missing: [],
+      note: `AI naming skipped — couldn't render the scan (${(error as Error).message}).`,
+    };
+  }
+
+  // Room photos, downscaled and re-encoded (phones shoot HEIC; the API wants
+  // JPEG). A photo that won't decode is skipped, never fatal.
+  const photoImages: string[] = [];
+  for (const photo of photos.slice(0, 2)) {
+    try {
+      photoImages.push(await blobToJpeg(photo));
+    } catch {
+      // undecodable format — the crops alone still work
+    }
   }
 
   const ids = OBJECT_CATEGORIES.map((c) => c.id);
@@ -64,8 +88,23 @@ export async function nameScannedObjects({ apiKey, scanSeeds, scanMesh }: NameIn
           additionalProperties: false,
         },
       },
+      missing: {
+        type: "array",
+        maxItems: 8,
+        items: {
+          type: "object",
+          properties: {
+            category: { type: "string", enum: ids },
+            width: { type: "number" },
+            depth: { type: "number" },
+            height: { type: "number" },
+          },
+          required: ["category", "width", "depth", "height"],
+          additionalProperties: false,
+        },
+      },
     },
-    required: ["assignments"],
+    required: ["assignments", "missing"],
     additionalProperties: false,
   } as const;
 
@@ -78,35 +117,44 @@ export async function nameScannedObjects({ apiKey, scanSeeds, scanMesh }: NameIn
 
   try {
     const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+    const content: ({ type: "image"; source: { type: "base64"; media_type: "image/jpeg"; data: string } } | { type: "text"; text: string })[] = [
+      {
+        type: "image",
+        source: { type: "base64", media_type: "image/jpeg", data: grid },
+      },
+    ];
+    for (const data of photoImages) {
+      content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } });
+    }
+    content.push({
+      type: "text",
+      text:
+        `The first image is a grid of ${targets.length} numbered crops from a rough 3D LiDAR scan of a home interior, rendered with normal-direction shading (colours indicate surface orientation, not material). Each crop shows one detected object cluster, viewed from a high three-quarter angle; surrounding geometry is clipped away. The measured real-world size of each is:\n${sizes}\n\n` +
+        (photoImages.length > 0
+          ? `The ${photoImages.length === 1 ? "next image is a photo" : `next ${photoImages.length} images are photos`} of the same room — far clearer evidence of what each object is. Use the photos to identify the crops.\n\n`
+          : "") +
+        `For each crop, identify the household object. Choose the single best-fitting category id from this list, or null when you genuinely can't tell:\n${ids.join(", ")}\n\n` +
+        `Size is strong evidence — a 1.8 m wide, 0.9 m deep, 0.8 m tall block against a wall is far more likely a sofa than a bathtub. Answer for every index from 0 to ${targets.length - 1}.` +
+        (photoImages.length > 0
+          ? `\n\nThen list under "missing" the significant furniture you can SEE in the photos that is clearly NOT among the ${targets.length} detected objects — at most 8, each with its taxonomy category and approximate real-world size in metres. Only include things a person would want in a floor plan (furniture and appliances, not decor, toys or clutter), and leave the list empty when everything visible is already detected.`
+          : ""),
+    });
+
     const response = await client.messages.create({
       model: MODEL,
-      max_tokens: 2000,
+      max_tokens: 2500,
       output_config: { effort: "low", format: { type: "json_schema", schema: schema as unknown as Record<string, unknown> } },
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: "image/jpeg", data: grid },
-            },
-            {
-              type: "text",
-              text:
-                `This image is a grid of ${targets.length} numbered crops from a rough 3D LiDAR scan of a home interior, rendered with normal-direction shading (colours indicate surface orientation, not material). Each crop shows one detected object cluster, viewed from a high three-quarter angle; surrounding geometry is clipped away. The measured real-world size of each is:\n${sizes}\n\n` +
-                `For each crop, identify the household object. Choose the single best-fitting category id from this list, or null when you genuinely can't tell:\n${ids.join(", ")}\n\n` +
-                `Size is strong evidence — a 1.8 m wide, 0.9 m deep, 0.8 m tall block against a wall is far more likely a sofa than a bathtub. Answer for every index from 0 to ${targets.length - 1}.`,
-            },
-          ],
-        },
-      ],
+      messages: [{ role: "user", content }],
     });
 
     if (response.stop_reason === "refusal") {
-      return { categories: none, note: "AI naming was declined by the API — kept the measured boxes unnamed." };
+      return { categories: none, missing: [], note: "AI naming was declined by the API — kept the measured boxes unnamed." };
     }
     const text = response.content.find((b) => b.type === "text")?.text ?? "";
-    const parsed = JSON.parse(text) as { assignments: { index: number; category: string | null }[] };
+    const parsed = JSON.parse(text) as {
+      assignments: { index: number; category: string | null }[];
+      missing?: { category: string; width: number; depth: number; height: number }[];
+    };
     const categories = [...none];
     const valid = new Set(ids);
     for (const a of parsed.assignments ?? []) {
@@ -114,17 +162,37 @@ export async function nameScannedObjects({ apiKey, scanSeeds, scanMesh }: NameIn
         categories[a.index] = a.category;
       }
     }
+    const clamp = (n: number) => Math.min(3, Math.max(0.1, Number.isFinite(n) ? n : 0.5));
+    const missing: MissedItem[] = (parsed.missing ?? [])
+      .filter((m) => valid.has(m.category))
+      .slice(0, 8)
+      .map((m) => ({ category: m.category, size: { w: clamp(m.width), d: clamp(m.depth), h: clamp(m.height) } }));
     const named = categories.filter((c) => c !== null).length;
     return {
       categories,
+      missing,
       note:
         named > 0
           ? `AI named ${named} of ${targets.length} scanned object${targets.length === 1 ? "" : "s"} — check the list and untick anything wrong.`
           : "AI couldn't confidently name the scanned objects — they stay as measured boxes.",
     };
   } catch (error) {
-    return { categories: none, note: `AI naming failed (${(error as Error).message}) — kept the measured boxes.` };
+    return { categories: none, missing: [], note: `AI naming failed (${(error as Error).message}) — kept the measured boxes.` };
   }
+}
+
+/** Downscale + re-encode any decodable image blob as base64 JPEG. */
+async function blobToJpeg(blob: Blob, maxEdge = 1280): Promise<string> {
+  const bitmap = await createImageBitmap(blob);
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+  return dataUrl.slice(dataUrl.indexOf(",") + 1);
 }
 
 /** Render one clipped crop per seed into a labelled JPEG grid; returns base64. */
