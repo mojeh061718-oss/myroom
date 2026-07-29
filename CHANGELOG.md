@@ -4,6 +4,73 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.0.0] — Reconstruction Pipeline 2.0: the pipeline runs on the device you have
+
+**Ships:** the removal of a hardware requirement that was never real, a tier
+chosen per device, and a licence-gated generative surface kept strictly outside
+the reconstruction path.
+
+### The bug this release exists for
+
+`workers/vision/myroom_vision/detect.py` refused to start stage 1 unless
+`torch.cuda.is_available()`, and hardcoded `.to("cuda")` on the model and its
+inputs. That made an NVIDIA card a hard requirement for the app's headline
+feature, and every downstream "partial" mark in this file traces back to it.
+
+It was a mistake, not a constraint. PyTorch's default device is the CPU; CUDA is
+one optional backend among CUDA, Metal, XPU, ROCm and CPU. The pipeline's models
+are 25–150 M parameters, and a reconstruction is a handful of photos. `docs/03`
+§8 already required the pipeline to run on a laptop without a GPU — the code
+just did not honour it.
+
+Measured on the four-core, GPU-less container this repository's CI runs in:
+
+| Model | Task | Device | Time |
+|---|---|---|---|
+| Depth Anything V2 Small | stage 2 depth, one room photo | CPU | 12.4 s |
+| SD 1.5 + ControlNet-depth + LoRA | 512×512 restyle, 8 steps | CPU | 106 s |
+
+### Added
+
+- **`workers/vision/device.py`** — backend selection: CUDA, then Metal (MPS),
+  then Intel XPU, then CPU. CPU is the documented floor, not a failure mode. An
+  explicit `MYROOM_VISION_DEVICE` override is honoured or raises, rather than
+  silently downgrading underneath the operator.
+- **`workers/vision/depth.py`** — stage 2's metric depth, resized back to the
+  photo's own resolution so stage 1's masks line up pixel for pixel.
+- **`apps/web/src/lib/inference/device.ts`** — the device tier. WebGPU ships
+  enabled by default in Safari on iOS 26, backed by Metal, so a phone GPU is
+  reachable from this PWA. Falls to wasm, then to the service. **There is no
+  "unsupported device" outcome**, and `e2e/inference-tier.spec.ts` pins that.
+- **The privacy screen states which tier ran**, because "where do my photos go"
+  has a different true answer per device and cannot be static copy.
+- **`workers/diffusion`** — restyle renders for docs/06 §6, with a licence gate
+  for model weights that the npm dependency gate cannot see. Explicitly *not*
+  part of reconstruction; see docs/05 §11.
+
+### Changed
+
+- **docs/05 is now 2.0.** §1a describes the three tiers; §9 states that accuracy
+  is a property of the inputs rather than the hardware; §10 drops on-device
+  reconstruction from the non-goals, since WebGPU is what it was waiting for.
+- **The stage-1 test asserted the bug.** `test_stages.py` skipped unless the
+  worker had a GPU, so the CUDA gate had a test defending it. Replaced with a
+  regression test that a runtime-equipped worker with no GPU reports itself
+  ready.
+
+### Not met
+
+- **Golden fixture rooms still do not exist**, so every accuracy number in
+  docs/05 §9 remains a target rather than a measurement. Nothing in this release
+  changes that: faster inference does not substitute for a tape measure.
+- **The BullMQ consumer is still unwritten.** `StageWorkers` remains the seam.
+- **The device tier's ONNX graphs are not yet exported.** `device.ts` selects the
+  tier and the privacy surface reports it; the in-browser model execution behind
+  it is scaffolded, not shipped.
+- **Restyle is off by default and unverified at quality.** It has been run end to
+  end on CPU against a synthetic render; it has not been run against a real
+  sandbox render, and no one has judged whether the output is good.
+
 ## [0.6.0-m6] — Milestone M6: Polish & Premium *(partial — see Not met)*
 
 **Ships:** the finish, and the checks that keep it finished.
@@ -213,6 +280,15 @@ decision; each is a thing this environment cannot do.
   SAM 2, Depth Anything V2 — are not running anywhere in this repository's CI or
   in the staging build. The code path exists and refuses loudly rather than
   returning nothing.
+
+  > **Corrected in 2.0 — this entry was wrong about its own cause.** The stages
+  > were not blocked by the absence of a GPU. They were blocked by
+  > `detect.py` gating on `torch.cuda.is_available()` and hardcoding
+  > `.to("cuda")`, which turned one optional PyTorch backend into a hard
+  > requirement. PyTorch's default device is the CPU, and these models are
+  > small. On the same GPU-less container that produced this entry, Depth
+  > Anything V2 Small now returns a correct depth map for a room photo in
+  > **12.4 s**. See the 2.0 entry below.
 - **No golden fixture rooms, so no accuracy numbers.** docs/05 §9 requires
   ≥ 5 real measured rooms with hand-labelled ground truth. Those are tape-measure
   measurements of physical rooms; synthesizing them would produce numbers that

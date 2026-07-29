@@ -3,8 +3,12 @@
 Python 3.11 reconstruction workers (docs/03 §4, docs/05).
 
 ```
-pip install -e ".[dev]"          # CPU stages + tests
-pip install -e ".[dev,models]"   # adds torch/transformers for stages 1–2
+pip install -e ".[dev]"          # geometry stages + tests, no ML runtime
+pip install -e ".[dev,models]"   # adds torch/transformers for the model stages
+
+# On a machine with no NVIDIA card, use the CPU wheel — it is ~200 MB rather
+# than ~2.5 GB, and carries no nvidia-* packages at all:
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 python -m pytest -q
 ```
 
@@ -22,8 +26,9 @@ pnpm --filter @myroom/catalog build:taxonomy
 | Stage | Module | Status |
 |---|---|---|
 | 0 · scan parse | `stage0_scan`, `roomplan`, `pointcloud`, `register` | implemented, tested |
-| 1 · detect & segment | `detect` | needs GPU + weights; raises `ModelsUnavailable` otherwise |
-| 2 · camera & scale | `solve` | intrinsics, depth rescale and back-projection implemented; the layout estimation that feeds the pose solve needs the model tier |
+| 1 · detect & segment | `detect` | runs on any backend; raises `ModelsUnavailable` only when the ML runtime is absent |
+| 2 · camera & scale | `solve`, `depth` | intrinsics, depth rescale and back-projection implemented; Depth Anything V2 runs on CPU in ~12 s/photo |
+| — · device selection | `device` | CUDA → Metal (MPS) → Intel XPU → CPU. CPU is the floor, not a failure |
 | 3 · measurement | `measure` | implemented, tested |
 | 4 · catalog match | — | TypeScript, `packages/recon` |
 | 5 · appearance | `appearance` | implemented, tested |

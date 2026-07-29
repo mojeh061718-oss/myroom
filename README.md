@@ -4,15 +4,20 @@
 
 **My Room Sandbox** is a premium, iOS-feeling progressive web app that turns a hand-drawn wall outline, a handful of photos, and (optionally) a LiDAR scan into a perfectly scaled, fully **editable** 3D sandbox of a real room. Move the couch across the room, paint the walls sage green, rehang the gallery wall — and see every idea visualized at true scale before touching a single real object.
 
-## Status: M1–M3 complete, M4–M6 partial
+## Status: M1–M3 complete, M4–M6 partial, pipeline at 2.0
 
 The installable PWA, the drawing board, 3D extrusion, the full manual editor,
-guided photo capture, scan upload, the reconstruction pipeline's non-GPU stages,
-and the M6 polish pass are built. **Two things this repository cannot do are
-marked partial and listed in [`CHANGELOG.md`](CHANGELOG.md): GPU inference for
-the vision stages, and the golden-room accuracy fixtures — which are tape-measure
-measurements of real rooms.** Every accuracy target in docs/05 §9 is therefore
-unverified, and the app says so where it matters.
+guided photo capture, scan upload, the reconstruction pipeline, and the M6
+polish pass are built. **The one thing this repository cannot do is
+listed in [`CHANGELOG.md`](CHANGELOG.md): the golden-room accuracy fixtures,
+which are tape-measure measurements of real rooms.** Every accuracy target in
+docs/05 §9 is therefore unverified, and the app says so where it matters.
+
+The vision stages no longer require a GPU. They pick a backend per device —
+CUDA, Apple Metal, Intel XPU, or CPU on the server; WebGPU, wasm, or the service
+on the client — and there is no device the pipeline refuses to run on. See
+[docs/05 §1a](docs/05-reconstruction-pipeline.md) and the 2.0 entry in the
+changelog.
 
 ```bash
 pnpm install
@@ -36,7 +41,8 @@ cd workers/vision && pip install -e ".[dev]" && python -m pytest -q
 | `packages/geometry` | Wall/polygon/unit math, shell extrusion, object snapping |
 | `packages/catalog` | Object taxonomy (187 categories) and the CC0 asset pipeline |
 | `packages/recon` | Catalog matching, scene assembly, scan parsing and refinement, golden-room scoring |
-| `workers/vision` | Python pipeline stages: scan parse, camera/depth solve, measurement, appearance |
+| `workers/vision` | Python pipeline stages: scan parse, camera/depth solve, measurement, appearance, device selection |
+| `workers/diffusion` | Restyle renders (docs/06 §6) and the model-weight licence gate — opt-in, never bundled |
 | `fixtures/golden-rooms` | Where the accuracy fixtures go, and why they can't be generated |
 
 Judgment calls made where the specification was silent are recorded in

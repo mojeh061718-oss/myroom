@@ -21,9 +21,21 @@ from .roomplan import ParsedScan, ScanObject, ScanWall, looks_like_roomplan, par
 from .schemas import validate
 
 
+#: Upload sniffing (apps/api/src/uploads/magic.ts) names a bare RoomPlan
+#: sidecar by its container — "json" — while the scan-parse contract names it by
+#: what it is. Without this mapping a RoomPlan export parses correctly and then
+#: fails its own output validation, because "json" is not in the schema's enum.
+_FORMAT_ALIASES = {"json": "roomplan-json"}
+
+
+def canonical_format(fmt: str) -> str:
+    """The contract's name for an input format (packages/schema ScanFormat)."""
+    return _FORMAT_ALIASES.get(fmt, fmt)
+
+
 def _failed(fmt: str, reason: str) -> dict[str, Any]:
     return {
-        "format": fmt,
+        "format": canonical_format(fmt),
         "parsed": False,
         "failure": reason,
         "walls": [],
@@ -108,7 +120,7 @@ def parse_scan(
     return validate(
         "scan-parse",
         {
-            "format": fmt,
+            "format": canonical_format(fmt),
             "parsed": True,
             "failure": None,
             "walls": [_wall_json(w) for w in walls],

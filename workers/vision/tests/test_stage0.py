@@ -248,3 +248,34 @@ def test_clustering_finds_the_object_and_not_the_walls():
     boxes = pointcloud.cluster_above_floor(points, floor=0.0, wall_inliers=inliers)
     sizes = [hi - lo for lo, hi in boxes]
     assert any(1.5 < s[0] < 2.1 and 0.6 < s[1] < 0.9 for s in sizes), sizes
+
+
+def test_a_roomplan_json_upload_validates_against_its_own_contract():
+    """Regression: `magic.ts` names a bare RoomPlan sidecar "json", but the
+    scan-parse enum only knows "roomplan-json". Emitting the sniffed name made
+    a successfully parsed scan fail its own output validation."""
+    from myroom_vision.stage0_scan import canonical_format
+
+    assert canonical_format("json") == "roomplan-json"
+    # Everything the schema already names passes through untouched.
+    for fmt in ("roomplan-json", "usdz", "ply", "glb", "e57", "las"):
+        assert canonical_format(fmt) == fmt
+
+
+def test_every_format_stage0_emits_is_in_the_schema_enum():
+    import json
+    from pathlib import Path
+
+    from myroom_vision.stage0_scan import _failed, canonical_format
+    from myroom_vision.schemas import validate
+
+    schema = json.loads(
+        (Path(__file__).resolve().parents[3] / "packages/schema/json/scan-parse.schema.json").read_text()
+    )
+    allowed = set(schema["definitions"]["scan-parse"]["properties"]["format"]["enum"])
+
+    # Every format the upload layer can hand us must survive canonicalisation
+    # into something the contract accepts.
+    for sniffed in ("json", "roomplan-json", "ply", "glb", "e57", "las", "usdz"):
+        assert canonical_format(sniffed) in allowed, sniffed
+        validate("scan-parse", _failed(sniffed, "unreadable"))

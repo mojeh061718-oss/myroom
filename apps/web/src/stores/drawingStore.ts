@@ -367,19 +367,29 @@ export const useDrawing = create<DrawingState>((set, get) => {
       const b = vertexById(plan, wall.end)!;
       const mid = { id: uuidv7(), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       const half = wallLength(plan, wall) / 2;
+      // Each opening goes to the half containing its centre, rebased onto that
+      // half and clamped to fit. Filtering on "lies wholly within a half"
+      // instead would drop anything straddling the midpoint from both halves —
+      // a door the user placed would simply disappear, with the undo entry
+      // still reading "Split wall". Clamping a straddling opening changes its
+      // position by at most half its width; deleting it loses it entirely.
+      const rebase = (o: Opening, base: number): Opening => {
+        const width = Math.min(o.width, half);
+        return { ...o, width, offset: Math.min(Math.max(o.offset - base, 0), half - width) };
+      };
+      const centreOf = (o: Opening) => o.offset + o.width / 2;
+
       const first: Wall = {
         ...wall,
         end: mid.id,
-        openings: wall.openings.filter((o) => o.offset + o.width <= half + 1e-9),
+        openings: wall.openings.filter((o) => centreOf(o) <= half).map((o) => rebase(o, 0)),
       };
       // Labels are recomputed below (closed: geometric relabel; open: draw order).
       const second: Wall = {
         ...wall,
         id: uuidv7(),
         start: mid.id,
-        openings: wall.openings
-          .filter((o) => o.offset >= half - 1e-9)
-          .map((o) => ({ ...o, offset: o.offset - half })),
+        openings: wall.openings.filter((o) => centreOf(o) > half).map((o) => rebase(o, half)),
       };
       const walls = [...plan.walls.slice(0, idx), first, second, ...plan.walls.slice(idx + 1)];
       const next = refreshDerived({
