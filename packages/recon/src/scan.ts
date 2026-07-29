@@ -167,7 +167,13 @@ export function parseRoomPlanJson(text: string): RoomPlanPreview | null {
       category: ROOMPLAN_CATEGORIES[String(raw)] ?? null,
       // RoomPlan reports the box centre; our objects sit on their base.
       position: { x: matrix[12]!, y: matrix[13]! - h / 2, z: matrix[14]! },
-      rotationY: Math.atan2(matrix[0]!, matrix[2]!),
+      // Yaw comes off column 2 (the object's local +Z), not column 0. For a
+      // rotation of θ about Y, column 0 is (cos θ, 0, −sin θ) and column 2 is
+      // (sin θ, 0, cos θ), so atan2(m[0], m[2]) returns θ + π/2 — every scanned
+      // object arrived a quarter-turn out, and the near-wall snap in
+      // assemble.ts then treated its width as its depth. Walls above read
+      // column 0 deliberately: a wall's length runs along its own local +X.
+      rotationY: Math.atan2(matrix[8]!, matrix[10]!),
       size: { w, d, h },
     });
   }
