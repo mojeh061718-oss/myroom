@@ -1,5 +1,7 @@
 import type { ScanParse } from "@myroom/schema";
 
+import { traceFloorOutline } from "./outline.js";
+
 /**
  * Stage 0 for mesh scans — Scaniverse, Polycam, RoomPlan USDZ, anything that
  * exports `.glb` or `.ply` (docs/05 §2).
@@ -390,7 +392,24 @@ export function parseMeshScan(
     const z = u * sin + v * cos;
     return { x, y: -z };
   };
-  const corners = [corner(-1, 1), corner(1, 1), corner(1, -1), corner(-1, -1)];
+  // Trace the floor's actual outline, and keep the fitted rectangle only as the
+  // fallback for when there is not enough floor to trace.
+  //
+  // Returning the rectangle unconditionally — which this did until an audit
+  // caught it — makes `traceFloorOutline` dead code and reintroduces the exact
+  // failure it exists to prevent: an open-plan space that runs from a play area
+  // into a kitchen is not a rectangle, and the rectangle's missing corner is
+  // not floor. `footprint.cells` are already in the room's own frame, so the
+  // trace runs at angle 0 and the corners are rotated back with everything else.
+  const traced = traceFloorOutline(footprint.cells, 0);
+  const corners =
+    traced && traced.length >= 4
+      ? traced.map((p) => {
+          const x = p.x * cos - p.y * sin;
+          const z = p.x * sin + p.y * cos;
+          return { x, y: -z };
+        })
+      : [corner(-1, 1), corner(1, 1), corner(1, -1), corner(-1, -1)];
   const walls = corners.map((start, i) => ({
     start,
     end: corners[(i + 1) % corners.length]!,

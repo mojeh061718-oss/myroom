@@ -237,3 +237,91 @@ describe.skipIf(!existsSync(POSITIONS) || !existsSync(INDICES))("a real Scaniver
     expect(sqFt).toBeLessThan(260);
   });
 });
+
+/**
+ * The parser must use the outline tracer it ships with. Emitting the fitted
+ * rectangle unconditionally made `traceFloorOutline` dead code and reintroduced
+ * the exact failure it exists to prevent.
+ */
+describe("parseMeshScan traces the floor rather than boxing it", () => {
+  /** An L-shaped room: a rectangle with a bite out of one corner. */
+  function lShapedMesh(): { positions: Float32Array; indices: Uint32Array } {
+    const positions: number[] = [];
+    const indices: number[] = [];
+    const quad = (corners: [number, number, number][]) => {
+      const base = positions.length / 3;
+      for (const [x, y, z] of corners) positions.push(x, y, z);
+      indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    };
+    const W = 6;
+    const D = 5;
+    const H = 2.4384;
+    const BITE_W = 2.2;
+    const BITE_D = 2.0;
+    const step = 0.1;
+    // Floor, minus the bitten corner.
+    for (let x = 0; x < W; x += step) {
+      for (let z = 0; z < D; z += step) {
+        if (x > W - BITE_W && z > D - BITE_D) continue;
+        quad([
+          [x, 0, -z],
+          [x + step, 0, -z],
+          [x + step, 0, -(z + step)],
+          [x, 0, -(z + step)],
+        ]);
+      }
+    }
+    // Ceiling over the same footprint, and a perimeter of walls tall enough to
+    // establish the wall band.
+    for (let x = 0; x < W; x += step) {
+      for (let z = 0; z < D; z += step) {
+        if (x > W - BITE_W && z > D - BITE_D) continue;
+        quad([
+          [x, H, -z],
+          [x + step, H, -z],
+          [x + step, H, -(z + step)],
+          [x, H, -(z + step)],
+        ]);
+      }
+    }
+    for (let x = 0; x < W; x += step) {
+      for (let y = 0; y < H; y += 0.2) {
+        quad([
+          [x, y, 0],
+          [x + step, y, 0],
+          [x + step, y + 0.2, 0],
+          [x, y + 0.2, 0],
+        ]);
+      }
+    }
+    for (let z = 0; z < D; z += step) {
+      for (let y = 0; y < H; y += 0.2) {
+        quad([
+          [0, y, -z],
+          [0, y, -(z + step)],
+          [0, y + 0.2, -(z + step)],
+          [0, y + 0.2, -z],
+        ]);
+      }
+    }
+    return { positions: new Float32Array(positions), indices: new Uint32Array(indices) };
+  }
+
+  it("keeps an L-shaped room an L", () => {
+    const { positions, indices } = lShapedMesh();
+    const scan = parseMeshScan(positions, indices, "glb");
+    expect(scan.parsed).toBe(true);
+    // A rectangle is four walls. An L needs more, or it is not an L.
+    expect(scan.walls.length).toBeGreaterThan(4);
+  });
+
+  it("still closes, whatever the shape", () => {
+    const { positions, indices } = lShapedMesh();
+    const scan = parseMeshScan(positions, indices, "glb");
+    for (let i = 0; i < scan.walls.length; i++) {
+      const next = scan.walls[(i + 1) % scan.walls.length]!;
+      expect(scan.walls[i]!.end.x).toBeCloseTo(next.start.x, 9);
+      expect(scan.walls[i]!.end.y).toBeCloseTo(next.start.y, 9);
+    }
+  });
+});
