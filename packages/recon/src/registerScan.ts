@@ -151,7 +151,7 @@ export function registerScanToPlan(
     }
   }
 
-  let best: Registration | null = null;
+  const finished: Registration[] = [];
   for (const angle of candidates) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
@@ -180,7 +180,30 @@ export function registerScanToPlan(
       current = solved;
     }
 
-    if (best === null || current.residual < best.residual) best = current;
+    finished.push(current);
   }
-  return best;
+  if (finished.length === 0) return null;
+
+  /*
+   * Symmetry tie-break. Walls alone cannot tell a rectangle from itself
+   * rotated 180° (or a square from its quarter turns): both fits register
+   * with identical residual, and picking by residual alone means the
+   * furniture of a symmetric room lands flipped or not by floating-point
+   * luck. Among candidates within a whisker of the best, prefer the smallest
+   * rotation — deterministic, and exactly right for the scan-first flow,
+   * where the plan was built FROM the scan and identity is the true answer.
+   */
+  const best = finished.reduce((a, b) => (b.residual < a.residual ? b : a));
+  const margin = Math.max(0.02, best.residual * 0.1);
+  const turn = (r: number) => {
+    const t = (((r + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    return Math.abs(t);
+  };
+  let chosen = best;
+  for (const candidate of finished) {
+    if (candidate.residual <= best.residual + margin && turn(candidate.rotation) < turn(chosen.rotation)) {
+      chosen = candidate;
+    }
+  }
+  return chosen;
 }

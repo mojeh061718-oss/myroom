@@ -1,4 +1,4 @@
-import type { Vec2 } from "@myroom/geometry";
+import { isSimplePolygon, type Vec2 } from "@myroom/geometry";
 
 /**
  * Floor occupancy → a room outline you can hand to the drawing board.
@@ -30,35 +30,22 @@ export interface OutlineOptions {
   cellMetres?: number;
   /** Morphological closing radius, in cells. 2 bridges a sofa-sized gap. */
   closeRadius?: number;
-  /** Drop segments shorter than this after simplification (metres). */
+  /** Collapse walls shorter than this into their neighbours (metres). */
   minWallMetres?: number;
-  /** Snap a segment to the room's axes when it is within this many degrees. */
-  snapDegrees?: number;
-  /** Douglas–Peucker tolerance, metres. */
-  toleranceMetres?: number;
 }
 
 /**
- * Tuned against a real Scaniverse scan of an open-plan play area and kitchen,
- * whose owner had separately drawn the same room by hand at 208 sq ft:
- *
- *   tolerance  minWall  close | vertices  area
- *      0.12      0.35     2   |    28     208 sq ft
- *      0.25      0.60     2   |    15     218
- *      0.30      0.90     3   |    10     221
- *      0.40      1.20     3   |     7     212   <- chosen
- *      0.50      1.20     4   |     8     245
- *
- * Coarser simplification gives both fewer vertices *and* better area, because
- * what it removes is scanner noise rather than architecture. Twenty-eight
- * vertices is not a plan anyone wants to edit on a phone; seven is.
+ * Validated against a real Scaniverse scan of an open-plan play area and
+ * kitchen, whose owner had separately drawn the same room by hand at 208 sq ft.
+ * A previous tuning pass judged parameters by vertex count and area alone —
+ * and shipped an outline that had the right area and a shape like a dart,
+ * because area is blind to shape. The reference scan's outline is now asserted
+ * to stay inside its own occupancy bounds (see outline.test.ts).
  */
 const DEFAULTS: Required<OutlineOptions> = {
   cellMetres: 0.15,
   closeRadius: 3,
   minWallMetres: 1.2,
-  snapDegrees: 22,
-  toleranceMetres: 0.4,
 };
 
 type Grid = { cells: Set<string>; key: (x: number, y: number) => string };
@@ -225,119 +212,80 @@ function traceBoundary(grid: Grid): Vec2[] {
   return ring;
 }
 
-/** Douglas–Peucker on a closed ring. */
-function simplify(points: readonly Vec2[], tolerance: number): Vec2[] {
-  if (points.length < 3) return [...points];
-  const keep = new Array<boolean>(points.length).fill(false);
-  keep[0] = true;
-  keep[points.length - 1] = true;
-
-  const stack: [number, number][] = [[0, points.length - 1]];
-  while (stack.length > 0) {
-    const [first, last] = stack.pop()!;
-    let worst = 0;
-    let index = -1;
-    const a = points[first]!;
-    const b = points[last]!;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const length = Math.hypot(dx, dy);
-    for (let i = first + 1; i < last; i++) {
-      const p = points[i]!;
-      const distance =
-        length < 1e-12
-          ? Math.hypot(p.x - a.x, p.y - a.y)
-          : Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / length;
-      if (distance > worst) {
-        worst = distance;
-        index = i;
-      }
-    }
-    if (index !== -1 && worst > tolerance) {
-      keep[index] = true;
-      stack.push([first, index], [index, last]);
-    }
+/**
+ * Remove vertices that sit on a straight run, so the marching-squares
+ * staircase becomes one vertex per direction change. Works on the integer
+ * grid ring, where collinear means exactly equal steps.
+ */
+function mergeCollinear(ring: readonly Vec2[]): Vec2[] {
+  const out: Vec2[] = [];
+  for (let i = 0; i < ring.length; i++) {
+    const prev = ring[(i - 1 + ring.length) % ring.length]!;
+    const here = ring[i]!;
+    const next = ring[(i + 1) % ring.length]!;
+    if (here.x === prev.x && here.x === next.x) continue;
+    if (here.y === prev.y && here.y === next.y) continue;
+    if (here.x === next.x && here.y === next.y) continue; // duplicate
+    out.push(here);
   }
-  return points.filter((_, i) => keep[i]);
+  return out;
 }
 
 /**
- * Snap each edge to the room's own axes, then re-intersect neighbours so the
- * corners stay closed.
+ * Straighten a rectilinear ring by repeatedly removing its shortest edge.
  *
- * A traced ring is a staircase of 15 cm steps. Rooms are not staircases, and a
- * plan full of 15 cm jogs is worse to edit than one the user drew themselves.
+ * This replaces a Douglas–Peucker → snap-to-axes → re-intersect-corners chain
+ * that failed catastrophically on the first real scan it met: two snapped
+ * walls meeting at a shallow angle intersect far away, and the reference
+ * Scaniverse room came back as a dart with a 36-foot wall — vertices metres
+ * outside its own floor. (The tuning table in this file's history recorded
+ * that outline as "7 vertices, 212 sq ft" and looked healthy by area alone;
+ * shape was never asserted.)
+ *
+ * The safe move exists because the traced boundary is already rectilinear:
+ * a short edge is removed by translating the SHORTER of its two perpendicular
+ * neighbours onto the line of the longer one. Every vertex only ever adopts a
+ * coordinate another vertex already has, so the ring can never grow past the
+ * occupancy it came from — no intersection step, no spikes, closed by
+ * construction, and an L-shaped room keeps its L.
  */
-function regularise(
-  ring: readonly Vec2[],
-  angle: number,
-  snapDegrees: number,
-  minWall = 0,
-): Vec2[] {
-  if (ring.length < 3) return [...ring];
-  const axes = [angle, angle + Math.PI / 2];
-  const snapped: { point: Vec2; dir: Vec2 }[] = [];
-
-  for (let i = 0; i < ring.length; i++) {
-    const a = ring[i]!;
-    const b = ring[(i + 1) % ring.length]!;
-    const edgeAngle = Math.atan2(b.y - a.y, b.x - a.x);
-    let best = edgeAngle;
-    let bestDelta = Infinity;
-    for (const axis of axes) {
-      for (const candidate of [axis, axis + Math.PI]) {
-        let delta = Math.abs(((edgeAngle - candidate + Math.PI) % (2 * Math.PI)) - Math.PI);
-        delta = Math.min(delta, Math.abs(2 * Math.PI - delta));
-        if (delta < bestDelta) {
-          bestDelta = delta;
-          best = candidate;
-        }
+function collapseShortEdges(ring: Vec2[], minLength: number): Vec2[] {
+  let points = ring.map((p) => ({ ...p }));
+  for (let guard = 0; guard < 4096 && points.length > 4; guard++) {
+    let shortest = -1;
+    let shortestLength = minLength;
+    for (let i = 0; i < points.length; i++) {
+      const a = points[i]!;
+      const b = points[(i + 1) % points.length]!;
+      const length = Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
+      if (length < shortestLength) {
+        shortestLength = length;
+        shortest = i;
       }
     }
-    const use = bestDelta <= (snapDegrees * Math.PI) / 180 ? best : edgeAngle;
-    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    /*
-     * Short edges are dropped HERE, before the corners are computed, so their
-     * two neighbours meet at their own intersection.
-     *
-     * Dropping vertices afterwards instead leaves a segment cutting diagonally
-     * across the corner that was removed. On the reference scan that left one
-     * wall 38.3 degrees off square among six that were exactly 0.0 — and it is
-     * not fixable by widening the snap threshold, because a room is allowed to
-     * have a genuinely angled wall and snapping those would be worse.
-     */
-    if (minWall > 0 && Math.hypot(b.x - a.x, b.y - a.y) < minWall) continue;
-    snapped.push({ point: mid, dir: { x: Math.cos(use), y: Math.sin(use) } });
-  }
-  if (snapped.length < 3) return [...ring];
+    if (shortest === -1) break;
 
-  // Re-corner: each vertex is where its two adjacent (now-straightened) walls meet.
-  const out: Vec2[] = [];
-  for (let i = 0; i < snapped.length; i++) {
-    const p = snapped[i]!;
-    const q = snapped[(i + 1) % snapped.length]!;
-    const denominator = p.dir.x * q.dir.y - p.dir.y * q.dir.x;
-    if (Math.abs(denominator) < 1e-9) continue; // parallel: no corner here
-    const t = ((q.point.x - p.point.x) * q.dir.y - (q.point.y - p.point.y) * q.dir.x) / denominator;
-    out.push({ x: p.point.x + p.dir.x * t, y: p.point.y + p.dir.y * t });
-  }
-  return out;
-}
+    const n = points.length;
+    const i0 = (shortest - 1 + n) % n; // start of the edge before
+    const i1 = shortest; //               short edge start
+    const i2 = (shortest + 1) % n; //     short edge end
+    const i3 = (shortest + 2) % n; //     end of the edge after
+    const before = Math.abs(points[i1]!.x - points[i0]!.x) + Math.abs(points[i1]!.y - points[i0]!.y);
+    const after = Math.abs(points[i3]!.x - points[i2]!.x) + Math.abs(points[i3]!.y - points[i2]!.y);
+    const vertical = points[i1]!.x === points[i2]!.x;
 
-/** Drop vertices closer together than `minWall`, collapsing tiny jogs. */
-function dropShortWalls(ring: readonly Vec2[], minWall: number): Vec2[] {
-  const out: Vec2[] = [];
-  for (const p of ring) {
-    const last = out[out.length - 1];
-    if (!last || Math.hypot(p.x - last.x, p.y - last.y) >= minWall) out.push(p);
+    // Translate the shorter neighbour (both endpoints) onto the longer one's
+    // line; the short edge collapses to nothing and the neighbours merge.
+    if (before < after) {
+      if (vertical) points[i0]!.y = points[i1]!.y = points[i2]!.y;
+      else points[i0]!.x = points[i1]!.x = points[i2]!.x;
+    } else {
+      if (vertical) points[i2]!.y = points[i3]!.y = points[i1]!.y;
+      else points[i2]!.x = points[i3]!.x = points[i1]!.x;
+    }
+    points = mergeCollinear(points);
   }
-  while (out.length > 3) {
-    const first = out[0]!;
-    const last = out[out.length - 1]!;
-    if (Math.hypot(first.x - last.x, first.y - last.y) < minWall) out.pop();
-    else break;
-  }
-  return out;
+  return points;
 }
 
 /**
@@ -353,50 +301,49 @@ export function traceFloorOutline(
   angle: number,
   options: OutlineOptions = {},
 ): Vec2[] | null {
-  const { cellMetres, closeRadius, minWallMetres, snapDegrees, toleranceMetres } = {
-    ...DEFAULTS,
-    ...options,
-  };
+  const { cellMetres, closeRadius, minWallMetres } = { ...DEFAULTS, ...options };
   if (cells.length < 8) return null;
 
-  const grid = gridOf(cells.map(([x, y]) => `${Math.round(x / cellMetres)},${Math.round(y / cellMetres)}`));
+  // Work in the room's own frame, where the boundary is rectilinear.
+  const cos = Math.cos(-angle);
+  const sin = Math.sin(-angle);
+  const grid = gridOf(
+    cells.map(([x, y]) => {
+      const u = x * cos - y * sin;
+      const v = x * sin + y * cos;
+      return `${Math.round(u / cellMetres)},${Math.round(v / cellMetres)}`;
+    }),
+  );
   // Close, keep the room, fill what the furniture hid.
   const closed = erode(dilate(grid, closeRadius), closeRadius);
   const component = largestComponent(closed.cells.size > 0 ? closed : grid);
   const solid = fillHoles(component);
   if (solid.cells.size < 8) return null;
 
-  const traced = traceBoundary(solid).map((p) => ({ x: p.x * cellMetres, y: p.y * cellMetres }));
+  // The traced boundary is unit axis-aligned steps in grid coordinates; keep
+  // it in integers through the whole simplification so collinearity and edge
+  // lengths are exact, and scale to metres only at the end.
+  const traced = mergeCollinear(traceBoundary(solid));
   if (traced.length < 4) return null;
 
-  /*
-   * Snap, drop, then snap again — the second pass is not redundant.
-   *
-   * `dropShortWalls` removes a vertex between two already-square walls, and the
-   * segment left behind cuts diagonally across the corner it removed. On the
-   * reference scan that produced five walls at exactly 0.0 degrees off square
-   * and two at 38.3 and 2.8 — a room that is mostly right and visibly wrong,
-   * which is worse than either.
-   *
-   * Re-snapping after the drop pulls those diagonals back onto the room's axes
-   * and re-corners them. Repeat until the vertex count settles, because one
-   * drop can expose another short wall; bounded, because a pathological outline
-   * must not spin.
-   */
-  // Repeat until the vertex count settles: removing one short edge can leave
-  // its neighbours meeting in a way that makes another edge short. Bounded, so
-  // a pathological outline cannot spin.
-  let ring = simplify(traced, toleranceMetres);
-  for (let pass = 0; pass < 5; pass++) {
-    const next = regularise(ring, angle, snapDegrees, minWallMetres);
-    if (next.length < 3) break;
-    if (next.length === ring.length) {
-      ring = next;
+  // Collapse the staircase into walls. If the collapse ever folds the ring
+  // over itself (a deep comb of notches can), retry gentler rather than ship
+  // a self-intersecting plan; a still-broken ring falls back to the caller's
+  // fitted rectangle, which is honest and editable.
+  let ring: Vec2[] | null = null;
+  for (const minWall of [minWallMetres, minWallMetres / 2, minWallMetres / 4]) {
+    const candidate = collapseShortEdges(traced, Math.max(1, Math.round(minWall / cellMetres)));
+    if (candidate.length >= 4 && isSimplePolygon(candidate.map((p) => ({ x: p.x * cellMetres, y: p.y * cellMetres })))) {
+      ring = candidate;
       break;
     }
-    ring = next;
   }
-  // A final tidy for anything coincident after the intersections.
-  ring = dropShortWalls(ring, minWallMetres * 0.25);
-  return ring.length >= 3 ? ring : null;
+  if (!ring) return null;
+
+  // Back to metres, and back to the caller's frame.
+  return ring.map((p) => {
+    const u = p.x * cellMetres;
+    const v = p.y * cellMetres;
+    return { x: u * cos + v * sin, y: -u * sin + v * cos };
+  });
 }

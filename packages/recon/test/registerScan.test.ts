@@ -68,6 +68,23 @@ describe("registerScanToPlan (docs/05 §2: 2D ICP of scan walls onto the drawn p
     expect(registerScanToPlan([], loop)).toBeNull();
     expect(registerScanToPlan(transformedWalls(0, 0, 0), [])).toBeNull();
   });
+
+  it("breaks a symmetric room's tie toward the smaller rotation", () => {
+    // A rectangle registers onto itself equally well at θ and θ+180° — walls
+    // can't tell the difference, so furniture landed flipped or not by
+    // floating-point luck. The deterministic choice is the smaller rotation:
+    // for a scan-first plan (built FROM the scan) identity is the truth.
+    const identity = registerScanToPlan(transformedWalls(0, 0.4, -0.2), loop);
+    expect(identity).not.toBeNull();
+    expect(Math.abs(identity!.rotation) % (2 * Math.PI)).toBeLessThan(0.1);
+
+    const thirty = (30 * Math.PI) / 180;
+    const rotated = registerScanToPlan(transformedWalls(thirty, 2, 1), loop);
+    expect(rotated).not.toBeNull();
+    // Undoing +30° means registering at −30°, never its 150° mirror.
+    const normalized = ((rotated!.rotation + Math.PI) % (2 * Math.PI)) - Math.PI;
+    expect(Math.abs(normalized + thirty)).toBeLessThan(0.06);
+  });
 });
 
 describe("assembleScene pins scan-measured objects (docs/05 §7)", () => {

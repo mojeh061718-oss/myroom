@@ -158,6 +158,11 @@ test("a RoomPlan scan corrects the room and furnishes it from its own measuremen
   await page.getByTestId("scan-continue").click();
 
   await page.getByTestId("processing").waitFor();
+  // The scan found objects, so the flow pauses to let the user pick which to
+  // keep — both measured objects, ticked by default, then build.
+  await expect(page.getByTestId("seed-review")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid^="seed-keep-"]')).toHaveCount(2);
+  await page.getByTestId("review-build").click();
   await expect(page.getByTestId("processing-open")).toBeEnabled({ timeout: 20_000 });
   // The objects came from the scan, so nothing is presented as a demo.
   await expect(page.getByTestId("processing-warnings")).toContainText("came from your scan");

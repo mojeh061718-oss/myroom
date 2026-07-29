@@ -284,7 +284,7 @@ export function measureFootprint(
   angle: number,
   options: MeshScanOptions = {},
 ): Footprint {
-  const { trim, cellMetres, horizontalMin } = { ...DEFAULTS, ...options };
+  const { trim, cellMetres } = { ...DEFAULTS, ...options };
   const cos = Math.cos(-angle);
   const sin = Math.sin(-angle);
 
@@ -296,8 +296,15 @@ export function measureFootprint(
   for (const t of facets) {
     // Structure only: the band above furniture and below the ceiling.
     const isWallBand = t.cy > planes.floorY + 0.8 && t.cy < ceiling - 0.3;
-    const isFloor = Math.abs(t.ny) >= horizontalMin && t.cy < planes.floorY + 0.35;
-    if (!isWallBand && !isFloor) continue;
+    // Interior evidence is EVERYTHING below the ceiling, not just visible
+    // floor. A sofa against a wall hides the floor behind it entirely — no
+    // amount of hole-closing recovers a bay that touches the boundary — but
+    // the sofa itself proves that volume is inside the room. Walls mark the
+    // rim, furniture fills its own shadow, and the outline lands where the
+    // space actually stops. (Ceiling facets say nothing about the floor and
+    // fray past the walls, so they stay out.)
+    const isInterior = t.cy > planes.floorY - 0.05 && t.cy < ceiling - 0.25;
+    if (!isWallBand && !isInterior) continue;
 
     const u = t.cx * cos - t.cz * sin;
     const v = t.cx * sin + t.cz * cos;
@@ -307,7 +314,7 @@ export function measureFootprint(
       us.push(u);
       vs.push(v);
     }
-    if (isFloor) {
+    if (isInterior) {
       markOccupancy(t, cellMetres, occupancy, (x, z) => [x * cos - z * sin, x * sin + z * cos]);
     }
   }
