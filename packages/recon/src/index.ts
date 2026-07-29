@@ -8,3 +8,4 @@ export * from "./fuse.js";
 export * from "./mesh.js";
 export * from "./outline.js";
 export * from "./meshDecode.js";
+export * from "./meshObjects.js";

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatArea, formatLength, parseDisplayLength } from "@myroom/geometry";
 import { decodeScanMesh, parseMeshScan, sniffScanFormat } from "@myroom/recon";
+import { OBJECT_CATEGORIES } from "@myroom/catalog";
 import { usableFloorArea, wallLength } from "@myroom/schema";
 import { useDrawing, type Tool } from "../../stores/drawingStore.js";
 import { useSettings } from "../../stores/settingsStore.js";
@@ -290,7 +291,9 @@ export function DrawingBoard() {
           return;
         }
 
-        const parsed = parseMeshScan(decoded.positions, decoded.indices, format);
+        const parsed = parseMeshScan(decoded.positions, decoded.indices, format, {
+          categories: OBJECT_CATEGORIES,
+        });
         if (!parsed.parsed || parsed.walls.length < 3) {
           setImportNote(parsed.failure ?? "We couldn't find a room in that scan.");
           return;
@@ -308,10 +311,17 @@ export function DrawingBoard() {
           setImportNote("That scan traced a shape we couldn't turn into a room. Try drawing it instead.");
           return;
         }
-        setImportNote(
+        const pieces = parsed.seedBoxes.length;
+        const ceiling =
           parsed.ceilingHeight !== null
-            ? `Measured from your scan: ${parsed.walls.length} walls, ${formatLength(parsed.ceilingHeight, settings.displayUnit)} ceiling. Drag any corner to adjust.`
-            : `Measured from your scan: ${parsed.walls.length} walls. Drag any corner to adjust.`,
+            ? `, ${formatLength(parsed.ceilingHeight, settings.displayUnit)} ceiling`
+            : "";
+        const found =
+          pieces > 0
+            ? ` It also found ${pieces} thing${pieces === 1 ? "" : "s"} in the room — add photos next and we'll place them.`
+            : "";
+        setImportNote(
+          `Measured from your scan: ${parsed.walls.length} walls${ceiling}. Drag any corner to adjust.${found}`,
         );
       } catch (error) {
         setImportNote(`We couldn't read that file (${(error as Error).message}).`);

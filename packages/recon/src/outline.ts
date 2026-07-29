@@ -268,7 +268,12 @@ function simplify(points: readonly Vec2[], tolerance: number): Vec2[] {
  * A traced ring is a staircase of 15 cm steps. Rooms are not staircases, and a
  * plan full of 15 cm jogs is worse to edit than one the user drew themselves.
  */
-function regularise(ring: readonly Vec2[], angle: number, snapDegrees: number): Vec2[] {
+function regularise(
+  ring: readonly Vec2[],
+  angle: number,
+  snapDegrees: number,
+  minWall = 0,
+): Vec2[] {
   if (ring.length < 3) return [...ring];
   const axes = [angle, angle + Math.PI / 2];
   const snapped: { point: Vec2; dir: Vec2 }[] = [];
@@ -291,8 +296,20 @@ function regularise(ring: readonly Vec2[], angle: number, snapDegrees: number): 
     }
     const use = bestDelta <= (snapDegrees * Math.PI) / 180 ? best : edgeAngle;
     const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    /*
+     * Short edges are dropped HERE, before the corners are computed, so their
+     * two neighbours meet at their own intersection.
+     *
+     * Dropping vertices afterwards instead leaves a segment cutting diagonally
+     * across the corner that was removed. On the reference scan that left one
+     * wall 38.3 degrees off square among six that were exactly 0.0 — and it is
+     * not fixable by widening the snap threshold, because a room is allowed to
+     * have a genuinely angled wall and snapping those would be worse.
+     */
+    if (minWall > 0 && Math.hypot(b.x - a.x, b.y - a.y) < minWall) continue;
     snapped.push({ point: mid, dir: { x: Math.cos(use), y: Math.sin(use) } });
   }
+  if (snapped.length < 3) return [...ring];
 
   // Re-corner: each vertex is where its two adjacent (now-straightened) walls meet.
   const out: Vec2[] = [];
@@ -352,8 +369,34 @@ export function traceFloorOutline(
   const traced = traceBoundary(solid).map((p) => ({ x: p.x * cellMetres, y: p.y * cellMetres }));
   if (traced.length < 4) return null;
 
-  const simplified = simplify(traced, toleranceMetres);
-  const straightened = regularise(simplified, angle, snapDegrees);
-  const ring = dropShortWalls(straightened, minWallMetres);
+  /*
+   * Snap, drop, then snap again — the second pass is not redundant.
+   *
+   * `dropShortWalls` removes a vertex between two already-square walls, and the
+   * segment left behind cuts diagonally across the corner it removed. On the
+   * reference scan that produced five walls at exactly 0.0 degrees off square
+   * and two at 38.3 and 2.8 — a room that is mostly right and visibly wrong,
+   * which is worse than either.
+   *
+   * Re-snapping after the drop pulls those diagonals back onto the room's axes
+   * and re-corners them. Repeat until the vertex count settles, because one
+   * drop can expose another short wall; bounded, because a pathological outline
+   * must not spin.
+   */
+  // Repeat until the vertex count settles: removing one short edge can leave
+  // its neighbours meeting in a way that makes another edge short. Bounded, so
+  // a pathological outline cannot spin.
+  let ring = simplify(traced, toleranceMetres);
+  for (let pass = 0; pass < 5; pass++) {
+    const next = regularise(ring, angle, snapDegrees, minWallMetres);
+    if (next.length < 3) break;
+    if (next.length === ring.length) {
+      ring = next;
+      break;
+    }
+    ring = next;
+  }
+  // A final tidy for anything coincident after the intersections.
+  ring = dropShortWalls(ring, minWallMetres * 0.25);
   return ring.length >= 3 ? ring : null;
 }

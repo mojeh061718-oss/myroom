@@ -1,5 +1,6 @@
 import type { ScanParse } from "@myroom/schema";
 
+import { clustersToSeedBoxes, extractObjectClusters, type SizedCategory } from "./meshObjects.js";
 import { traceFloorOutline } from "./outline.js";
 
 /**
@@ -344,7 +345,14 @@ export function parseMeshScan(
   positions: Float32Array,
   indices: Uint32Array,
   format: ScanParse["format"],
-  options: MeshScanOptions = {},
+  options: MeshScanOptions & {
+    /**
+     * The taxonomy, so clusters can be given a name from their dimensions.
+     * Omit it and the boxes still come back, unnamed — a correctly-sized box
+     * the user can identify beats an empty room.
+     */
+    categories?: readonly SizedCategory[];
+  } = {},
 ): ScanParse {
   const empty: ScanParse = {
     format,
@@ -422,11 +430,22 @@ export function parseMeshScan(
     failure: null,
     walls,
     ceilingHeight: ceilingHeight !== null && ceilingHeight > 1.5 ? ceilingHeight : null,
-    // Naming an object needs a classifier. A seed box without a category tells
-    // assembly that a volume is occupied but not by what, and docs/05 §6 would
-    // place an anonymous parametric blank. Reporting nothing is more honest
-    // than furnishing someone's room with grey boxes.
-    seedBoxes: [],
+    // The furniture, clustered out of what is left once the floor, ceiling and
+    // walls are accounted for. This used to return [] on the reasoning that an
+    // unlabelled mesh cannot say *what* occupies a volume — but that means
+    // someone scans their room and gets an empty one, which is the outcome
+    // they scanned to avoid. Names are a separate, weak, clearly-declined-when-
+    // unsure guess; the box is the useful part.
+    seedBoxes: clustersToSeedBoxes(
+      extractObjectClusters(facets, {
+        floorY: planes.floorY,
+        ceilingY: planes.ceilingY,
+        walls,
+        angle,
+      }),
+      options.categories ?? [],
+      planes.floorY,
+    ),
     disagreements: [],
     silhouette: footprint.cells.map(([u, v]) => {
       const x = u * cos - v * sin;
