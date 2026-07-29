@@ -2,10 +2,12 @@ import { planToShell, type JobEvent, type RoomPlan, type Scene } from "@myroom/s
 import {
   applyRefinements,
   assembleScene,
+  decodeScanMesh,
   demoMeasuredObjects,
   describeRefinements,
   fuseSeedBoxes,
   matchCatalog,
+  parseMeshScan,
   parseRoomPlanJson,
   proposeRefinements,
   sniffScanFormat,
@@ -82,13 +84,64 @@ export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Pr
   if (!scan) return { plan, notes: [], refined: false, seeds: [] };
 
   const head = new Uint8Array(await scan.blob.slice(0, 64).arrayBuffer());
-  if (sniffScanFormat(head) !== "roomplan-json") {
+  const format = sniffScanFormat(head);
+
+  // Mesh scans are read here, on the device (docs/05 §2). They used to fall
+  // through to the branch below and be dropped with a note about a server that
+  // is not deployed — so a scan of a real room did nothing at all.
+  if (format === "glb" || format === "ply") {
+    const decoded = decodeScanMesh(new Uint8Array(await scan.blob.arrayBuffer()), format);
+    if (!decoded.ok) {
+      return { plan, notes: [`We couldn't read that scan: ${decoded.reason}.`], refined: false, seeds: [] };
+    }
+    if (decoded.indices.length < 300) {
+      // A point cloud carries no surfaces, and every measurement here is
+      // area-weighted over triangles. Name the format that does carry them.
+      return {
+        plan,
+        notes: ["That scan is a point cloud with no surfaces in it — export it as GLB and we can measure the room from it."],
+        refined: false,
+        seeds: [],
+      };
+    }
+
+    const parsed = parseMeshScan(decoded.positions, decoded.indices, format);
+    if (!parsed.parsed) {
+      return { plan, notes: [`We couldn't read that scan: ${parsed.failure ?? "unknown reason"}.`], refined: false, seeds: [] };
+    }
+
+    // ScanParse carries walls as {x, y} points; the refiner wants tuples.
+    const lines = parsed.walls.map((w) => ({
+      start: [w.start.x, w.start.y] as [number, number],
+      end: [w.end.x, w.end.y] as [number, number],
+    }));
+    const proposal = proposeRefinements(plan, lines, parsed.ceilingHeight);
+    if (!proposal.comparable) {
+      return {
+        plan,
+        notes: [`We measured your scan but couldn't line it up with your plan (${proposal.reason}), so we left your drawing as it is.`],
+        refined: false,
+        seeds: [],
+      };
+    }
+    const refinedPlan = applyRefinements(plan, proposal);
+    return {
+      plan: refinedPlan,
+      notes: describeRefinements(proposal, refinedPlan, plan),
+      refined: true,
+      // A mesh scan names nothing, so it corrects the room without furnishing
+      // it — and the accuracy badge stays honest about that.
+      seeds: [],
+    };
+  }
+
+  if (format !== "roomplan-json") {
     return {
       plan,
       notes: [
         hasApi
           ? "We'll read your scan on the server while your room is built."
-          : "This scan needs the reconstruction server to read — your room is built from the plan and photos for now.",
+          : `We can't read ${format ?? "that format"} on the device yet — export your scan as GLB and we'll measure the room from it.`,
       ],
       refined: false,
       seeds: [],

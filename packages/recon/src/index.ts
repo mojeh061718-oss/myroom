@@ -7,3 +7,4 @@ export * from "./refine.js";
 export * from "./fuse.js";
 export * from "./mesh.js";
 export * from "./outline.js";
+export * from "./meshDecode.js";
