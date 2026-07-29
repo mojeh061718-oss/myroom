@@ -14,7 +14,7 @@ import { createDemoWorkers, type StageWorkers } from "./jobs/orchestrator.js";
 import { registerUploadRoutes } from "./routes/uploads.js";
 import { registerReconstructRoutes } from "./routes/reconstruct.js";
 import { registerSceneRoutes } from "./routes/scene.js";
-import { clearSession, issueSession, readSession } from "./auth.js";
+import { clearSession, devAuthEnabled, issueSession, readSession } from "./auth.js";
 import { invalid, notFound, problem, unauthorized } from "./problem.js";
 
 export interface AppOptions {
@@ -95,7 +95,11 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance> 
     if (!body.success) return invalid(reply, "A valid email address is required.");
     const token = newId();
     magicTokens.set(token, body.data.email);
-    return reply.send({ sent: true, ...(process.env.NODE_ENV === "production" ? {} : { token }) });
+    // The token is the credential. It goes back in the response only when
+    // someone has explicitly asked for dev auth (see auth.ts devAuthEnabled);
+    // otherwise the hosted build delivers it by email and this route says
+    // nothing an unauthenticated caller could sign in with.
+    return reply.send({ sent: true, ...(devAuthEnabled() ? { token } : {}) });
   });
 
   app.post("/v1/auth/session", async (request, reply) => {
