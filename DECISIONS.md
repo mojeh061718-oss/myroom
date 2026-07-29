@@ -393,6 +393,44 @@ fallback, and it is honest.
 
 ---
 
+## Post-2.0 fix & polish pass
+
+### 25. Local-first is the reconstruction architecture, not a fallback
+
+**Unspecified.** docs/03 describes the server pipeline; docs/03 §6 requires the
+app to work offline. Nothing says which is authoritative when both exist.
+
+**Chosen.** The on-device path is the real path. Every scan format the app
+accepts is parsed on the device; the API path, when configured, is attempted
+first and falls back to the device with a visible warning if unreachable. No
+BullMQ consumer was added.
+
+**Why.** The only `StageWorkers` implementation the API has is the demo driver,
+whose scan parse unconditionally fails — so the server path was strictly worse
+than the device path while *looking* more capable. The privacy story is also
+simpler: the file never leaves the device unless a server is configured.
+**What would change it.** A deployed worker tier with the Python pipeline
+behind a queue; the seam (`StageWorkers`) is unchanged.
+
+### 26. No postprocessing package for the graphics polish
+
+**Unspecified.** docs/02 §7 asks for SSAO/baked ambient occlusion; docs/06 §2
+mentions a selection outline pass. The obvious tool is
+`@react-three/postprocessing`.
+
+**Chosen.** Not added. The look is carried by a warm procedural environment
+(closing §11's HDRI deferral), a hemisphere + bounce light rig, PCSS soft
+shadows (a shader patch, no assets), live contact shadows, emissive + point
+lights on lamp categories, and procedural floor/wall textures. Selection is a
+floor halo, not an outline pass.
+
+**Why.** Its underlying `postprocessing` package is Zlib-licensed — outside the
+docs/08 §7 allowlist — and a full-screen AO pass is the wrong first spend of
+the docs/06 §8 frame budget on phones. Contact shadows + PCSS deliver the
+occlusion cues the spec is actually after at a fraction of the cost.
+**What would change it.** A licence-policy exemption plus mid-range phone
+profiling showing headroom for N8AO at the Balanced tier.
+
 ## Not built, and why
 
 These are **not** decisions — they are blueprint items this repository does not
@@ -405,7 +443,7 @@ described in full, with its acceptance criterion, in `CHANGELOG.md`.
 | Golden-room accuracy fixtures (docs/05 §9) | Tape-measure measurements of five real rooms; cannot be synthesized without inventing the numbers they exist to check |
 | Queue-driven worker dispatch (BullMQ over Valkey) | The orchestrator calls its stage driver in-process; `StageWorkers` is the seam a consumer would implement |
 | The 60-second demo video (docs/09 M6's definition of done) | Films a photo reconstruction, which needs the GPU tier |
-| Tutorial T2–T5 final animations, splash room-loop video | Asset production |
+| Splash room-loop video | Asset production (tutorial T2–T5 vignettes shipped in 2.1 as CSS-animated SVGs) |
 | Low-end device lab pass (2 GB Android, 30 fps floor) | No device lab |
 | Web Push proper (VAPID + server) | Needs the hosted API; the local notification works without it |
 
