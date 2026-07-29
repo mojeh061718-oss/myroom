@@ -5,3 +5,5 @@ export * from "./scan.js";
 export * from "./golden.js";
 export * from "./refine.js";
 export * from "./fuse.js";
+export * from "./mesh.js";
+export * from "./outline.js";

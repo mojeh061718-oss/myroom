@@ -60,6 +60,10 @@ function photo(id: string) {
     storageRef: id,
     blob: new Blob([new Uint8Array(8)]),
     createdAt: new Date().toISOString(),
+    wallLabel: "A",
+    shotId: id,
+    quality: null,
+    remoteId: null,
   };
 }
 
