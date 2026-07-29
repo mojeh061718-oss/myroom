@@ -4,6 +4,41 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.2.0] — The scan lands where the room is
+
+**Ships:** the fix for "nothing was placed right": scanned furniture is
+registered onto the drawn plan instead of dropped in the scanner's own
+coordinate frame, a review step where you tick the objects to keep, and
+optional AI naming of what the scan found.
+
+### Fixed — scan placement
+
+- **Scan-measured objects landed in the scanner's session frame**, which is
+  rotated and shifted arbitrarily relative to the drawn plan — so every box
+  was placed wrong, then wall-snap and collision-shuffle scattered them
+  further. The worker's 2D wall-to-plan ICP (`register.py`) is now ported to
+  TS and runs on the device: candidate rotations from wall-heading pairs,
+  point-to-segment ICP, closed-form 2D Kabsch. Seeds are transformed through
+  the registration (position and yaw) before assembly, and registrations
+  worse than 0.5 m residual are refused with a note rather than trusted.
+- **`assembleScene` no longer second-guesses the scan**: scan-measured
+  objects are pinned — no wall snap, no collision relocation. The scan
+  already knows where the sofa is; overlaps like a rug under a table are
+  real, not errors.
+
+### Added — review what it found
+
+- **A review step between scan and build**: the detected objects are drawn
+  as numbered boxes over the plan, and each is tickable — tap a box on the
+  plan or its row in the list to keep or drop it. "Build my room (N items)"
+  builds exactly what's ticked.
+- **Optional AI naming**: paste an Anthropic API key in Settings and small
+  rendered crops of the scan (normal-shaded, clipped per object) are sent in
+  one batched request to name what it found — fridge, sofa, floor lamp —
+  against the catalog taxonomy, with measured sizes as evidence. Strictly
+  local-first: the key lives on this device only, no key means no request,
+  and any failure falls back to unnamed "Scanned item" boxes.
+
 ## [2.1.0] — Every input reads, every dimension lands, and the room finally looks warm
 
 **Ships:** the owner's four complaints, fixed at the root: dimension entry

@@ -278,3 +278,48 @@
 .scan-help-card p {
   margin: 0 0 6px;
 }
+
+/* Scan review (S6): confirm the layout and the item list before building. */
+.seed-review {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 440px;
+}
+.seed-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-height: 32dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.seed-review-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  cursor: pointer;
+}
+.seed-review-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.seed-review-number {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  min-width: 18px;
+}
+.seed-review-label { flex: 1; }
+.seed-review-dims { color: var(--text-dim); white-space: nowrap; }

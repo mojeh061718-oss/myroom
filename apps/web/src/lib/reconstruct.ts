@@ -1,6 +1,7 @@
-import { planToShell, type JobEvent, type RoomPlan, type Scene } from "@myroom/schema";
+import { planLoop, planToShell, type JobEvent, type RoomPlan, type Scene } from "@myroom/schema";
 import {
   applyRefinements,
+  applyRegistration,
   assembleScene,
   demoMeasuredObjects,
   describeRefinements,
@@ -10,10 +11,12 @@ import {
   parsePointCloudScan,
   parseRoomPlanJson,
   proposeRefinements,
+  registerScanToPlan,
   SCANNED_ITEM_CATEGORY,
   SCANNED_ITEM_LABEL,
   type RefinementProposal,
   type ScanSeedObject,
+  type ScanWallLine,
 } from "@myroom/recon";
 import { getCategory, OBJECT_CATEGORIES } from "@myroom/catalog";
 import { decodeScanFile } from "./scanDecode.js";
@@ -82,33 +85,86 @@ export interface ScanRefinement {
   notes: string[];
   /** true only when the scan was actually read and used */
   refined: boolean;
-  /** the furniture the scan itself measured, ready for stage 3 fusion */
+  /** the furniture the scan measured, registered into PLAN coordinates */
   seeds: ScanSeedObject[];
+  /** the same seeds in the scan's own frame (index-aligned with `seeds`) */
+  scanSeeds: ScanSeedObject[];
+  /** decoded scan geometry (world Y-up, scan frame), for thumbnails */
+  scanMesh: { positions: Float32Array; indices: Uint32Array } | null;
+}
+
+/**
+ * Lay the scan's furniture into the plan's coordinate frame (docs/05 §2:
+ * "register scan to the user's plan… then 2D ICP of extracted wall lines
+ * against the drawn polygon"). Without this the seed boxes arrive wherever
+ * the scanner's session origin was — real objects in the wrong room.
+ */
+function registerSeeds(
+  plan: RoomPlan,
+  scanWallLines: readonly ScanWallLine[],
+  seeds: ScanSeedObject[],
+): { seeds: ScanSeedObject[]; note: string | null } {
+  if (seeds.length === 0) return { seeds, note: null };
+  const loop = planLoop(plan);
+  if (!loop || scanWallLines.length < 2) return { seeds, note: null };
+  const registration = registerScanToPlan(scanWallLines, loop);
+  if (!registration || registration.residual > 0.5) {
+    return {
+      seeds,
+      note: "We couldn't confidently line the scan's furniture up with your walls — check positions after building, and drag anything that's off.",
+    };
+  }
+  const moved = seeds.map((seed) => {
+    // World (x, z) ↔ plan (x, −z); yaw adds the registration's rotation.
+    const p = applyRegistration(registration, { x: seed.position.x, y: -seed.position.z });
+    return {
+      ...seed,
+      position: { x: p.x, y: seed.position.y, z: -p.y },
+      rotationY: seed.rotationY + registration.rotation,
+    };
+  });
+  const degrees = Math.round((((registration.rotation * 180) / Math.PI) % 360 + 360) % 360);
+  const cm = Math.max(1, Math.round(registration.residual * 100));
+  return {
+    seeds: moved,
+    note: `Lined the scan up with your walls${degrees ? ` (rotated ${degrees}°)` : ""} — matched to about ${cm} cm.`,
+  };
 }
 
 /**
  * Refinements that survive a wall-count mismatch. Length-rank pairing needs
  * one scanned wall per drawn wall, but the ceiling height the scan measured
  * is a scalar and stays true however many walls the tracer found — a scan
- * that can't correct the outline can still correct the ceiling.
+ * that can't correct the outline can still correct the ceiling. Seeds are
+ * registered against the plan as it stands AFTER refinement, so a corrected
+ * scale can't strand the furniture in pre-correction coordinates.
  */
 function applyWhatFits(
   plan: RoomPlan,
   proposal: RefinementProposal,
-  seeds: ScanSeedObject[],
+  rawSeeds: ScanSeedObject[],
+  scanWallLines: readonly ScanWallLine[],
+  scanMesh: ScanRefinement["scanMesh"],
 ): ScanRefinement {
+  let refinedPlan: RoomPlan;
+  let notes: string[];
+  let refined: boolean;
   if (proposal.comparable) {
-    const refinedPlan = applyRefinements(plan, proposal);
-    return { plan: refinedPlan, notes: describeRefinements(proposal, refinedPlan, plan), refined: true, seeds };
+    refinedPlan = applyRefinements(plan, proposal);
+    notes = describeRefinements(proposal, refinedPlan, plan);
+    refined = true;
+  } else {
+    const partial: RefinementProposal = { ...proposal, disagreements: [], uniformScale: null };
+    refinedPlan = applyRefinements(plan, partial);
+    refined = refinedPlan !== plan;
+    notes = [
+      `We couldn't line the scan up with your plan (${proposal.reason}), so we kept your walls as you drew them.`,
+      ...describeRefinements(partial, refinedPlan, plan),
+    ];
   }
-  const partial: RefinementProposal = { ...proposal, disagreements: [], uniformScale: null };
-  const refinedPlan = applyRefinements(plan, partial);
-  const ceilingChanged = refinedPlan !== plan;
-  const notes = [
-    `We couldn't line the scan up with your plan (${proposal.reason}), so we kept your walls as you drew them.`,
-    ...describeRefinements(partial, refinedPlan, plan),
-  ];
-  return { plan: refinedPlan, notes, refined: ceilingChanged, seeds };
+  const registered = registerSeeds(refinedPlan, scanWallLines, rawSeeds);
+  if (registered.note) notes.push(registered.note);
+  return { plan: refinedPlan, notes, refined, seeds: registered.seeds, scanSeeds: rawSeeds, scanMesh };
 }
 
 /**
@@ -122,23 +178,25 @@ function applyWhatFits(
  * get a message that says which export switch to flip.
  */
 export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Promise<ScanRefinement> {
+  const none: Omit<ScanRefinement, "plan" | "notes"> = { refined: false, seeds: [], scanSeeds: [], scanMesh: null };
   const scan = uploads.find((u) => u.kind === "lidar");
-  if (!scan) return { plan, notes: [], refined: false, seeds: [] };
+  if (!scan) return { plan, notes: [], ...none };
 
   const geometry = await decodeScanFile(scan.blob);
 
   if (geometry.kind === "error") {
-    return { plan, notes: [`We couldn't read that scan: ${geometry.reason}.`], refined: false, seeds: [] };
+    return { plan, notes: [`We couldn't read that scan: ${geometry.reason}.`], ...none };
   }
 
   if (geometry.kind === "roomplan-json") {
     const preview = parseRoomPlanJson(geometry.text);
     if (!preview) {
       // docs/05 §8: a scan we can't read is a toast, not a failure.
-      return { plan, notes: ["We couldn't read that scan, so we used your plan and photos."], refined: false, seeds: [] };
+      return { plan, notes: ["We couldn't read that scan, so we used your plan and photos."], ...none };
     }
+    const lines = preview.walls.map((w) => ({ start: w.start, end: w.end }));
     const proposal = proposeRefinements(plan, preview.walls, preview.ceilingHeight);
-    return applyWhatFits(plan, proposal, preview.objects);
+    return applyWhatFits(plan, proposal, preview.objects, lines, null);
   }
 
   const parsed =
@@ -146,7 +204,7 @@ export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Pr
       ? parseMeshScan(geometry.positions, geometry.indices, geometry.format, { categories: OBJECT_CATEGORIES })
       : parsePointCloudScan(geometry.positions, geometry.format, { categories: OBJECT_CATEGORIES });
   if (!parsed.parsed) {
-    return { plan, notes: [`We couldn't read that scan: ${parsed.failure ?? "unknown reason"}.`], refined: false, seeds: [] };
+    return { plan, notes: [`We couldn't read that scan: ${parsed.failure ?? "unknown reason"}.`], ...none };
   }
 
   // ScanParse carries walls as {x, y} points; the refiner wants tuples.
@@ -158,7 +216,10 @@ export async function refineFromScan(plan: RoomPlan, uploads: LocalUpload[]): Pr
   // The boxes the scan measured are seeds whether or not the outline lined
   // up — they were thrown away here once, which meant a scanned room came
   // back furnished with invented demo furniture.
-  return applyWhatFits(plan, proposal, parsed.seedBoxes);
+  return applyWhatFits(plan, proposal, parsed.seedBoxes, lines, {
+    positions: geometry.positions,
+    indices: geometry.kind === "mesh" ? geometry.indices : new Uint32Array(),
+  });
 }
 
 // --- demo path ---------------------------------------------------------------

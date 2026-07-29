@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@myroom/catalog": "workspace:*",
     "@myroom/geometry": "workspace:*",
     "@myroom/recon": "workspace:*",
