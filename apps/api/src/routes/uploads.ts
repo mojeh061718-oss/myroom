@@ -117,26 +117,52 @@ export function registerUploadRoutes(
    * Dev/CI storage endpoint. In the hosted build the presigned URL points at
    * S3 and this route does not participate — see `createMemoryBlobs`.
    */
-  app.put<{ Params: { key: string }; Querystring: { expires?: string; sig?: string } }>(
-    "/v1/blobs/:key",
-    { bodyLimit: UPLOAD_LIMITS.lidar.maxBytes },
-    async (request, reply) => {
-      const key = decodeURIComponent(request.params.key);
-      if (!blobs.verify(key, Number(request.query.expires), request.query.sig ?? "")) {
-        return problem(reply, {
-          type: "https://myroom.app/problems/expired-url",
-          title: "Upload link expired",
-          status: 403,
-          detail: "That upload link has expired. Ask for a new one and try again.",
-        });
-      }
-      const body = request.body;
-      const bytes =
-        body instanceof Buffer ? new Uint8Array(body) : new Uint8Array(Buffer.from(String(body ?? ""), "binary"));
-      await blobs.put(key, bytes);
-      return reply.code(204).send();
-    },
-  );
+  /**
+   * The blob routes live in their own encapsulated scope so that *every*
+   * content type is read as raw bytes here, and only here.
+   *
+   * The catch-all parser in app.ts is registered as `"*"`, which Fastify
+   * consults only for content types its built-in parsers decline. It therefore
+   * never covered `application/json` or `text/plain`: a JSON-typed upload body
+   * arrived already parsed into an object, and `String(body)` stored the
+   * fifteen bytes "[object Object]" in place of the file. A text/plain body
+   * went through a latin1 round-trip that mangled every multi-byte character.
+   *
+   * Browsers set `File.type` to "application/json" for a .json file, and the
+   * client sends that as the upload's content type — so this destroyed RoomPlan
+   * JSON, which docs/05 §2 calls "the gold input". The upload then failed its
+   * own size check on /complete, with no way for the user to recover.
+   *
+   * Removing the parsers inside a child scope leaves the JSON API's own parsing
+   * untouched, because Fastify's content-type parsers are encapsulated.
+   */
+  app.register(async (scope) => {
+    scope.removeAllContentTypeParsers();
+    scope.addContentTypeParser("*", { parseAs: "buffer" }, (_req, body, done) => done(null, body));
+
+    scope.put<{ Params: { key: string }; Querystring: { expires?: string; sig?: string } }>(
+      "/v1/blobs/:key",
+      { bodyLimit: UPLOAD_LIMITS.lidar.maxBytes },
+      async (request, reply) => {
+        const key = decodeURIComponent(request.params.key);
+        if (!blobs.verify(key, Number(request.query.expires), request.query.sig ?? "")) {
+          return problem(reply, {
+            type: "https://myroom.app/problems/expired-url",
+            title: "Upload link expired",
+            status: 403,
+            detail: "That upload link has expired. Ask for a new one and try again.",
+          });
+        }
+        const body = request.body;
+        // Every type reaches here as a Buffer now; the fallback stays as a
+        // guard rather than a code path anything is expected to take.
+        const bytes =
+          body instanceof Buffer ? new Uint8Array(body) : new Uint8Array(Buffer.from(String(body ?? ""), "utf8"));
+        await blobs.put(key, bytes);
+        return reply.code(204).send();
+      },
+    );
+  });
 
   app.get<{ Params: { key: string }; Querystring: { expires?: string; sig?: string } }>(
     "/v1/blobs/:key",
