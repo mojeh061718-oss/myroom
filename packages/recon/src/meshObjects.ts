@@ -278,24 +278,46 @@ export function extractObjectClusters(
     // one blob. Cut at footprint valleys first, box the pieces.
     for (const piece of splitAtValleys(members)) {
       /*
-       * Percentile extents, not min/max. A couch with a stray toy on its back
-       * or a wisp of wall fringe in its cluster used to measure ceiling-tall,
-       * and a ceiling-tall couch matches nothing: not the dimension guesser,
-       * not a catalog model — so the room filled with anonymous boxes. The
-       * few per cent trimmed here is scanner noise, and it is the difference
-       * between "Sofa" and "Scanned item".
+       * Measure the dense core, not the extremes. A couch drags along a halo
+       * — a toy leaning on it, a blanket corner, a wisp of merged clutter —
+       * and boxing the min/max (or even a global percentile) of all of that
+       * produced couches four feet deep and six feet tall. Real objects are
+       * where the surface is DENSE: the footprint comes from columns holding
+       * enough geometry, and the height from what most of those columns top
+       * out at — a lamp poking up behind the couch is a few columns, and the
+       * 80th-percentile column top ignores it.
        */
-      const us = piece.map((m) => m.u).sort((a, b) => a - b);
-      const vs = piece.map((m) => m.v).sort((a, b) => a - b);
-      const ys = piece.map((m) => m.y).sort((a, b) => a - b);
+      const COL = 0.1;
+      const columns = new Map<string, { count: number; top: number }>();
+      for (const m of piece) {
+        const key = `${Math.round(m.u / COL)},${Math.round(m.v / COL)}`;
+        const col = columns.get(key);
+        if (col) {
+          col.count++;
+          col.top = Math.max(col.top, m.y);
+        } else {
+          columns.set(key, { count: 1, top: m.y });
+        }
+      }
+      const dense: { cu: number; cv: number; top: number }[] = [];
+      for (const [key, col] of columns) {
+        if (col.count < 3) continue;
+        const [cu, cv] = key.split(",").map(Number) as [number, number];
+        dense.push({ cu, cv, top: col.top });
+      }
+      if (dense.length < 4) continue;
       const pick = (sorted: number[], q: number) =>
         sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(q * (sorted.length - 1))))]!;
-      const minU = pick(us, 0.02);
-      const maxU = pick(us, 0.98);
-      const minV = pick(vs, 0.02);
-      const maxV = pick(vs, 0.98);
+      const cus = dense.map((d) => d.cu).sort((a, b) => a - b);
+      const cvs = dense.map((d) => d.cv).sort((a, b) => a - b);
+      const tops = dense.map((d) => d.top).sort((a, b) => a - b);
+      const ys = piece.map((m) => m.y).sort((a, b) => a - b);
+      const minU = (pick(cus, 0.02) - 0.5) * COL;
+      const maxU = (pick(cus, 0.98) + 0.5) * COL;
+      const minV = (pick(cvs, 0.02) - 0.5) * COL;
+      const maxV = (pick(cvs, 0.98) + 0.5) * COL;
       const minY = pick(ys, 0.02);
-      const maxY = pick(ys, 0.96);
+      const maxY = Math.max(minY + 0.1, pick(tops, 0.8));
       let area = 0;
       for (const m of piece) area += m.area;
 

@@ -12,6 +12,7 @@ import {
 } from "@myroom/schema";
 import { SCANNED_ITEM_LABEL, type ScanSeedObject } from "@myroom/recon";
 import { getCategory, OBJECT_CATEGORIES } from "@myroom/catalog";
+import { sizeForNamedSeed } from "../../lib/seedSize.js";
 import { getProject, listUploads, putProject, type LocalProject, type LocalUpload } from "../../lib/db.js";
 import { DEMO_NOTICE, reconstruct, refineFromScan } from "../../lib/reconstruct.js";
 import { PillButton } from "../../components/PillButton.js";
@@ -183,6 +184,8 @@ function SeedReviewPlan({
 interface ReviewState {
   seeds: ScanSeedObject[];
   keep: boolean[];
+  /** pristine scan measurements, so renaming snaps from the truth, not from a prior snap */
+  measured: { w: number; d: number; h: number }[];
 }
 
 export function Processing() {
@@ -316,7 +319,9 @@ export function Processing() {
             photos: uploads.filter((u) => u.kind === "photo").slice(0, 2).map((u) => u.blob),
           });
           seeds = seeds.map((seed, i) =>
-            seed.category === null && named.categories[i] ? { ...seed, category: named.categories[i] } : seed,
+            seed.category === null && named.categories[i]
+              ? { ...seed, category: named.categories[i], size: sizeForNamedSeed(seed.size, named.categories[i]!) }
+              : seed,
           );
           if (named.missing.length > 0) {
             // Photo-spotted items have no measured position — line them up
@@ -351,7 +356,7 @@ export function Processing() {
         // the room is built. The user picks what to keep.
         if (seeds.length > 0) {
           pending.current = { project: base, plan, uploads, refined };
-          setReview({ seeds, keep: seeds.map(() => true) });
+          setReview({ seeds, keep: seeds.map(() => true), measured: seeds.map((s) => ({ ...s.size })) });
           return;
         }
       }
@@ -399,6 +404,7 @@ export function Processing() {
           },
         ],
         keep: [...r.keep, true],
+        measured: [...r.measured, { w: 0.6, d: 0.6, h: 0.9 }],
       };
     });
   };
@@ -472,17 +478,21 @@ export function Processing() {
                     value={seed.category ?? ""}
                     data-testid={`seed-name-${i}`}
                     aria-label={`What is item ${i + 1}?`}
-                    onChange={(e) =>
-                      setReview(
-                        (r) =>
-                          r && {
-                            ...r,
-                            seeds: r.seeds.map((s, j) =>
-                              j === i ? { ...s, category: e.target.value || null } : s,
-                            ),
-                          },
-                      )
-                    }
+                    onChange={(e) => {
+                      const category = e.target.value || null;
+                      setReview((r) => {
+                        if (!r) return r;
+                        const base = r.measured[i] ?? r.seeds[i]!.size;
+                        return {
+                          ...r,
+                          seeds: r.seeds.map((s, j) =>
+                            j === i
+                              ? { ...s, category, size: category ? sizeForNamedSeed(base, category) : { ...base } }
+                              : s,
+                          ),
+                        };
+                      });
+                    }}
                   >
                     <option value="">What is this?</option>
                     <optgroup label="Common">

@@ -4,6 +4,29 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.3.2] — Boxes the size of the things they are
+
+**Ships:** the fix for "the models are producing WAY too big of boxes":
+measured sizes now come from each object's dense core, and a named object
+snaps its implausible axes to the category's real proportions.
+
+### Fixed — measured size accuracy
+
+- **Extents come from the dense core, not the halo.** A couch drags along
+  a welded fringe — a toy against it, a blanket corner, merged clutter —
+  and min/max boxing measured couches four feet deep and six feet tall.
+  The footprint is now the columns that actually hold geometry, and the
+  height is what most of those columns top out at, so a lamp poking up
+  behind a couch no longer becomes couch height.
+- **A name overrides an implausible measurement.** Naming a box (picker,
+  photo pass, or dimension guess) keeps each measured axis when it is
+  plausible for that category (0.6–1.5× nominal — real furniture varies)
+  and snaps it to the category's size when it is not, orientation-
+  agnostically. Renaming always snaps from the pristine measurement, never
+  from a prior snap. On the reference scan this is what pushed dimension
+  fits over the catalog threshold: the two couches now build as actual
+  sofa models at couch scale instead of six-foot-tall boxes.
+
 ## [2.3.1] — A named box builds as the thing it is
 
 **Ships:** the fix for "the items just import as boxes and not representing
