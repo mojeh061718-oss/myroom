@@ -11,7 +11,7 @@ import {
   type RoomPlan,
 } from "@myroom/schema";
 import { SCANNED_ITEM_LABEL, type ScanSeedObject } from "@myroom/recon";
-import { getCategory } from "@myroom/catalog";
+import { getCategory, OBJECT_CATEGORIES } from "@myroom/catalog";
 import { getProject, listUploads, putProject, type LocalProject, type LocalUpload } from "../../lib/db.js";
 import { DEMO_NOTICE, reconstruct, refineFromScan } from "../../lib/reconstruct.js";
 import { PillButton } from "../../components/PillButton.js";
@@ -46,6 +46,58 @@ interface FoundObject {
 
 const seedLabel = (seed: ScanSeedObject): string =>
   (seed.category && getCategory(seed.category)?.label) ?? SCANNED_ITEM_LABEL;
+
+/**
+ * The review's "what is this?" picker. Dimensions can only name the obvious;
+ * the person standing in the room knows the rest — and a named box builds as
+ * the right shape (a matched catalog model, or the category's massing)
+ * instead of a grey block.
+ */
+const COMMON_CATEGORY_IDS = [
+  "sofa",
+  "sectional",
+  "loveseat",
+  "armchair",
+  "ottoman",
+  "bench",
+  "coffee-table",
+  "side-table",
+  "console-table",
+  "dining-table",
+  "dining-chair",
+  "desk",
+  "office-chair",
+  "tv",
+  "bookshelf",
+  "wall-shelf-unit",
+  "cabinet",
+  "dresser",
+  "wardrobe",
+  "nightstand",
+  "bed",
+  "bunk-bed",
+  "crib",
+  "fridge",
+  "range",
+  "microwave",
+  "washer",
+  "dryer",
+  "floor-lamp",
+  "desk-lamp",
+  "rug",
+  "trash-can",
+  "storage-trunk",
+  "potted-plant",
+  "coat-rack",
+  "mirror",
+  "stool",
+];
+const COMMON_CATEGORIES = COMMON_CATEGORY_IDS.map((id) => getCategory(id)).filter(
+  (c): c is NonNullable<ReturnType<typeof getCategory>> => Boolean(c),
+);
+const OTHER_CATEGORIES = OBJECT_CATEGORIES.filter((c) => !COMMON_CATEGORY_IDS.includes(c.id)).sort((a, b) =>
+  a.label.localeCompare(b.label),
+);
 
 /**
  * The plan with the scanned objects drawn on it, each tappable to keep or
@@ -402,22 +454,57 @@ export function Processing() {
           <ul className="seed-review-list">
             {review.seeds.map((seed, i) => (
               <li key={i}>
-                <label className="seed-review-item">
-                  <input
-                    type="checkbox"
-                    checked={review.keep[i] ?? true}
-                    data-testid={`seed-keep-${i}`}
-                    onChange={() =>
-                      setReview((r) => r && { ...r, keep: r.keep.map((k, j) => (j === i ? !k : k)) })
+                <div className="seed-review-item">
+                  <label className="seed-review-tick">
+                    <input
+                      type="checkbox"
+                      checked={review.keep[i] ?? true}
+                      data-testid={`seed-keep-${i}`}
+                      aria-label={`Keep ${seedLabel(seed)} ${i + 1}`}
+                      onChange={() =>
+                        setReview((r) => r && { ...r, keep: r.keep.map((k, j) => (j === i ? !k : k)) })
+                      }
+                    />
+                    <span className="seed-review-number">{i + 1}</span>
+                  </label>
+                  <select
+                    className="seed-review-pick"
+                    value={seed.category ?? ""}
+                    data-testid={`seed-name-${i}`}
+                    aria-label={`What is item ${i + 1}?`}
+                    onChange={(e) =>
+                      setReview(
+                        (r) =>
+                          r && {
+                            ...r,
+                            seeds: r.seeds.map((s, j) =>
+                              j === i ? { ...s, category: e.target.value || null } : s,
+                            ),
+                          },
+                      )
                     }
-                  />
-                  <span className="seed-review-number">{i + 1}</span>
-                  <span className="seed-review-label">{seedLabel(seed)}</span>
+                  >
+                    <option value="">What is this?</option>
+                    <optgroup label="Common">
+                      {COMMON_CATEGORIES.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Everything else">
+                      {OTHER_CATEGORIES.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
                   <span className="type-caption seed-review-dims">
                     {formatLength(seed.size.w, unit)} × {formatLength(seed.size.d, unit)} ×{" "}
                     {formatLength(seed.size.h, unit)}
                   </span>
-                </label>
+                </div>
               </li>
             ))}
           </ul>

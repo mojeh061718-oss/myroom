@@ -4,6 +4,35 @@ All notable changes to My Room Sandbox. Milestones follow
 [`docs/09-roadmap.md`](docs/09-roadmap.md); each ships tagged, with a demo
 recording against its acceptance criteria.
 
+## [2.3.1] — A named box builds as the thing it is
+
+**Ships:** the fix for "the items just import as boxes and not representing
+what I have" — the catalog's 96 CC0 models and per-category massings were
+already there; what was missing was names to route boxes to them.
+
+### Added — name it in the review
+
+- **Every review row has a "what is this?" picker** (common furniture
+  first, full taxonomy behind it). A named box builds as a real catalog
+  model when its measured size fits one, or as the category's shaped
+  massing — a sofa with a back and arms, a shelf with shelves — never a
+  grey block. The person standing in the room is the best classifier the
+  app has.
+
+### Fixed — measured sizes match reality
+
+- **Cluster extents are percentiles now, not min/max.** A stray toy on a
+  couch or a wisp of wall fringe used to make it measure ceiling-tall, and
+  a ceiling-tall couch matches nothing — not the dimension guesser, not a
+  catalog model. Trimming the top few per cent is the difference between
+  "Sofa" and "Scanned item".
+- **Dimension-only guessing is restricted to ordinary household things.**
+  Loosening its gates re-labelled the kitchen island a grand piano within
+  one run — a cluttered island IS piano-proportioned; priors are what rule
+  the piano out. Rare categories now require the photo-informed AI pass or
+  the user's own word; ties within a family (sofa vs loveseat) are safe to
+  call and no longer blocked.
+
 ## [2.3.0] — Ask, don't guess
 
 **Ships:** the owner's proposal verbatim: "what if we eliminate this

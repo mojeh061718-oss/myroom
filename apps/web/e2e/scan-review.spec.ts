@@ -97,6 +97,10 @@ test("a rotated point-cloud scan reviews, registers, and furnishes the drawn roo
   await expect(items).toHaveCount(detected + 1);
   await expect(page.locator(`[data-testid="seed-keep-${detected}"]`)).toBeChecked();
 
+  // Naming a box in the review is what turns a grey block into furniture:
+  // the person in the room says what it is, and it builds as that.
+  await page.getByTestId("seed-name-0").selectOption("ottoman");
+
   await page.getByTestId("review-build").click();
   await expect(page.getByTestId("processing-open")).toBeEnabled({ timeout: 45_000 });
   await page.getByTestId("processing-open").click();
@@ -115,4 +119,6 @@ test("a rotated point-cloud scan reviews, registers, and furnishes the drawn roo
   );
   expect(Math.abs(sofa.x)).toBeLessThan(0.45);
   expect(Math.abs(sofa.z + 1.5)).toBeLessThan(0.45);
+  // The named box built as what the user said it is, not as "Scanned item".
+  expect(placed.some((o) => o.label.toLowerCase().includes("ottoman"))).toBe(true);
 });
