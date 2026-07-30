@@ -277,22 +277,27 @@ export function extractObjectClusters(
     // A component is not yet an object: adjacent furniture flood-fills into
     // one blob. Cut at footprint valleys first, box the pieces.
     for (const piece of splitAtValleys(members)) {
-      let minU = Infinity;
-      let maxU = -Infinity;
-      let minV = Infinity;
-      let maxV = -Infinity;
-      let minY = Infinity;
-      let maxY = -Infinity;
+      /*
+       * Percentile extents, not min/max. A couch with a stray toy on its back
+       * or a wisp of wall fringe in its cluster used to measure ceiling-tall,
+       * and a ceiling-tall couch matches nothing: not the dimension guesser,
+       * not a catalog model — so the room filled with anonymous boxes. The
+       * few per cent trimmed here is scanner noise, and it is the difference
+       * between "Sofa" and "Scanned item".
+       */
+      const us = piece.map((m) => m.u).sort((a, b) => a - b);
+      const vs = piece.map((m) => m.v).sort((a, b) => a - b);
+      const ys = piece.map((m) => m.y).sort((a, b) => a - b);
+      const pick = (sorted: number[], q: number) =>
+        sorted[Math.min(sorted.length - 1, Math.max(0, Math.floor(q * (sorted.length - 1))))]!;
+      const minU = pick(us, 0.02);
+      const maxU = pick(us, 0.98);
+      const minV = pick(vs, 0.02);
+      const maxV = pick(vs, 0.98);
+      const minY = pick(ys, 0.02);
+      const maxY = pick(ys, 0.96);
       let area = 0;
-      for (const m of piece) {
-        if (m.u < minU) minU = m.u;
-        if (m.u > maxU) maxU = m.u;
-        if (m.v < minV) minV = m.v;
-        if (m.v > maxV) maxV = m.v;
-        if (m.y < minY) minY = m.y;
-        if (m.y > maxY) maxY = m.y;
-        area += m.area;
-      }
+      for (const m of piece) area += m.area;
 
       const width = maxU - minU;
       const depth = maxV - minV;
@@ -358,8 +363,14 @@ export function guessCategory(
   categories: readonly SizedCategory[],
 ): CategoryGuess {
   const onFloor = cluster.baseY < 0.25;
-  const candidates = categories.filter((c) =>
-    onFloor ? c.support === "floor" : c.support === "wall" || c.support === "surface",
+  const candidates = categories.filter(
+    (c) =>
+      // Dimensions alone may only propose ordinary household things. A
+      // cluttered 6'×5'×2'9" island IS piano-proportioned — priors, not
+      // proportions, are what rule the piano out, so rare categories need
+      // the photo pass or the user's own word.
+      guessableFromSizeAlone(c.id) &&
+      (onFloor ? c.support === "floor" : c.support === "wall" || c.support === "surface"),
   );
   if (candidates.length === 0) return { category: null, confidence: 0 };
 
@@ -386,26 +397,57 @@ export function guessCategory(
   if (!best) return { category: null, confidence: 0 };
 
   /*
-   * Two gates, and most clusters fail both. That is the intended outcome.
+   * Two gates. With 112 floor categories, *something* is always within a
+   * loose radius of any box, and an early loose threshold labelled a
+   * sectional sofa a "grand-piano" — the kind of output that makes a user
+   * stop believing anything the app says.
    *
-   * With 112 floor categories, *something* is always within a loose radius of
-   * any box. On the reference scan a generous threshold labelled a sectional
-   * sofa a "grand-piano" and a shelving unit a "bunk-bed" — a grand piano in a
-   * child's play area is not a small error, it is the kind of output that makes
-   * a user stop believing anything the app says.
-   *
-   *   ABSOLUTE — the match must actually be close. 0.35 total across three
-   *   axes is roughly 12% out on each.
-   *   MARGIN — it must also be clearly better than the next candidate. Boxes
-   *   that sit between two categories get no name rather than a coin toss.
+   *   ABSOLUTE — the match must actually be close. 0.4 total across three
+   *   axes is roughly 14% out on each.
+   *   MARGIN — it must beat the next candidate clearly, UNLESS they are the
+   *   same kind of thing. A dead heat between a sofa and a loveseat is safe
+   *   to call (either name puts the right shape in the room and the review
+   *   catches the rest); a dead heat between a sofa and a piano is not.
    *
    * A declined name still leaves a correctly-sized box in the right place,
    * which is the useful part: the user can say what it is, and the swap sheet
    * needs something to swap.
    */
-  if (best.s > 0.35) return { category: null, confidence: 0 };
-  if (runnerUp && runnerUp.s - best.s < 0.12) return { category: null, confidence: 0 };
+  // Loosening the absolute gate to 0.4 was tried and immediately relabelled
+  // the reference scan's kitchen island a grand piano. 0.32 it stays; the
+  // review screen's own name picker and the photo-informed AI pass are the
+  // honest ways to name what dimensions alone cannot.
+  if (best.s > 0.32) return { category: null, confidence: 0 };
+  if (runnerUp && runnerUp.s - best.s < 0.12 && familyOf(runnerUp.c.id) !== familyOf(best.c.id)) {
+    return { category: null, confidence: 0 };
+  }
   return { category: best.c.id, confidence: Math.max(0.2, 1 - best.s) };
+}
+
+const GUESSABLE_EXTRAS = new Set(["coat-rack", "trash-can", "tv", "mirror", "rug", "runner-rug", "potted-plant"]);
+
+/** Ordinary household categories — everything `familyOf` groups, plus a few singles. */
+function guessableFromSizeAlone(id: string): boolean {
+  return familyOf(id) !== id || GUESSABLE_EXTRAS.has(id);
+}
+
+/**
+ * Coarse shape family, for the margin gate above: confusing two kinds of
+ * seating is a harmless naming quibble; confusing furniture kinds is the
+ * grand-piano incident.
+ */
+function familyOf(id: string): string {
+  if (/(sofa|sectional|loveseat|armchair|chair|stool|bench|ottoman|pouf|beanbag|recliner|chaise|daybed)/.test(id)) return "seating";
+  if (/(table|desk|island|nightstand|bar-cart|counter|workbench)/.test(id)) return "table";
+  if (/(shelf|shelving|bookcase|bookshelf|cabinet|dresser|wardrobe|armoire|hutch|credenza|sideboard|storage|trunk|cubby|locker)/.test(id)) {
+    return "storage";
+  }
+  if (/(bed|mattress|crib|cot)/.test(id)) return "bed";
+  if (/(lamp|lantern|sconce|light|chandelier|fan)/.test(id)) return "light";
+  if (/(fridge|refrigerator|freezer|range|oven|stove|dishwasher|washer|dryer|microwave|kettle|toaster)/.test(id)) {
+    return "appliance";
+  }
+  return id;
 }
 
 /** Clusters → the seed boxes Stage 3 fuses (docs/05 §5). */
